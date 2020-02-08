@@ -18,12 +18,3 @@ to make substantial changes since the initial scaffolding is not finished yet an
 
 ![Interaction Diagram](docs/img/interactions.png)
 
-
-
-# modules todo
-
-- get kernel sources at version
-- copy config to `.config`
-- make oldconfig
-- make prepare
-- make modules_prepare

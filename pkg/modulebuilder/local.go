@@ -107,7 +107,7 @@ func (b LocalBuilder) BuildKernel() error {
 func (b LocalBuilder) BuildModule() error {
 	// Create necessary makefile
 	makefilePath := path.Join(b.cfg.ModuleDir, "Makefile")
-	if err := createMakefile(makefilePath, "falco", b.cfg.KernelDir, b.cfg.ModuleDir); err != nil {
+	if err := createMakefile(makefilePath, b.cfg.ModuleName, b.cfg.KernelDir, b.cfg.ModuleDir); err != nil {
 		return fmt.Errorf("error creating the module Makefile: %v", err)
 	}
 	// Create the driver_config.h
