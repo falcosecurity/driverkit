@@ -1,4 +1,4 @@
-package modulebuilder
+package builder
 
 import (
 	"io"

@@ -4,8 +4,7 @@ This is the component that takes care of preparing the kernel sources and buildi
 
 TODO:
 - [x] Implement a local builder
-- [ ] Implement a builder in a container using the docker daemon
-- [ ] Iplement a remote builder using kubernetes
+- [ ] Implement a builder in a container using kubernetes client-go
 
 ## Local builder Usage example
 
@@ -18,7 +17,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/falcosecurity/build-service/pkg/modulebuilder"
+	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
 )
 
 func main() {
@@ -35,7 +34,7 @@ func main() {
 	buf.ReadFrom(zr)
 	configStr := buf.String()
 
-	builder := modulebuilder.NewLocalBuilderFromConfig(modulebuilder.Config{
+	b := builder.NewLocalBuilderFromConfig(builder.Config{
 		KernelDir:        "/tmp/linux-src-5.5.2",
 		KernelVersion:    "5.5.2-arch1-1",
 		ModuleDir:        "/tmp/driver-src",
@@ -45,7 +44,7 @@ func main() {
 		KernelConfigData: configStr,
 	})
 
-	err = builder.Build()
+	err = b.Build()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -53,7 +52,7 @@ func main() {
 
 ```
 
-## Docker builder Usage example
+## Kubernetes Builder Usage example
 
 ```go
 TODO: example here

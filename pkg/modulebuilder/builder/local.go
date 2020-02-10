@@ -1,8 +1,9 @@
-package modulebuilder
+package builder
 
 import (
 	"bytes"
 	"fmt"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -13,13 +14,19 @@ import (
 )
 
 type LocalBuilder struct {
-	cfg Config
+	cfg    Config
+	logger *zap.Logger
 }
 
 func NewLocalBuilderFromConfig(cfg Config) LocalBuilder {
 	return LocalBuilder{
-		cfg: cfg,
+		cfg:    cfg,
+		logger: zap.NewNop(),
 	}
+}
+
+func (b *LocalBuilder) WithLogger(logger *zap.Logger) {
+	b.logger = logger
 }
 
 func (b LocalBuilder) Build() error {
@@ -57,7 +64,6 @@ func kernelConfigFile(kernelConfigContent string, kernelVersion string) (*os.Fil
 	if err != nil {
 		return nil, err
 	}
-
 	configStr := fmt.Sprintf("%s\nCONFIG_LOCALVERSION=\"-%s\"\n", kernelConfigContent, localVersion)
 	if _, err := file.WriteString(configStr); err != nil {
 		return nil, err
@@ -72,6 +78,9 @@ func makeInKernelDir(command, kernelDir, moduleDir string, kernelConfigContent s
 	}
 	file, err := kernelConfigFile(kernelConfigContent, kernelVersion)
 	defer file.Close()
+	if err != nil {
+		return err
+	}
 	defer os.Remove(file.Name())
 
 	cmd := exec.Command(makeCmd, buildMakeInKernelDirCommandArguments(command, kernelDir, moduleDir, file.Name())...)

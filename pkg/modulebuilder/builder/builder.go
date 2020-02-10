@@ -1,6 +1,8 @@
-package modulebuilder
+package builder
 
 const moduleExtension = "ko"
+const KubernetesBuilderName = "kubernetes"
+const LocalBuilderName = "local"
 
 type Builder interface {
 	Build() error
