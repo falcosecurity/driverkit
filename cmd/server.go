@@ -8,7 +8,6 @@ import (
 
 	"github.com/falcosecurity/build-service/pkg/kubernetes"
 	"github.com/falcosecurity/build-service/pkg/modulebuilder"
-	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
 	"github.com/falcosecurity/build-service/pkg/server"
 	"github.com/falcosecurity/build-service/pkg/signals"
 	"github.com/mitchellh/go-homedir"
@@ -47,7 +46,7 @@ var serverCmd = &cobra.Command{
 		}
 
 		srv.WithLogger(logger)
-		builderStr, err := cmd.PersistentFlags().GetString("builder")
+		builderStr, err := cmd.PersistentFlags().GetString("build-processor")
 		if err != nil {
 			return err
 		}
@@ -56,7 +55,7 @@ var serverCmd = &cobra.Command{
 		buildProcessor = modulebuilder.NewNopBuildProcessor()
 
 		switch builderStr {
-		case builder.KubernetesBuilderName:
+		case modulebuilder.KubernetesBuildProcessorName:
 			kubeconfigPath, err := cmd.PersistentFlags().GetString("kubeconfig")
 			if err != nil {
 				return err
@@ -95,7 +94,7 @@ var serverCmd = &cobra.Command{
 		return nil
 	},
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if builderStr, _ := cmd.PersistentFlags().GetString("builder"); builderStr == builder.KubernetesBuilderName {
+		if builderStr, _ := cmd.PersistentFlags().GetString("build-processor"); builderStr == modulebuilder.KubernetesBuildProcessorName {
 			err := cmd.MarkFlagRequired("kubeconfig")
 			if err != nil {
 				return err
@@ -114,8 +113,8 @@ func init() {
 		os.Exit(1)
 	}
 
-	serverCmd.PersistentFlags().String("builder", builder.KubernetesBuilderName, fmt.Sprintf("builder used to build the kernel modules (%s)", builder.KubernetesBuilderName))
-	serverCmd.PersistentFlags().String("kubeconfig", filepath.Join(home, ".kube", "config"), fmt.Sprintf("absolute path to the kubeconfig file, required for the '%s' builder", builder.KubernetesBuilderName))
+	serverCmd.PersistentFlags().String("build-processor", modulebuilder.KubernetesBuildProcessorName, fmt.Sprintf("build processor used to build the kernel modules (%s)", modulebuilder.KubernetesBuildProcessorName))
+	serverCmd.PersistentFlags().String("kubeconfig", filepath.Join(home, ".kube", "config"), fmt.Sprintf("absolute path to the kubeconfig file, required for the '%s' processor", modulebuilder.KubernetesBuildProcessorName))
 	serverCmd.PersistentFlags().StringP("bind-address", "b", "127.0.0.1:8093", "the address to bind the HTTP(s) server to")
 	serverCmd.PersistentFlags().String("certfile", "", "certificate for running the server with TLS. If you pass this you also need 'keyfile' to enable TLS")
 	serverCmd.PersistentFlags().String("keyfile", "", "certificate for running the server with TLS. If you pass this you also need 'certfile' to enable TLS")

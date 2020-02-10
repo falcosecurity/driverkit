@@ -25,3 +25,4 @@ func NewKubernetesClientFromConfigPath(configPath string) (*kube.Clientset, erro
 	}
 	return clientset, nil
 }
+
