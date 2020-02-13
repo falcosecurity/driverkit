@@ -1,0 +1,6 @@
+FROM ubuntu:18.04
+
+RUN apt update -y
+RUN apt install build-essential git curl -y
+RUN apt install libncurses-dev flex bison openssl libssl-dev dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf -y
+RUN apt install bc -y
