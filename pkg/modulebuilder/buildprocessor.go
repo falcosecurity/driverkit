@@ -2,21 +2,12 @@ package modulebuilder
 
 import (
 	"context"
+	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
 	"go.uber.org/zap"
 )
 
-type BuildType string
-const (
-	 BuildTypeVanilla BuildType = "vanilla"
-	// BuildTypeCentOS BuildType = "centos" // not implemented
-	// BuildTypeCoreOS BuildType = "coreos" // Not implemented
-	// BuildTypeFedora BuildType = "fedora"  // Not implemented
-	// BuildTypeUbuntu BuildType = "ubuntu"  // Not implemented
-	// BuildTypeDebian BuildType = "debian"  // Not implemented
-)
-
 type Build struct {
-	BuildType        BuildType
+	BuildType        builder.BuildType
 	KernelConfigData string
 	KernelVersion    string
 }

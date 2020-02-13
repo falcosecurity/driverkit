@@ -1,18 +1,22 @@
 package modulebuilder
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
 	"go.uber.org/zap"
-	batchv1 "k8s.io/api/batch/v1"
-	apiv1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kube "k8s.io/client-go/kubernetes"
-	v1 "k8s.io/client-go/kubernetes/typed/batch/v1"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 const KubernetesBuildProcessorName = "kubernetes"
+
+var builderBaseImage = "docker.io/falcosecurity/falco-builder-service-base:latest" // This is overwritten when using the Makefile to build
+const falcoBuilderUIdLabel = "org.falcosecurity/falco-builder-uid"
 
 type KubernetesBuildProcessor struct {
 	buildsch   chan Build
@@ -67,7 +71,9 @@ func (bp *KubernetesBuildProcessor) Start() error {
 		default:
 			bp.logger.Info("doing a build", zap.String("type", string(b.BuildType)))
 			// TODO(fntlnz): make namespace configurable
-			err := createKubernetesJob(bp.kubeClient.BatchV1().Jobs("default"))
+			podClient := bp.kubeClient.CoreV1().Pods("default")
+			configClient := bp.kubeClient.CoreV1().ConfigMaps("default")
+			err := buildOnKubernetes(bp.ctx, podClient, configClient, b)
 			if err != nil {
 				bp.logger.Error("error creating the kubernetes job", zap.Error(err))
 			}
@@ -76,60 +82,149 @@ func (bp *KubernetesBuildProcessor) Start() error {
 	return nil
 }
 
-const builderBaseImage = "docker.io/library/ubuntu:18.04"
-
-func int32Ptr(i int32) *int32 { return &i }
 func int64Ptr(i int64) *int64 { return &i }
 
-func createKubernetesJob(jobClient v1.JobInterface) error {
+func buildOnKubernetes(ctx context.Context, podClient v1.PodInterface, configClient v1.ConfigMapInterface, build Build) error {
+
+	deadline := int64(1000)
+	deadlineGracePeriod := int64(20)
+
+	v, err := builder.Factory(build.BuildType)
+	if err != nil {
+		return err
+	}
+
+	bc := builder.BuilderConfig{
+		ModuleConfig: builder.ModuleConfig{
+			ModuleVersion:   "dev",                                      // TODO: make this configurable per request
+			ModuleName:      "falco",                                    // TODO: make this configurable at startup
+			DeviceName:      "falco",                                    // TODO: make this configurable at startup
+			DownloadBaseURL: "https://github.com/draios/sysdig/archive", // TODO: make this configurable at startup
+		},
+		KernelConfigData: build.KernelConfigData, // TODO: make this configurable per request
+		KernelVersion:    build.KernelVersion,
+	}
+	res, err := v.Script(bc)
+	if err != nil {
+		return err
+	}
+
 	buildCmd := []string{
-		"/usr/bin/whoami",
+		"/bin/bash",
+		"/module-builder/module-builder.sh",
 	}
 
 	name := "falco-builder" // TODO(fntlnz): generate this
-	namespace := "default" // TODO(fntlnz): make this configurable
+	namespace := "default"  // TODO(fntlnz): make this configurable
+	uid := "generate-a-uid" //todo(fntlnz): generate an uid here
 	commonMeta := metav1.ObjectMeta{
 		Name:      name,
 		Namespace: namespace,
+		Labels: map[string]string{
+			falcoBuilderUIdLabel: uid,
+		},
 	}
 
-	job := &batchv1.Job{
+	// Prepare driver config template
+	bufDriverConfig := bytes.NewBuffer(nil)
+	err = renderDriverConfig(bufDriverConfig, driverConfigData{ModuleVersion: bc.ModuleConfig.ModuleVersion, ModuleName: bc.ModuleConfig.ModuleName, DeviceName: bc.ModuleConfig.DeviceName})
+	if err != nil {
+		return err
+	}
+
+	// Prepare makefile template
+	bufMakefile := bytes.NewBuffer(nil)
+	err = renderMakefile(bufMakefile, makefileData{ModuleName: bc.ModuleConfig.ModuleName, KernelBuildDir: builder.KernelDirectory, ModuleBuildDir: builder.ModuleDirectory})
+	if err != nil {
+		return err
+	}
+
+	cm := &corev1.ConfigMap{
 		ObjectMeta: commonMeta,
-		Spec: batchv1.JobSpec{
-			ActiveDeadlineSeconds:   int64Ptr(100),
-			TTLSecondsAfterFinished: int32Ptr(5),
-			Parallelism:             int32Ptr(1),
-			Completions:             int32Ptr(1),
-			BackoffLimit:            int32Ptr(1),
-			Template: apiv1.PodTemplateSpec{
-				ObjectMeta: commonMeta,
-				Spec: apiv1.PodSpec{
-					Containers: []apiv1.Container{
+		Data: map[string]string{
+			"module-builder.sh":      res,
+			"kernel.config":          prepareKernelConfig(build.KernelConfigData, bc.KernelVersion),
+			"module-Makefile":        bufMakefile.String(),
+			"module-driver-config.h": bufDriverConfig.String(),
+		},
+	}
+
+	pod := &corev1.Pod{
+		ObjectMeta: commonMeta,
+		Spec: corev1.PodSpec{
+			ActiveDeadlineSeconds: int64Ptr(deadline + deadlineGracePeriod),
+			Containers: []corev1.Container{
+				{
+					Name:    name,
+					Image:   builderBaseImage,
+					Command: buildCmd,
+
+					Resources: corev1.ResourceRequirements{
+						Requests: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("1000m"),
+							corev1.ResourceMemory: resource.MustParse("2000Mi"),
+						},
+						Limits: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("4"),
+							corev1.ResourceMemory: resource.MustParse("4G"),
+						},
+					},
+					VolumeMounts: []corev1.VolumeMount{
 						{
-							Name:    name,
-							Image:   builderBaseImage,
-							Command: buildCmd,
-							Resources: apiv1.ResourceRequirements{
-								Requests: apiv1.ResourceList{
-									apiv1.ResourceCPU:    resource.MustParse("1000m"),
-									apiv1.ResourceMemory: resource.MustParse("2000Mi"),
-								},
-								Limits: apiv1.ResourceList{
-									apiv1.ResourceCPU:    resource.MustParse("4"),
-									apiv1.ResourceMemory: resource.MustParse("4G"),
-								},
+							Name:      "module-builder",
+							MountPath: "/module-builder",
+							ReadOnly:  true,
+						},
+					},
+				},
+			},
+			Volumes: []corev1.Volume{
+				{
+					Name: "module-builder",
+					VolumeSource: corev1.VolumeSource{
+						ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: cm.Name,
 							},
 						},
 					},
-					RestartPolicy: "Never",
 				},
 			},
 		},
 	}
 
-	_, err := jobClient.Create(job)
+	_, err = configClient.Create(cm)
 	if err != nil {
 		return err
 	}
+	_, err = podClient.Create(pod)
+	if err != nil {
+		return err
+	}
+
+	//watch, err := podClient.Watch(metav1.ListOptions{
+	//	LabelSelector: fmt.Sprintf("%s=%s", falcoBuilderUIdLabel, uid),
+	//})
+	//
+	//if err != nil {
+	//	return err
+	//}
+	//for event := range watch.ResultChan() {
+	//	select {
+	//	case <-ctx.Done():
+	//		return podClient.Delete(name,nil)
+	//	default:
+	//		fmt.Printf("Type: %v\n", event.Type)
+	//		p, ok := event.Object.(*corev1.Pod)
+	//		if !ok {
+	//			fmt.Println("unexpected type")
+	//		}
+	//		fmt.Println(p.Status.ContainerStatuses)
+	//		fmt.Println(p.Status.Phase)
+	//
+	//		// TODO(fntlnz): once status is ready, start executing the build steps
+	//	}
+	//
+	//}
 	return nil
 }
