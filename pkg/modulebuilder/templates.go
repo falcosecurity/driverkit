@@ -1,8 +1,7 @@
-package modulebuilder
+package builder
 
 import (
 	"io"
-	"os"
 	"text/template"
 )
 
@@ -17,14 +16,13 @@ const makefileTemplate = `
 obj-m += {{ .ModuleName }}.o
 
 all:
-	$(MAKE) -C {{ .KernelBuildDir }} M={{ .ModuleBuildDir }} modules
+	make -C {{ .KernelBuildDir }} M={{ .ModuleBuildDir }} modules
 
 clean:
-	$(MAKE) -C {{ .KernelBuildDir }} M={{ .KernelBuildDir }} clean
+	make -C {{ .KernelBuildDir }} M={{ .KernelBuildDir }} clean
 
 install: all
-	$(MAKE) -C {{ .KernelBuildDir }} M={{ .KernelBuildDir }} modules_install
-
+	make -C {{ .KernelBuildDir }} M={{ .KernelBuildDir }} modules_install
 `
 
 func renderMakefile(w io.Writer, md makefileData) error {
@@ -33,15 +31,6 @@ func renderMakefile(w io.Writer, md makefileData) error {
 	return t.Execute(w, md)
 }
 
-func createMakefile(path string, moduleName string, kernelBuildDir string, moduleBuildDir string) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	return renderMakefile(f, makefileData{ModuleName: moduleName, KernelBuildDir: kernelBuildDir, ModuleBuildDir: moduleBuildDir})
-}
 
 type driverConfigData struct {
 	ModuleVersion string
@@ -63,16 +52,10 @@ const driverConfigTemplate = `
 
 func renderDriverConfig(w io.Writer, dd driverConfigData) error {
 	t := template.New("driverconfig")
-	t, _ = t.Parse(driverConfigTemplate)
-	return t.Execute(w, dd)
-}
-
-func createDriverConfig(path string, moduleVersion string, moduleName string, deviceName string) error {
-	f, err := os.Create(path)
+	parsed, err := t.Parse(driverConfigTemplate)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-
-	return renderDriverConfig(f, driverConfigData{ModuleVersion: moduleVersion, ModuleName: moduleName, DeviceName: deviceName})
+	return parsed.Execute(w, dd)
 }
+
