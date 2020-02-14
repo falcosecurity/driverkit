@@ -14,12 +14,7 @@ type BuildType string
 var EnabledBuildTypes = map[BuildType]bool{}
 
 func init() {
-	govalidator.TagMap["buildtype"] = func(str string) bool {
-		if val, ok := EnabledBuildTypes[BuildType(str)]; ok {
-			return val
-		}
-		return false
-	}
+	govalidator.TagMap["buildtype"] = isBuildTypeEnabled
 }
 
 type BuilderConfig struct {
@@ -45,4 +40,11 @@ func Factory(buildType BuildType) (Builder, error) {
 		return &Vanilla{}, nil
 	}
 	return nil, fmt.Errorf("build type not found: %s", buildType)
+}
+
+func isBuildTypeEnabled(str string) bool {
+	if val, ok := EnabledBuildTypes[BuildType(str)]; ok {
+		return val
+	}
+	return false
 }

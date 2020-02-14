@@ -16,6 +16,8 @@ IMAGE_NAME_BUILDER_BASE_LATEST := $(IMAGE_NAME_BUILDER_BASE):latest
 
 LDFLAGS := -ldflags '-X github.com/falcosecurity/build-service/pkg/version.buildTime=$(shell date +%s) -X github.com/falcosecurity/build-service/pkg/version.gitCommit=${GIT_COMMIT} -X github.com/falcosecurity/build-service/pkg/modulebuilder.builderBaseImage=${IMAGE_NAME_BUILDER_BASE_COMMIT}'
 
+TESTPACKAGES := $(shell go list ./...)
+
 build_service ?= _output/bin/build-service
 
 .PHONY: build
@@ -47,3 +49,7 @@ image/push:
 image/latest:
 	$(DOCKER) tag $(IMAGE_NAME_BUILDER_BASE_COMMIT) $(IMAGE_NAME_BUILDER_BASE_LATEST)
 	$(DOCKER) push $(IMAGE_NAME_BUILDER_BASE_LATEST)
+
+.PHONY: test
+test:
+	$(GO) test -v -race $(TESTPACKAGES)
