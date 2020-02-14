@@ -2,6 +2,8 @@ package modulebuilder
 
 import (
 	"context"
+	"crypto/sha256"
+	"fmt"
 
 	"github.com/asaskevich/govalidator"
 	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
@@ -19,6 +21,11 @@ type Build struct {
 
 func (b *Build) Validate() (bool, error) {
 	return govalidator.ValidateStruct(b)
+}
+
+func (b *Build) SHA256() string {
+	shasum := sha256.Sum256([]byte(b.KernelConfigData))
+	return fmt.Sprintf("%x", shasum)
 }
 
 type BuildProcessor interface {

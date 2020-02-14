@@ -51,9 +51,8 @@ func NewServer(addr string) *Server {
 
 	v1Router := router.PathPrefix("/v1").Subrouter()
 
-	v1Router.HandleFunc("/module/{buildtype}/{kernel}/{configsha256}", handlers.ModuleHandlerGet).Methods(http.MethodGet)
+	v1Router.HandleFunc("/module/{buildtype}/{architecture}/{kernel}/{configsha256}", handlers.ModuleHandlerGet).Methods(http.MethodGet)
 	v1Router.HandleFunc("/module", handlers.ModuleHandlerPost).Methods(http.MethodPost)
-
 	router.Use(s.loggingMiddleware)
 	return s
 }
@@ -85,6 +84,7 @@ func (s *Server) ListenAndServe() error {
 		ReadTimeout:       time.Second * 15,
 		ReadHeaderTimeout: time.Second * 15,
 		IdleTimeout:       time.Second * 60,
+		ErrorLog:          zap.NewStdLog(s.logger.With(zap.String("source", "net/http"))),
 	}
 	server.BaseContext = func(l net.Listener) context.Context {
 		return s.ctx

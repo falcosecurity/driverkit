@@ -2,10 +2,10 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
-	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
 	"github.com/gorilla/mux"
 
 	"github.com/falcosecurity/build-service/pkg/modulebuilder"
@@ -39,36 +39,53 @@ func (h *Handlers) WithBuildProcessor(bp modulebuilder.BuildProcessor) {
 }
 
 func (h *Handlers) ModuleHandlerGet(w http.ResponseWriter, req *http.Request) {
+	// TODO(fntlnz): build a struct and validate the paramaters
 	vars := mux.Vars(req)
 	buildType := vars["buildtype"]
 	architecture := vars["architecture"]
 	kernel := vars["kernel"]
 	configSHA256 := vars["configsha256"]
 
+	// TODO(fntlnz): download from the configured filesystem here
 	w.Write([]byte(fmt.Sprintf("you to retrieve - this is not yet implemented: %s - %s - %s - %s", buildType, architecture, kernel, configSHA256)))
 }
 
 func (h *Handlers) ModuleHandlerPost(w http.ResponseWriter, req *http.Request) {
-	b := modulebuilder.Build{
-		BuildType:        builder.BuildTypeVanilla,
-		KernelConfigData: "",
-		KernelVersion:    "5.5.2",
-		Architecture:     "x86_64",
+	logger := h.logger.With(zap.String("handler", "ModuleHandlerPost"))
+
+	if req.Header.Get("Content-Type") != "application/json" {
+		w.WriteHeader(http.StatusBadRequest)
+		e := json.NewEncoder(w)
+		if err := e.Encode(NewErrorResponse(fmt.Errorf("bad content type, please use: application/json"))); err != nil {
+			logger.Error("error decoding response", zap.Error(err))
+			return
+		}
+		return
+	}
+	b := modulebuilder.Build{}
+	if err := JsonRequestDecode(req.Body, &b); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		logger.Error("error decoding build", zap.Error(err))
+		return
 	}
 
 	if valid, err := b.Validate(); !valid || err != nil {
 		// TODO(fntlnz): write validation errors to response?
-		h.logger.Info("ciao", zap.Error(err))
+		logger.Info("build not valid", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	err := h.buildProcessor.Request(b)
-	if err != nil {
+	if err := h.buildProcessor.Request(b); err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
 
-	// TODO(fntlnz): write location for the future resource or inform about the existing one
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusAccepted)
+	e := json.NewEncoder(w)
+	if err := e.Encode(NewBuildResponseFromBuild(b)); err != nil {
+		logger.Error("error decoding response", zap.Error(err))
+		return
+	}
 }
