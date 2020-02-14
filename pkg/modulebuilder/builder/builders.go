@@ -2,6 +2,8 @@ package builder
 
 import (
 	"fmt"
+
+	"github.com/asaskevich/govalidator"
 )
 
 const KernelDirectory = "/tmp/kernel"
@@ -9,14 +11,16 @@ const ModuleDirectory = "/tmp/module"
 
 type BuildType string
 
-const (
-	BuildTypeVanilla BuildType = "vanilla"
-	// BuildTypeCentOS BuildType = "centos" // not implemented
-	// BuildTypeCoreOS BuildType = "coreos" // Not implemented
-	// BuildTypeFedora BuildType = "fedora"  // Not implemented
-	// BuildTypeUbuntu BuildType = "ubuntu"  // Not implemented
-	// BuildTypeDebian BuildType = "debian"  // Not implemented
-)
+var EnabledBuildTypes = map[BuildType]bool{}
+
+func init() {
+	govalidator.TagMap["buildtype"] = func(str string) bool {
+		if val, ok := EnabledBuildTypes[BuildType(str)]; ok {
+			return val
+		}
+		return false
+	}
+}
 
 type BuilderConfig struct {
 	ModuleConfig     ModuleConfig

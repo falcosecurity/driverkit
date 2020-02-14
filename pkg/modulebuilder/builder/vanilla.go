@@ -9,6 +9,12 @@ import (
 type Vanilla struct {
 }
 
+const BuildTypeVanilla BuildType = "vanilla"
+
+func init() {
+	EnabledBuildTypes[BuildTypeVanilla] = true
+}
+
 const vanillaTemplate = `
 #!/bin/bash
 rm -Rf {{ .ModuleBuildDir }}
@@ -46,10 +52,10 @@ ls -la
 `
 
 type vanillaTemplateData struct {
-	KernelBuildDir      string
-	ModuleBuildDir      string
-	ModuleDownloadURL   string
-	KernelDownloadURL   string
+	KernelBuildDir    string
+	ModuleBuildDir    string
+	ModuleDownloadURL string
+	KernelDownloadURL string
 }
 
 func (v Vanilla) Script(bc BuilderConfig) (string, error) {
@@ -60,10 +66,10 @@ func (v Vanilla) Script(bc BuilderConfig) (string, error) {
 	}
 
 	td := vanillaTemplateData{
-		KernelBuildDir:      KernelDirectory,
-		ModuleBuildDir:      ModuleDirectory,
-		ModuleDownloadURL:   fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.ModuleConfig.ModuleVersion),
-		KernelDownloadURL:   fetchVanillaKernelURLFromKernelVersion(bc.KernelVersion),
+		KernelBuildDir:    KernelDirectory,
+		ModuleBuildDir:    ModuleDirectory,
+		ModuleDownloadURL: fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.ModuleConfig.ModuleVersion),
+		KernelDownloadURL: fetchVanillaKernelURLFromKernelVersion(bc.KernelVersion),
 	}
 
 	buf := bytes.NewBuffer(nil)
