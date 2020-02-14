@@ -7,11 +7,11 @@ import (
 )
 
 type ErrorResponse struct {
-	reason string
+	Reason string `json:"reason"`
 }
 
 func NewErrorResponse(err error) ErrorResponse {
-	return ErrorResponse{reason: err.Error()}
+	return ErrorResponse{Reason: err.Error()}
 }
 
 type ModuleBuildResponse struct {

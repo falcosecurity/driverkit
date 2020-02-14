@@ -52,6 +52,7 @@ func (h *Handlers) ModuleHandlerGet(w http.ResponseWriter, req *http.Request) {
 
 func (h *Handlers) ModuleHandlerPost(w http.ResponseWriter, req *http.Request) {
 	logger := h.logger.With(zap.String("handler", "ModuleHandlerPost"))
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	if req.Header.Get("Content-Type") != "application/json" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -70,9 +71,13 @@ func (h *Handlers) ModuleHandlerPost(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if valid, err := b.Validate(); !valid || err != nil {
-		// TODO(fntlnz): write validation errors to response?
 		logger.Info("build not valid", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
+		e := json.NewEncoder(w)
+		if err := e.Encode(NewErrorResponse(err)); err != nil {
+			logger.Error("error decoding response", zap.Error(err))
+			return
+		}
 		return
 	}
 
@@ -81,7 +86,6 @@ func (h *Handlers) ModuleHandlerPost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusAccepted)
 	e := json.NewEncoder(w)
 	if err := e.Encode(NewBuildResponseFromBuild(b)); err != nil {
