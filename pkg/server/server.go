@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/falcosecurity/build-service/pkg/modulebuilder"
 	"github.com/gorilla/mux"
@@ -32,15 +33,28 @@ type Server struct {
 }
 
 func NewServer(addr string) *Server {
+	ctx := context.Background()
+
+	handlers := NewHandlers()
+	handlers.WithContext(ctx)
+
+	router := mux.NewRouter()
+
 	s := &Server{
 		logger:     zap.NewNop(),
-		handlers:   NewHandlers(),
+		handlers:   handlers,
 		tlsOptions: nil,
 		address:    addr,
-		router:     mux.NewRouter(),
-		ctx:        context.Background(),
+		router:     router,
+		ctx:        ctx,
 	}
-	s.router.HandleFunc("/module", s.handlers.ModuleHandler)
+
+	v1Router := router.PathPrefix("/v1").Subrouter()
+
+	v1Router.HandleFunc("/module/{buildtype}/{kernel}/{configsha256}", handlers.ModuleHandlerGet).Methods(http.MethodGet)
+	v1Router.HandleFunc("/module", handlers.ModuleHandlerPost).Methods(http.MethodPost)
+
+	router.Use(s.loggingMiddleware)
 	return s
 }
 
@@ -60,10 +74,18 @@ func (s *Server) WithTLSOptions(tlsopts *TLSOptions) {
 
 func (s *Server) WithContext(ctx context.Context) {
 	s.ctx = ctx
+	s.handlers.WithContext(ctx)
 }
 
 func (s *Server) ListenAndServe() error {
-	server := &http.Server{Addr: s.address, Handler: s.router}
+	server := &http.Server{
+		Addr:              s.address,
+		Handler:           s.router,
+		WriteTimeout:      time.Second * 15,
+		ReadTimeout:       time.Second * 15,
+		ReadHeaderTimeout: time.Second * 15,
+		IdleTimeout:       time.Second * 60,
+	}
 	server.BaseContext = func(l net.Listener) context.Context {
 		return s.ctx
 	}
@@ -81,4 +103,11 @@ func (s *Server) ListenAndServe() error {
 		zap.String("address", s.address),
 	)
 	return server.ListenAndServe()
+}
+
+func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s.logger.Info("request", zap.String("url", r.URL.String()), zap.String("remote_addr", r.RemoteAddr))
+		next.ServeHTTP(w, r)
+	})
 }
