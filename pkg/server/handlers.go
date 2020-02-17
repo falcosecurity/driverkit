@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/falcosecurity/build-service/pkg/modulebuilder"
+	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
 	"go.uber.org/zap"
 )
 
@@ -39,15 +40,28 @@ func (h *Handlers) WithBuildProcessor(bp modulebuilder.BuildProcessor) {
 }
 
 func (h *Handlers) ModuleHandlerGet(w http.ResponseWriter, req *http.Request) {
-	// TODO(fntlnz): build a struct and validate the paramaters
+
+	logger := h.logger.With(zap.String("handler", "ModuleHandlerGet"))
 	vars := mux.Vars(req)
-	buildType := vars["buildtype"]
-	architecture := vars["architecture"]
-	kernel := vars["kernel"]
-	configSHA256 := vars["configsha256"]
+	mrr := ModuleRetrieveRequest{
+		BuildType:     builder.BuildType(vars["buildtype"]),
+		Architecture:  vars["architecture"],
+		KernelVersion: vars["kernelversion"],
+		ConfigSHA256:  vars["configsha256"],
+	}
+	if valid, err := mrr.Validate(); !valid {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(http.StatusBadRequest)
+		e := json.NewEncoder(w)
+		if err := e.Encode(NewErrorResponse(err)); err != nil {
+			logger.Error("error decoding response", zap.Error(err))
+			return
+		}
+		return
+	}
 
 	// TODO(fntlnz): download from the configured filesystem here
-	w.Write([]byte(fmt.Sprintf("you to retrieve - this is not yet implemented: %s - %s - %s - %s", buildType, architecture, kernel, configSHA256)))
+	w.Write([]byte(fmt.Sprintf("you want to retrieve - this is not yet implemented: %v", mrr)))
 }
 
 func (h *Handlers) ModuleHandlerPost(w http.ResponseWriter, req *http.Request) {

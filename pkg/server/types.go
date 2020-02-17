@@ -3,7 +3,9 @@ package server
 import (
 	"path"
 
+	"github.com/asaskevich/govalidator"
 	"github.com/falcosecurity/build-service/pkg/modulebuilder"
+	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
 )
 
 type ErrorResponse struct {
@@ -12,6 +14,17 @@ type ErrorResponse struct {
 
 func NewErrorResponse(err error) ErrorResponse {
 	return ErrorResponse{Reason: err.Error()}
+}
+
+type ModuleRetrieveRequest struct {
+	BuildType     builder.BuildType `valid:"buildtype"`
+	Architecture  string            `valid:"buildarchitecture"`
+	KernelVersion string
+	ConfigSHA256  string
+}
+
+func (m *ModuleRetrieveRequest) Validate() (bool, error) {
+	return govalidator.ValidateStruct(m)
 }
 
 type ModuleBuildResponse struct {
