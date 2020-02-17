@@ -27,8 +27,9 @@ func init() {
 
 type Build struct {
 	BuildType        builder.BuildType `valid:"buildtype"`
-	KernelConfigData string
-	KernelVersion    string
+	KernelConfigData string            `valid:"base64"`
+	KernelVersion    string            `valid:"ascii"` // TODO(fntlnz): make specific validator for this?
+	ModuleVersion    string            `valid:"ascii"` // TODO(fntlnz):make specific validator for this? (check govalidator semver)
 	// only architecture supported is x86_64 now, if you want to add one, just add it:
 	// e.g: in(x86_64|ppcle64|armv7hf)
 	Architecture string `valid:"buildarchitecture"`
