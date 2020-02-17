@@ -3,7 +3,42 @@ package modulebuilder
 import (
 	"io"
 	"text/template"
+
+	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
 )
+
+var waitForModuleScript = `
+touch /tmp/module-download.lock
+while true; do
+  if [ ! -f ` + builder.FalcoModuleFullPath + ` ]; then
+    echo "Falco module not found - waiting for 10 seconds"
+	sleep 10
+	continue
+  fi
+  echo "module found, wait for the download lock to be released"
+  if [ -f /tmp/module-download.lock ]; then
+    echo "Falco module not found - waiting for 10 seconds"
+    sleep 5
+    continue
+  fi
+  echo "download lock was released, we can exit now"
+  break
+done
+`
+
+var waitForModuleAndCat = `
+while true; do
+  if [ ! -f ` + builder.FalcoModuleFullPath + ` ]; then
+    echo "Falco module not found - waiting for 10 seconds"
+	sleep 10
+	continue
+  fi
+  echo "module found, releasing the download lock"
+  rm /tmp/module-download.lock
+  break
+done
+cat ` + builder.FalcoModuleFullPath + `
+`
 
 type makefileData struct {
 	ModuleName     string
@@ -31,7 +66,6 @@ func renderMakefile(w io.Writer, md makefileData) error {
 	return t.Execute(w, md)
 }
 
-
 type driverConfigData struct {
 	ModuleVersion string
 	ModuleName    string
@@ -58,4 +92,3 @@ func renderDriverConfig(w io.Writer, dd driverConfigData) error {
 	}
 	return parsed.Execute(w, dd)
 }
-
