@@ -2,6 +2,14 @@
 
 Status: Under development
 
+## Usage
+
+### Requesta  build
+
+```bash
+echo '{"buildType": "vanilla", "architecture": "x86_64", "kernelversion": "5.5.2", "kernelConfigData": "'"$(zcat /proc/config.gz|base64)"'"}' |  curl  --header "Content-Type: application/json"   -d @-  -v http://127.0.0.1:8093/v1/module
+```
+
 ## Goals
 - [x] Have a package that can build the kernel module in k8s - **DONE** (look at [/pkg/modulebuilder](/pkg/modulebuilder))
 - [x] Have a package that can verify the kernel module - **DONE** (look at [/pkg/modinfo](/pkg/modinfo))

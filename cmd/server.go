@@ -60,11 +60,17 @@ var serverCmd = &cobra.Command{
 			if err != nil {
 				return err
 			}
-			kc, err := kubernetes.NewKubernetesClientFromConfigPath(kubeconfigPath)
+			clientConfig, err := kubernetes.NewClientConfigFrom(kubeconfigPath)
 			if err != nil {
 				return err
 			}
-			buildProcessor = modulebuilder.NewKubernetesBuildProcessor(kc, buffersize)
+
+			kc, err := kubernetes.NewKubernetesClientFrom(clientConfig)
+			if err != nil {
+				return err
+			}
+
+			buildProcessor = modulebuilder.NewKubernetesBuildProcessor(kc.CoreV1(), clientConfig, buffersize)
 			srv.WithBuildProcessor(buildProcessor)
 		default:
 			logger.Info("starting without a build processor, builds will not be processed")

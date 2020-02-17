@@ -29,7 +29,6 @@ ${build_service}:
 .PHONY: clean
 clean:
 	$(RM) -R _output
-	$(RM) -R dist
 
 .PHONY: image/build
 image/build:
