@@ -2,12 +2,15 @@ package builder
 
 import (
 	"fmt"
+	"path"
 
 	"github.com/asaskevich/govalidator"
 )
 
 const KernelDirectory = "/tmp/kernel"
 const ModuleDirectory = "/tmp/module"
+
+var FalcoModuleFullPath = path.Join(ModuleDirectory, "falco.ko")
 
 type BuildType string
 
@@ -22,9 +25,8 @@ func init() {
 }
 
 type BuilderConfig struct {
-	ModuleConfig     ModuleConfig
-	KernelConfigData string
-	KernelVersion    string
+	ModuleConfig  ModuleConfig
+	KernelVersion string
 }
 
 type ModuleConfig struct {
