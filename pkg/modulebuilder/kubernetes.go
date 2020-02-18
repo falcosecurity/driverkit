@@ -247,6 +247,7 @@ func (bp *KubernetesBuildProcessor) copyModuleFromPodWithUID(namespace string, f
 		return err
 	}
 	// Give it ten minutes to complete, if it doesn't give an error
+	// TODO(fntlnz): maybe pass this from the outside?
 	ctx, cancel := context.WithTimeout(bp.ctx, 10*time.Minute)
 	defer cancel()
 	for {
@@ -264,18 +265,18 @@ func (bp *KubernetesBuildProcessor) copyModuleFromPodWithUID(namespace string, f
 				continue
 			}
 			if p.Status.Phase == corev1.PodRunning {
-				bp.logger.Info("downloading module from pod", zap.String(falcoBuilderUIDLabel, falcoBuilderUID))
+				bp.logger.Info("start downloading module from pod", zap.String(falcoBuilderUIDLabel, falcoBuilderUID))
 				// TODO(fntlnz): make the output directory configurable
 				err = copySingleFileFromPod(bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name, builder.FalcoModuleFullPath, "/tmp/falco.ko")
 				if err != nil {
 					return err
 				}
+				bp.logger.Info("completed downloading module from pod", zap.String(falcoBuilderUIDLabel, falcoBuilderUID))
 			}
 			return nil
 		}
 
 	}
-	return nil
 }
 
 func copySingleFileFromPod(podClient v1.PodsGetter, clientConfig *restclient.Config, namespace, podName, fileName, destFileName string) error {
@@ -298,10 +299,10 @@ func copySingleFileFromPod(podClient v1.PodsGetter, clientConfig *restclient.Con
 		Config:    clientConfig,
 		StreamOptions: exec.StreamOptions{
 			IOStreams: genericclioptions.IOStreams{
-				In:     nil,
 				Out:    outStream,
-				ErrOut: os.Stdout, //TODO(fntlnz): necessary to deal with errors here?
+				ErrOut: bytes.NewBuffer([]byte{}), //TODO(fntlnz): necessary to deal with errors here?
 			},
+			Stdin: false,
 
 			Namespace: namespace,
 			PodName:   podName,
@@ -314,9 +315,10 @@ func copySingleFileFromPod(podClient v1.PodsGetter, clientConfig *restclient.Con
 		Executor: &exec.DefaultRemoteExecutor{},
 	}
 
-	err := options.Run()
-
-	if err != nil {
+	if err := options.Validate(); err != nil {
+		return err
+	}
+	if err := options.Run(); err != nil {
 		return err
 	}
 
