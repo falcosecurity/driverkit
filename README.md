@@ -2,12 +2,13 @@
 
 Status: Under development
 
-## Usage
+## Client usage
 
-### Requesta  build
+### Request a  build
 
 ```bash
-echo '{"buildType": "vanilla", "architecture": "x86_64", "kernelversion": "5.5.2", "kernelConfigData": "'"$(zcat /proc/config.gz|base64)"'"}' |  curl  --header "Content-Type: application/json"   -d @-  -v http://127.0.0.1:8093/v1/module
+echo '{"buildType": "vanilla", "architecture": "x86_64", "kernelversion": "5.5.2", "kernelConfigData": "'"$(zcat /proc/config.gz|base64)"'"}' | 
+    curl  --header "Content-Type: application/json"   -d @-  -v http://127.0.0.1:8093/v1/module
 ```
 
 ## Goals

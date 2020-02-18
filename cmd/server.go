@@ -3,25 +3,48 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
-
-	"github.com/falcosecurity/build-service/pkg/kubernetes"
+	"github.com/falcosecurity/build-service/pkg/kubernetes/factory"
 	"github.com/falcosecurity/build-service/pkg/modulebuilder"
 	"github.com/falcosecurity/build-service/pkg/server"
 	"github.com/falcosecurity/build-service/pkg/signals"
-	"github.com/mitchellh/go-homedir"
-	"go.uber.org/zap"
-
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-// serverCmd represents the server command
-var serverCmd = &cobra.Command{
-	Use:   "server",
-	Short: "The Falco build server HTTP server",
-	Long:  "This is the actual server that exposes the build-server functionalities",
-	RunE: func(cmd *cobra.Command, args []string) error {
+func init() {
+	rootCmd.AddCommand(NewServerCmd())
+}
+
+func NewServerCmd() *cobra.Command {
+	serverCmd := &cobra.Command{
+		Use:   "server",
+		Short: "The Falco build server HTTP server",
+		Long:  "This is the actual server that exposes the build-server functionalities",
+	}
+
+	// Add Flags
+	serverCmd.PersistentFlags().String("build-processor", modulebuilder.KubernetesBuildProcessorName, fmt.Sprintf("build processor used to build the kernel modules (%s)", modulebuilder.KubernetesBuildProcessorName))
+	serverCmd.PersistentFlags().StringP("bind-address", "b", "127.0.0.1:8093", "the address to bind the HTTP(s) server to")
+	serverCmd.PersistentFlags().String("certfile", "", "certificate for running the server with TLS. If you pass this you also need 'keyfile' to enable TLS")
+	serverCmd.PersistentFlags().String("keyfile", "", "certificate for running the server with TLS. If you pass this you also need 'certfile' to enable TLS")
+	serverCmd.PersistentFlags().Int("build-buffersize", 1024, "maxmimum number of build jobs that can be queued in the same moment")
+
+	configFlags := genericclioptions.NewConfigFlags(false)
+	configFlags.AddFlags(serverCmd.PersistentFlags())
+	kubefactory := factory.NewFactory(configFlags)
+
+	serverCmd.RunE = serverCmdRunE(kubefactory)
+
+	// Override help on all the commands tree
+	walk(serverCmd, func(c *cobra.Command) {
+		c.Flags().BoolP("help", "h", false, fmt.Sprintf("Help for the %s command", c.Name()))
+	})
+
+	return serverCmd
+}
+func serverCmdRunE(kubefactory factory.Factory) func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
 		bindAddress, err := cmd.PersistentFlags().GetString("bind-address")
 		if err != nil {
 			return err
@@ -56,20 +79,17 @@ var serverCmd = &cobra.Command{
 
 		switch builderStr {
 		case modulebuilder.KubernetesBuildProcessorName:
-			kubeconfigPath, err := cmd.PersistentFlags().GetString("kubeconfig")
+			kc, err := kubefactory.KubernetesClientSet()
 			if err != nil {
 				return err
 			}
-			clientConfig, err := kubernetes.NewClientConfigFrom(kubeconfigPath)
+			clientConfig, err := kubefactory.ToRESTConfig()
 			if err != nil {
 				return err
 			}
-
-			kc, err := kubernetes.NewKubernetesClientFrom(clientConfig)
-			if err != nil {
+			if err := factory.SetKubernetesDefaults(clientConfig); err != nil {
 				return err
 			}
-
 			buildProcessor = modulebuilder.NewKubernetesBuildProcessor(kc.CoreV1(), clientConfig, buffersize)
 			srv.WithBuildProcessor(buildProcessor)
 		default:
@@ -98,31 +118,13 @@ var serverCmd = &cobra.Command{
 
 		<-ctx.Done()
 		return nil
-	},
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if builderStr, _ := cmd.PersistentFlags().GetString("build-processor"); builderStr == modulebuilder.KubernetesBuildProcessorName {
-			err := cmd.MarkFlagRequired("kubeconfig")
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	},
+	}
 }
 
-func init() {
-	rootCmd.AddCommand(serverCmd)
-
-	home, err := homedir.Dir()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+// walk calls f for c and all of its children.
+func walk(c *cobra.Command, f func(*cobra.Command)) {
+	f(c)
+	for _, c := range c.Commands() {
+		walk(c, f)
 	}
-
-	serverCmd.PersistentFlags().String("build-processor", modulebuilder.KubernetesBuildProcessorName, fmt.Sprintf("build processor used to build the kernel modules (%s)", modulebuilder.KubernetesBuildProcessorName))
-	serverCmd.PersistentFlags().String("kubeconfig", filepath.Join(home, ".kube", "config"), fmt.Sprintf("absolute path to the kubeconfig file, required for the '%s' processor", modulebuilder.KubernetesBuildProcessorName))
-	serverCmd.PersistentFlags().StringP("bind-address", "b", "127.0.0.1:8093", "the address to bind the HTTP(s) server to")
-	serverCmd.PersistentFlags().String("certfile", "", "certificate for running the server with TLS. If you pass this you also need 'keyfile' to enable TLS")
-	serverCmd.PersistentFlags().String("keyfile", "", "certificate for running the server with TLS. If you pass this you also need 'certfile' to enable TLS")
-	serverCmd.PersistentFlags().Int("build-buffersize", 1024, "maxmimum number of build jobs that can be queued in the same moment")
 }
