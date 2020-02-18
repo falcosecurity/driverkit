@@ -26,18 +26,18 @@ while true; do
 done
 `
 
+// waitForModuleAndCat MUST only output the file, any other output will break
+// the download file itself because it goes trough stdout
 var waitForModuleAndCat = `
 while true; do
   if [ ! -f ` + builder.FalcoModuleFullPath + ` ]; then
-    echo "Falco module not found - waiting for 10 seconds"
-	sleep 10
+	sleep 10 1>&/dev/null
 	continue
   fi
-  echo "module found, releasing the download lock"
-  rm /tmp/module-download.lock
   break
 done
 cat ` + builder.FalcoModuleFullPath + `
+rm /tmp/module-download.lock 1>&/dev/null
 `
 
 type makefileData struct {

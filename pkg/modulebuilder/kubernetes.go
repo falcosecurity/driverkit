@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"time"
 
@@ -292,14 +291,18 @@ func copySingleFileFromPod(podClient v1.PodsGetter, clientConfig *restclient.Con
 		return errors.New("need a fileName to copy from pod")
 	}
 
-	reader, outStream := io.Pipe()
+	out, err := os.Create(destFileName)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
 
 	options := &exec.ExecOptions{
 		PodClient: podClient,
 		Config:    clientConfig,
 		StreamOptions: exec.StreamOptions{
 			IOStreams: genericclioptions.IOStreams{
-				Out:    outStream,
+				Out:    out,
 				ErrOut: bytes.NewBuffer([]byte{}), //TODO(fntlnz): necessary to deal with errors here?
 			},
 			Stdin: false,
@@ -322,17 +325,5 @@ func copySingleFileFromPod(podClient v1.PodsGetter, clientConfig *restclient.Con
 		return err
 	}
 
-	out, err := os.Create(destFileName)
-	if err != nil {
-		return err
-	}
-
-	defer out.Close()
-
-	// This (reader) is not copied until the end because we want the file to appear on the filesystem
-	// only very late in the stage, when there are no errors.
-	// Please don't pass the final file directly to the IOStreams otherwise we will have synchronization
-	// problems with the entrypoint!
-	_, err = io.Copy(out, reader)
-	return err
+	return nil
 }
