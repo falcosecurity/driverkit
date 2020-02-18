@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/falcosecurity/build-service/pkg/modulebuilder"
+	"github.com/falcosecurity/build-service/pkg/modulebuilder/build"
 	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
 	"go.uber.org/zap"
 )
@@ -77,7 +78,7 @@ func (h *Handlers) ModuleHandlerPost(w http.ResponseWriter, req *http.Request) {
 		}
 		return
 	}
-	b := modulebuilder.Build{}
+	b := build.Build{}
 	if err := JsonRequestDecode(req.Body, &b); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		logger.Error("error decoding build", zap.Error(err))

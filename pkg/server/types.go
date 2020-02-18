@@ -4,7 +4,7 @@ import (
 	"path"
 
 	"github.com/asaskevich/govalidator"
-	"github.com/falcosecurity/build-service/pkg/modulebuilder"
+	"github.com/falcosecurity/build-service/pkg/modulebuilder/build"
 	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
 )
 
@@ -31,6 +31,6 @@ type ModuleBuildResponse struct {
 	Href string `json:"href"`
 }
 
-func NewBuildResponseFromBuild(b modulebuilder.Build) ModuleBuildResponse {
+func NewBuildResponseFromBuild(b build.Build) ModuleBuildResponse {
 	return ModuleBuildResponse{Href: path.Join("module", b.BuildType.String(), b.Architecture, b.KernelVersion, b.SHA256())}
 }

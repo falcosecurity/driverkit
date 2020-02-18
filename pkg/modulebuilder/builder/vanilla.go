@@ -17,7 +17,7 @@ func init() {
 
 const vanillaTemplate = `
 #!/bin/bash
-set -xeuo pipefail
+set -euo pipefail
 
 rm -Rf {{ .ModuleBuildDir }}
 mkdir {{ .ModuleBuildDir }}
