@@ -2,11 +2,10 @@ package modulebuilder
 
 import (
 	"context"
-	"crypto/sha256"
-	"fmt"
 
 	"github.com/asaskevich/govalidator"
-	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
+	"github.com/falcosecurity/build-service/pkg/filesystem"
+	"github.com/falcosecurity/build-service/pkg/modulebuilder/build"
 	"go.uber.org/zap"
 )
 
@@ -25,30 +24,12 @@ func init() {
 	EnabledBuildArchitectures[BuildArchitectureX86_64] = true
 }
 
-type Build struct {
-	BuildType        builder.BuildType `valid:"buildtype"`
-	KernelConfigData string            `valid:"base64"`
-	KernelVersion    string            `valid:"ascii"` // TODO(fntlnz): make specific validator for this?
-	ModuleVersion    string            `valid:"ascii"` // TODO(fntlnz):make specific validator for this? (check govalidator semver)
-	// only architecture supported is x86_64 now, if you want to add one, just add it:
-	// e.g: in(x86_64|ppcle64|armv7hf)
-	Architecture string `valid:"buildarchitecture"`
-}
-
-func (b *Build) Validate() (bool, error) {
-	return govalidator.ValidateStruct(b)
-}
-
-func (b *Build) SHA256() string {
-	shasum := sha256.Sum256([]byte(b.KernelConfigData))
-	return fmt.Sprintf("%x", shasum)
-}
-
 type BuildProcessor interface {
 	Start() error
-	Request(b Build) error
+	Request(b build.Build) error
 	WithContext(c context.Context)
 	WithLogger(logger *zap.Logger)
+	WithModuleStorage(ms *filesystem.ModuleStorage)
 	String() string
 }
 
