@@ -3,6 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
+
+	"github.com/falcosecurity/build-service/pkg/filesystem"
 	"github.com/falcosecurity/build-service/pkg/kubernetes/factory"
 	"github.com/falcosecurity/build-service/pkg/modulebuilder"
 	"github.com/falcosecurity/build-service/pkg/server"
@@ -24,7 +27,9 @@ func NewServerCmd() *cobra.Command {
 	}
 
 	// Add Flags
-	serverCmd.PersistentFlags().String("build-processor", modulebuilder.KubernetesBuildProcessorName, fmt.Sprintf("build processor used to build the kernel modules (%s)", modulebuilder.KubernetesBuildProcessorName))
+	serverCmd.PersistentFlags().String("build-processor", modulebuilder.KubernetesBuildProcessorName, fmt.Sprintf("build processor used to build the kernel modules (supported: %s)", modulebuilder.KubernetesBuildProcessorName))
+	serverCmd.PersistentFlags().String("filesystem", filesystem.LocalFilesystemStr, fmt.Sprintf("filesystem to use to save built kernel modules (supported: %s)", filesystem.LocalFilesystemStr))
+	serverCmd.PersistentFlags().String("filesystem.local.basepath", os.TempDir(), "directory to use to save files when using the local filesystem")
 	serverCmd.PersistentFlags().StringP("bind-address", "b", "127.0.0.1:8093", "the address to bind the HTTP(s) server to")
 	serverCmd.PersistentFlags().String("certfile", "", "certificate for running the server with TLS. If you pass this you also need 'keyfile' to enable TLS")
 	serverCmd.PersistentFlags().String("keyfile", "", "certificate for running the server with TLS. If you pass this you also need 'certfile' to enable TLS")
@@ -58,6 +63,14 @@ func serverCmdRunE(kubefactory factory.Factory) func(cmd *cobra.Command, args []
 			return err
 		}
 		buffersize, err := cmd.PersistentFlags().GetInt("build-buffersize")
+		if err != nil {
+			return err
+		}
+		fsname, err := cmd.PersistentFlags().GetString("filesystem")
+		if err != nil {
+			return err
+		}
+		localfsBasepath, err := cmd.PersistentFlags().GetString("filesystem.local.basepath")
 		if err != nil {
 			return err
 		}
@@ -101,6 +114,16 @@ func serverCmdRunE(kubefactory factory.Factory) func(cmd *cobra.Command, args []
 
 		buildProcessor.WithContext(ctx)
 		buildProcessor.WithLogger(logger)
+
+		fs, err := filesystem.Factory(fsname, map[string]string{
+			"basepath": localfsBasepath,
+		})
+		if err != nil {
+			logger.Fatal("fatal error creating the filesystem", zap.Error(err))
+		}
+
+		ms := filesystem.NewModuleStorage(fs)
+		buildProcessor.WithModuleStorage(ms)
 
 		go func() {
 			err := buildProcessor.Start()
