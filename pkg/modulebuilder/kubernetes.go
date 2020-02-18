@@ -6,9 +6,11 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"os"
+	"io"
 	"time"
 
+	"github.com/falcosecurity/build-service/pkg/filesystem"
+	buildmeta "github.com/falcosecurity/build-service/pkg/modulebuilder/build"
 	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -26,12 +28,13 @@ var builderBaseImage = "falcosecurity/falco-builder-service-base:latest" // This
 const falcoBuilderUIDLabel = "org.falcosecurity/falco-builder-uid"
 
 type KubernetesBuildProcessor struct {
-	buildsch     chan Build
-	ctx          context.Context
-	logger       *zap.Logger
-	coreV1Client v1.CoreV1Interface
-	clientConfig *restclient.Config
-	bufferSize   int
+	buildsch      chan buildmeta.Build
+	ctx           context.Context
+	logger        *zap.Logger
+	coreV1Client  v1.CoreV1Interface
+	clientConfig  *restclient.Config
+	bufferSize    int
+	modulestorage *filesystem.ModuleStorage
 }
 
 // NewKubernetesBuildProcessor constructs a KubernetesBuildProcessor
@@ -39,14 +42,15 @@ type KubernetesBuildProcessor struct {
 // channel we use to do the builds. A bigger bufferSize will mean that we can save more Builds
 // for processing, however setting this to a big value will have impacts
 func NewKubernetesBuildProcessor(corev1Client v1.CoreV1Interface, clientConfig *restclient.Config, bufferSize int) *KubernetesBuildProcessor {
-	buildsch := make(chan Build, bufferSize)
+	buildsch := make(chan buildmeta.Build, bufferSize)
 	return &KubernetesBuildProcessor{
-		buildsch:     buildsch,
-		ctx:          context.TODO(),
-		logger:       zap.NewNop(),
-		coreV1Client: corev1Client,
-		clientConfig: clientConfig,
-		bufferSize:   bufferSize,
+		buildsch:      buildsch,
+		ctx:           context.TODO(),
+		logger:        zap.NewNop(),
+		coreV1Client:  corev1Client,
+		clientConfig:  clientConfig,
+		bufferSize:    bufferSize,
+		modulestorage: filesystem.NewModuleStorage(filesystem.NewNop()),
 	}
 }
 
@@ -63,7 +67,11 @@ func (bp *KubernetesBuildProcessor) WithLogger(logger *zap.Logger) {
 	bp.logger.With(zap.String("processor", bp.String()))
 }
 
-func (bp *KubernetesBuildProcessor) Request(b Build) error {
+func (bp *KubernetesBuildProcessor) WithModuleStorage(ms *filesystem.ModuleStorage) {
+	bp.modulestorage = ms
+}
+
+func (bp *KubernetesBuildProcessor) Request(b buildmeta.Build) error {
 	if len(bp.buildsch) >= bp.bufferSize {
 		return fmt.Errorf("too many queued elements right now, retry later")
 	}
@@ -97,7 +105,7 @@ func (bp *KubernetesBuildProcessor) Start() error {
 
 func int64Ptr(i int64) *int64 { return &i }
 
-func (bp *KubernetesBuildProcessor) buildModule(build Build) error {
+func (bp *KubernetesBuildProcessor) buildModule(build buildmeta.Build) error {
 	// TODO(fntlnz): make these configurable
 	deadline := int64(1000)
 	deadlineGracePeriod := int64(20)
@@ -234,10 +242,16 @@ func (bp *KubernetesBuildProcessor) buildModule(build Build) error {
 		return err
 	}
 
-	return bp.copyModuleFromPodWithUID(namespace, uid)
+	out, err := bp.modulestorage.CreateModuleWriter(build)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	return bp.copyModuleFromPodWithUID(out, namespace, uid)
 }
 
-func (bp *KubernetesBuildProcessor) copyModuleFromPodWithUID(namespace string, falcoBuilderUID string) error {
+func (bp *KubernetesBuildProcessor) copyModuleFromPodWithUID(out io.Writer, namespace string, falcoBuilderUID string) error {
 	namespacedClient := bp.coreV1Client.Pods(namespace)
 	watch, err := namespacedClient.Watch(metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", falcoBuilderUIDLabel, falcoBuilderUID),
@@ -266,7 +280,7 @@ func (bp *KubernetesBuildProcessor) copyModuleFromPodWithUID(namespace string, f
 			if p.Status.Phase == corev1.PodRunning {
 				bp.logger.Info("start downloading module from pod", zap.String(falcoBuilderUIDLabel, falcoBuilderUID))
 				// TODO(fntlnz): make the output directory configurable
-				err = copySingleFileFromPod(bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name, builder.FalcoModuleFullPath, "/tmp/falco.ko")
+				err = copySingleFileFromPod(out, bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name)
 				if err != nil {
 					return err
 				}
@@ -278,7 +292,7 @@ func (bp *KubernetesBuildProcessor) copyModuleFromPodWithUID(namespace string, f
 	}
 }
 
-func copySingleFileFromPod(podClient v1.PodsGetter, clientConfig *restclient.Config, namespace, podName, fileName, destFileName string) error {
+func copySingleFileFromPod(out io.Writer, podClient v1.PodsGetter, clientConfig *restclient.Config, namespace, podName string) error {
 	if len(namespace) == 0 {
 		return errors.New("need a namespace to copy from pod")
 	}
@@ -286,16 +300,6 @@ func copySingleFileFromPod(podClient v1.PodsGetter, clientConfig *restclient.Con
 	if len(podName) == 0 {
 		return errors.New("need a podName to copy from pod")
 	}
-
-	if len(fileName) == 0 {
-		return errors.New("need a fileName to copy from pod")
-	}
-
-	out, err := os.Create(destFileName)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
 
 	options := &exec.ExecOptions{
 		PodClient: podClient,
