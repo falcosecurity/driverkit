@@ -27,7 +27,7 @@ func NewServerCmd() *cobra.Command {
 	}
 
 	// Add Flags
-	serverCmd.PersistentFlags().String("build-processor", modulebuilder.KubernetesBuildProcessorName, fmt.Sprintf("build processor used to build the kernel modules (supported: %s)", modulebuilder.KubernetesBuildProcessorName))
+	serverCmd.PersistentFlags().String("buildprocessor", modulebuilder.KubernetesBuildProcessorName, fmt.Sprintf("build processor used to build the kernel modules (supported: %s)", modulebuilder.KubernetesBuildProcessorName))
 	serverCmd.PersistentFlags().String("filesystem", filesystem.LocalFilesystemStr, fmt.Sprintf("filesystem to use to save built kernel modules (supported: %s)", filesystem.LocalFilesystemStr))
 	serverCmd.PersistentFlags().String("filesystem.local.basepath", os.TempDir(), "directory to use to save files when using the local filesystem")
 	serverCmd.PersistentFlags().StringP("bind-address", "b", "127.0.0.1:8093", "the address to bind the HTTP(s) server to")
@@ -82,7 +82,7 @@ func serverCmdRunE(kubefactory factory.Factory) func(cmd *cobra.Command, args []
 		}
 
 		srv.WithLogger(logger)
-		builderStr, err := cmd.PersistentFlags().GetString("build-processor")
+		builderStr, err := cmd.PersistentFlags().GetString("buildprocessor")
 		if err != nil {
 			return err
 		}
@@ -103,7 +103,11 @@ func serverCmdRunE(kubefactory factory.Factory) func(cmd *cobra.Command, args []
 			if err := factory.SetKubernetesDefaults(clientConfig); err != nil {
 				return err
 			}
-			buildProcessor = modulebuilder.NewKubernetesBuildProcessor(kc.CoreV1(), clientConfig, buffersize)
+			namespaceStr, err := cmd.PersistentFlags().GetString("namespace")
+			if err != nil {
+				return err
+			}
+			buildProcessor = modulebuilder.NewKubernetesBuildProcessor(kc.CoreV1(), clientConfig, buffersize, namespaceStr)
 			srv.WithBuildProcessor(buildProcessor)
 		default:
 			logger.Info("starting without a build processor, builds will not be processed")

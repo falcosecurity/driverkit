@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"text/template"
+
+	"github.com/falcosecurity/build-service/pkg/kernelversion"
 )
 
 type Vanilla struct {
@@ -42,6 +44,11 @@ mv /tmp/kernel-download/*/* {{ .KernelBuildDir }}
 
 cd {{ .KernelBuildDir }}
 cp /module-builder/kernel.config /tmp/kernel.config
+
+{{ if .KernelLocalVersion}}
+sed -i 's/^CONFIG_LOCALVERSION=.*$/CONFIG_LOCALVERSION="-{{ .KernelLocalVersion }}"/' /tmp/kernel.config
+{{ end }}
+
 make KCONFIG_CONFIG=/tmp/kernel.config oldconfig
 make KCONFIG_CONFIG=/tmp/kernel.config prepare
 make KCONFIG_CONFIG=/tmp/kernel.config modules_prepare
@@ -54,10 +61,11 @@ ls -la
 `
 
 type vanillaTemplateData struct {
-	KernelBuildDir    string
-	ModuleBuildDir    string
-	ModuleDownloadURL string
-	KernelDownloadURL string
+	KernelBuildDir     string
+	ModuleBuildDir     string
+	ModuleDownloadURL  string
+	KernelDownloadURL  string
+	KernelLocalVersion string
 }
 
 func (v Vanilla) Script(bc BuilderConfig) (string, error) {
@@ -67,11 +75,17 @@ func (v Vanilla) Script(bc BuilderConfig) (string, error) {
 		return "", err
 	}
 
+	kv, err := kernelversion.FromString(bc.KernelVersion)
+	if err != nil {
+		return "", err
+	}
+
 	td := vanillaTemplateData{
-		KernelBuildDir:    KernelDirectory,
-		ModuleBuildDir:    ModuleDirectory,
-		ModuleDownloadURL: fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.ModuleConfig.ModuleVersion),
-		KernelDownloadURL: fetchVanillaKernelURLFromKernelVersion(bc.KernelVersion),
+		KernelBuildDir:     KernelDirectory,
+		ModuleBuildDir:     ModuleDirectory,
+		ModuleDownloadURL:  fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.ModuleConfig.ModuleVersion),
+		KernelDownloadURL:  fetchVanillaKernelURLFromKernelVersion(kv.Version),
+		KernelLocalVersion: kv.LocalVersion,
 	}
 
 	buf := bytes.NewBuffer(nil)

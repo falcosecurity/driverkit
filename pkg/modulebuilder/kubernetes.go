@@ -16,6 +16,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	restclient "k8s.io/client-go/rest"
@@ -35,13 +36,14 @@ type KubernetesBuildProcessor struct {
 	clientConfig  *restclient.Config
 	bufferSize    int
 	modulestorage *filesystem.ModuleStorage
+	namespace     string
 }
 
 // NewKubernetesBuildProcessor constructs a KubernetesBuildProcessor
 // starting from a kubernetes.Clientset. bufferSize represents the length of the
 // channel we use to do the builds. A bigger bufferSize will mean that we can save more Builds
 // for processing, however setting this to a big value will have impacts
-func NewKubernetesBuildProcessor(corev1Client v1.CoreV1Interface, clientConfig *restclient.Config, bufferSize int) *KubernetesBuildProcessor {
+func NewKubernetesBuildProcessor(corev1Client v1.CoreV1Interface, clientConfig *restclient.Config, bufferSize int, namespace string) *KubernetesBuildProcessor {
 	buildsch := make(chan buildmeta.Build, bufferSize)
 	return &KubernetesBuildProcessor{
 		buildsch:      buildsch,
@@ -51,6 +53,7 @@ func NewKubernetesBuildProcessor(corev1Client v1.CoreV1Interface, clientConfig *
 		clientConfig:  clientConfig,
 		bufferSize:    bufferSize,
 		modulestorage: filesystem.NewModuleStorage(filesystem.NewNop()),
+		namespace:     namespace,
 	}
 }
 
@@ -110,10 +113,9 @@ func (bp *KubernetesBuildProcessor) buildModule(build buildmeta.Build) error {
 	deadline := int64(1000)
 	deadlineGracePeriod := int64(20)
 
-	// TODO(fntlnz): make namespace configurable
-	namespace := "default"
-	name := "falco-builder" // TODO(fntlnz): generate this
-	uid := "generate-a-uid" //todo(fntlnz): generate an uid here
+	namespace := bp.namespace
+	uid := uuid.NewUUID()
+	name := fmt.Sprintf("falco-builder-%s", string(uid))
 
 	podClient := bp.coreV1Client.Pods(namespace)
 	configClient := bp.coreV1Client.ConfigMaps(namespace)
@@ -153,7 +155,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build buildmeta.Build) error {
 		Name:      name,
 		Namespace: namespace,
 		Labels: map[string]string{
-			falcoBuilderUIDLabel: uid,
+			falcoBuilderUIDLabel: string(uid),
 		},
 	}
 
@@ -248,7 +250,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build buildmeta.Build) error {
 	}
 	defer out.Close()
 
-	return bp.copyModuleFromPodWithUID(out, namespace, uid)
+	return bp.copyModuleFromPodWithUID(out, namespace, string(uid))
 }
 
 func (bp *KubernetesBuildProcessor) copyModuleFromPodWithUID(out io.Writer, namespace string, falcoBuilderUID string) error {

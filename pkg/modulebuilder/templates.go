@@ -17,7 +17,7 @@ while true; do
   fi
   echo "module found, wait for the download lock to be released"
   if [ -f /tmp/module-download.lock ]; then
-    echo "Falco module not found - waiting for 10 seconds"
+    echo "Lock not released yet - waiting for 5 seconds"
     sleep 5
     continue
   fi
