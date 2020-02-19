@@ -8,9 +8,11 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/falcosecurity/build-service/pkg/filesystem"
 	"github.com/falcosecurity/build-service/pkg/modulebuilder"
 	"github.com/falcosecurity/build-service/pkg/modulebuilder/build"
 	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
+	"github.com/falcosecurity/build-service/pkg/server/types"
 	"go.uber.org/zap"
 )
 
@@ -18,6 +20,7 @@ type Handlers struct {
 	logger         *zap.Logger
 	ctx            context.Context
 	buildProcessor modulebuilder.BuildProcessor
+	moduleStorage  *filesystem.ModuleStorage
 }
 
 func NewHandlers() *Handlers {
@@ -25,6 +28,7 @@ func NewHandlers() *Handlers {
 		logger:         zap.NewNop(),
 		ctx:            context.TODO(),
 		buildProcessor: modulebuilder.NewNopBuildProcessor(),
+		moduleStorage:  filesystem.NewModuleStorage(filesystem.NewNop()),
 	}
 }
 
@@ -40,27 +44,32 @@ func (h *Handlers) WithBuildProcessor(bp modulebuilder.BuildProcessor) {
 	h.buildProcessor = bp
 }
 
-func (h *Handlers) ModuleHandlerGet(w http.ResponseWriter, req *http.Request) {
+func (h *Handlers) WithModuleStorage(ms *filesystem.ModuleStorage) {
+	h.moduleStorage = ms
+}
 
+func (h *Handlers) ModuleHandlerGet(w http.ResponseWriter, req *http.Request) {
 	logger := h.logger.With(zap.String("handler", "ModuleHandlerGet"))
 	vars := mux.Vars(req)
-	mrr := ModuleRetrieveRequest{
+	mrr := types.ModuleRetrieveRequest{
 		BuildType:     builder.BuildType(vars["buildtype"]),
 		Architecture:  vars["architecture"],
 		KernelVersion: vars["kernelversion"],
+		ModuleVersion: vars["moduleversion"],
 		ConfigSHA256:  vars["configsha256"],
 	}
 	if valid, err := mrr.Validate(); !valid {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(http.StatusBadRequest)
 		e := json.NewEncoder(w)
-		if err := e.Encode(NewErrorResponse(err)); err != nil {
+		if err := e.Encode(types.NewErrorResponse(err)); err != nil {
 			logger.Error("error decoding response", zap.Error(err))
 			return
 		}
 		return
 	}
 
+	// h.moduleStorage.FindModule()
 	// TODO(fntlnz): download from the configured filesystem here
 	w.Write([]byte(fmt.Sprintf("you want to retrieve - this is not yet implemented: %v", mrr)))
 }
@@ -72,7 +81,7 @@ func (h *Handlers) ModuleHandlerPost(w http.ResponseWriter, req *http.Request) {
 	if req.Header.Get("Content-Type") != "application/json" {
 		w.WriteHeader(http.StatusBadRequest)
 		e := json.NewEncoder(w)
-		if err := e.Encode(NewErrorResponse(fmt.Errorf("bad content type, please use: application/json"))); err != nil {
+		if err := e.Encode(types.NewErrorResponse(fmt.Errorf("bad content type, please use: application/json"))); err != nil {
 			logger.Error("error decoding response", zap.Error(err))
 			return
 		}
@@ -89,7 +98,7 @@ func (h *Handlers) ModuleHandlerPost(w http.ResponseWriter, req *http.Request) {
 		logger.Info("build not valid", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
 		e := json.NewEncoder(w)
-		if err := e.Encode(NewErrorResponse(err)); err != nil {
+		if err := e.Encode(types.NewErrorResponse(err)); err != nil {
 			logger.Error("error decoding response", zap.Error(err))
 			return
 		}
@@ -103,7 +112,7 @@ func (h *Handlers) ModuleHandlerPost(w http.ResponseWriter, req *http.Request) {
 
 	w.WriteHeader(http.StatusAccepted)
 	e := json.NewEncoder(w)
-	if err := e.Encode(NewBuildResponseFromBuild(b)); err != nil {
+	if err := e.Encode(types.NewBuildResponseFromBuild(b)); err != nil {
 		logger.Error("error decoding response", zap.Error(err))
 		return
 	}

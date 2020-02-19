@@ -1,4 +1,4 @@
-package server
+package types
 
 import (
 	"path"
@@ -7,6 +7,10 @@ import (
 	"github.com/falcosecurity/build-service/pkg/modulebuilder/build"
 	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
 )
+
+func init() {
+	govalidator.TagMap["sha256"] = govalidator.IsSHA256
+}
 
 type ErrorResponse struct {
 	Reason string `json:"reason"`
@@ -19,8 +23,10 @@ func NewErrorResponse(err error) ErrorResponse {
 type ModuleRetrieveRequest struct {
 	BuildType     builder.BuildType `valid:"buildtype"`
 	Architecture  string            `valid:"buildarchitecture"`
-	KernelVersion string
-	ConfigSHA256  string
+	ConfigSHA256  string            `valid:"sha256"`
+	KernelVersion string            `valid:"ascii"` // TODO(fntlnz): make specific validator for this?
+	ModuleVersion string            `valid:"ascii"` // TODO(fntlnz):make specific validator for this? (check govalidator semver)
+
 }
 
 func (m *ModuleRetrieveRequest) Validate() (bool, error) {
@@ -32,5 +38,6 @@ type ModuleBuildResponse struct {
 }
 
 func NewBuildResponseFromBuild(b build.Build) ModuleBuildResponse {
-	return ModuleBuildResponse{Href: path.Join("module", b.BuildType.String(), b.Architecture, b.KernelVersion, b.SHA256())}
+	s, _ := b.SHA256()
+	return ModuleBuildResponse{Href: path.Join("module", b.BuildType.String(), b.Architecture, b.ModuleVersion, b.KernelVersion, s)}
 }

@@ -58,6 +58,8 @@ cd {{ .ModuleBuildDir }}
 make
 # print results
 ls -la
+
+modinfo falco.ko
 `
 
 type vanillaTemplateData struct {

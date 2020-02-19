@@ -2,6 +2,7 @@ package build
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 
 	"github.com/asaskevich/govalidator"
@@ -20,7 +21,12 @@ func (b *Build) Validate() (bool, error) {
 	return govalidator.ValidateStruct(b)
 }
 
-func (b *Build) SHA256() string {
-	shasum := sha256.Sum256([]byte(b.KernelConfigData))
-	return fmt.Sprintf("%x", shasum)
+func (b *Build) SHA256() (string, error) {
+	configDecoded, err := base64.StdEncoding.DecodeString(b.KernelConfigData)
+	if err != nil {
+		return "", err
+	}
+
+	shasum := sha256.Sum256([]byte(configDecoded))
+	return fmt.Sprintf("%x", shasum), nil
 }

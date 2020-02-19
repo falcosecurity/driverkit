@@ -89,8 +89,14 @@ func (bp *KubernetesBuildProcessor) Start() error {
 			zap.String("BuildType", string(b.BuildType)),
 			zap.String("KernelVersion", b.KernelVersion),
 			zap.String("ModuleVersion", b.ModuleVersion),
-			zap.String("SHA256", b.SHA256()),
 		)
+		sha, err := b.SHA256()
+		if err != nil {
+			buildlogger.Error("build sha256 error", zap.Error(err))
+			continue
+		}
+
+		buildlogger = buildlogger.With(zap.String("SHA256", sha))
 		select {
 		case <-bp.ctx.Done():
 			bp.logger.Info("graceful stop of the kubernetes build processor")
@@ -100,6 +106,7 @@ func (bp *KubernetesBuildProcessor) Start() error {
 			err := bp.buildModule(b)
 			if err != nil {
 				buildlogger.Error("build errored", zap.Error(err))
+				continue
 			}
 		}
 	}
