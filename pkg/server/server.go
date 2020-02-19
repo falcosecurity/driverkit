@@ -2,11 +2,14 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"time"
 
+	"github.com/falcosecurity/build-service/pkg/filesystem"
 	"github.com/falcosecurity/build-service/pkg/modulebuilder"
+	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 	"k8s.io/client-go/kubernetes"
@@ -51,7 +54,7 @@ func NewServer(addr string) *Server {
 
 	v1Router := router.PathPrefix("/v1").Subrouter()
 
-	v1Router.HandleFunc("/module/{buildtype}/{architecture}/{moduleversion}/{kernelversion}/{configsha256}", handlers.ModuleHandlerGet).Methods(http.MethodGet)
+	v1Router.HandleFunc(fmt.Sprintf("/module/{buildtype}/{architecture}/{moduleversion}/{kernelversion}/{configsha256}/%s", builder.ModuleFileName), handlers.ModuleHandlerGet).Methods(http.MethodGet)
 	v1Router.HandleFunc("/module", handlers.ModuleHandlerPost).Methods(http.MethodPost)
 	router.Use(s.loggingMiddleware)
 	return s
@@ -74,6 +77,10 @@ func (s *Server) WithTLSOptions(tlsopts *TLSOptions) {
 func (s *Server) WithContext(ctx context.Context) {
 	s.ctx = ctx
 	s.handlers.WithContext(ctx)
+}
+
+func (s *Server) WithModuleStorage(ms *filesystem.ModuleStorage) {
+	s.handlers.moduleStorage = ms
 }
 
 func (s *Server) ListenAndServe() error {

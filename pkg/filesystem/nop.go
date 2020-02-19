@@ -14,6 +14,14 @@ func (f *Nop) Create(name string) (io.WriteCloser, error) {
 	return DiscardCloser{}, nil
 }
 
+func (f *Nop) Exists(name string) bool {
+	return false
+}
+
+func (f *Nop) Size(name string) (int64, error) {
+	return 0, nil
+}
+
 type DiscardCloser struct {
 }
 

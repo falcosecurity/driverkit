@@ -13,6 +13,11 @@ echo '{"buildType": "vanilla", "architecture": "x86_64", "kernelversion": "5.5.2
 
 ### Retrieve a built module
 
+
+```bash
+curl -O  -v http://127.0.0.1:8093/v1/module/vanilla/x86_64/dev/5.5.2-arch1-1/51878ec3bfc7e45a02d8161557116486d058cd3160d6aa8ad7bc683ab4cf3000/falco.ko
+```
+
 ## Goals
 - [x] Have a package that can build the kernel module in k8s - **DONE** (look at [/pkg/modulebuilder](/pkg/modulebuilder))
 - [x] Have a package that can verify the kernel module - **DONE** (look at [/pkg/modinfo](/pkg/modinfo))

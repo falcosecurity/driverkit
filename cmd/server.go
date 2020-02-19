@@ -82,6 +82,7 @@ func serverCmdRunE(kubefactory factory.Factory) func(cmd *cobra.Command, args []
 		}
 
 		srv.WithLogger(logger)
+
 		builderStr, err := cmd.PersistentFlags().GetString("buildprocessor")
 		if err != nil {
 			return err
@@ -128,6 +129,7 @@ func serverCmdRunE(kubefactory factory.Factory) func(cmd *cobra.Command, args []
 
 		ms := filesystem.NewModuleStorage(fs)
 		buildProcessor.WithModuleStorage(ms)
+		srv.WithModuleStorage(ms)
 
 		go func() {
 			err := buildProcessor.Start()

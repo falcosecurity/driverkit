@@ -1,6 +1,7 @@
 package filesystem
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"path"
@@ -8,6 +9,8 @@ import (
 	"github.com/falcosecurity/build-service/pkg/modulebuilder/build"
 	"github.com/falcosecurity/build-service/pkg/server/types"
 )
+
+var ErrModuleDoesNotExists = errors.New("module does not exists")
 
 type ModuleStorage struct {
 	filesystem Filesystem
@@ -22,11 +25,24 @@ func (ms *ModuleStorage) CreateModuleWriter(b build.Build) (io.WriteCloser, erro
 }
 
 func (ms *ModuleStorage) FindModuleWithBuild(b build.Build) (io.ReadCloser, error) {
-	return ms.filesystem.Open(moduleFilenameFromBuild(b))
+	n := moduleFilenameFromBuild(b)
+	return ms.openModule(n)
 }
 
 func (ms *ModuleStorage) FindModuleWithModuleRetrieveRequest(b types.ModuleRetrieveRequest) (io.ReadCloser, error) {
-	return ms.filesystem.Open(moduleFilenameFromModuleRetrieveRequest(b))
+	n := moduleFilenameFromModuleRetrieveRequest(b)
+	return ms.openModule(n)
+}
+
+func (ms *ModuleStorage) openModule(name string) (io.ReadCloser, error) {
+	if !ms.filesystem.Exists(name) {
+		return nil, ErrModuleDoesNotExists
+	}
+	f, err := ms.filesystem.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	return f, nil
 }
 
 func moduleFilenameFromBuild(b build.Build) string {
@@ -39,4 +55,8 @@ func moduleFilenameFromModuleRetrieveRequest(b types.ModuleRetrieveRequest) stri
 
 func moduleFilenameFromParams(buildType, architecture, kernelVersion, moduleVersion, sha256 string) string {
 	return path.Clean(path.Base(fmt.Sprintf("falco-%s-%s-%s-%s-%s.ko", buildType, architecture, kernelVersion, moduleVersion, sha256)))
+}
+
+func ErrIsModuleDoesNotExists(err error) bool {
+	return err == ErrModuleDoesNotExists
 }

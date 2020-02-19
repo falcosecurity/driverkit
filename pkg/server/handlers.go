@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -48,6 +49,7 @@ func (h *Handlers) WithModuleStorage(ms *filesystem.ModuleStorage) {
 	h.moduleStorage = ms
 }
 
+// TODO(fntlnz): need better json error handling here
 func (h *Handlers) ModuleHandlerGet(w http.ResponseWriter, req *http.Request) {
 	logger := h.logger.With(zap.String("handler", "ModuleHandlerGet"))
 	vars := mux.Vars(req)
@@ -69,9 +71,25 @@ func (h *Handlers) ModuleHandlerGet(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// h.moduleStorage.FindModule()
-	// TODO(fntlnz): download from the configured filesystem here
-	w.Write([]byte(fmt.Sprintf("you want to retrieve - this is not yet implemented: %v", mrr)))
+	r, err := h.moduleStorage.FindModuleWithModuleRetrieveRequest(mrr)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		status := http.StatusInternalServerError
+		if filesystem.ErrIsModuleDoesNotExists(err) {
+			status = http.StatusNotFound
+		}
+		w.WriteHeader(status)
+		e := json.NewEncoder(w)
+		if err := e.Encode(types.NewErrorResponse(err)); err != nil {
+			logger.Error("error decoding response", zap.Error(err))
+			return
+		}
+		return
+	}
+
+	defer r.Close()
+
+	io.Copy(w, r)
 }
 
 func (h *Handlers) ModuleHandlerPost(w http.ResponseWriter, req *http.Request) {

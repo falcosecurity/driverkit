@@ -9,8 +9,9 @@ import (
 
 const KernelDirectory = "/tmp/kernel"
 const ModuleDirectory = "/tmp/module"
+const ModuleFileName = "falco.ko"
 
-var FalcoModuleFullPath = path.Join(ModuleDirectory, "falco.ko")
+var FalcoModuleFullPath = path.Join(ModuleDirectory, ModuleFileName)
 
 type BuildType string
 
