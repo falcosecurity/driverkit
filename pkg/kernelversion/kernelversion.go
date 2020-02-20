@@ -5,16 +5,19 @@ import (
 )
 
 var (
-	kernelVersionPattern = regexp.MustCompile(`^(?P<version>0|[1-9]\d*)\.(?P<patchlevel>0|[1-9]\d*)\.(?P<sublevel>0|[1-9]\d*)(?P<fullextraversion>-(?P<extraversion>0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$`)
+	kernelVersionPattern = regexp.MustCompile(`(?P<fullversion>^(?P<version>0|[1-9]\d*)\.(?P<patchlevel>0|[1-9]\d*)\.(?P<sublevel>0|[1-9]\d*))(?P<fullextraversion>-(?P<extraversion>0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$`)
 )
 
 type KernelVersion struct {
+	Fullversion string
 	Version      string
 	PatchLevel string
 	Sublevel string
 	Extraversion string
 	FullExtraversion string
 }
+
+
 
 func FromString(kernelVersionStr string) (KernelVersion) {
 	kv := KernelVersion{}
@@ -24,6 +27,8 @@ func FromString(kernelVersionStr string) (KernelVersion) {
 		if i > 0 && i <= len(match) {
 			identifiers[name] = match[i]
 			switch name {
+			case "fullversion":
+				kv.Fullversion = match[i]
 			case "version":
 				kv.Version = match[i]
 			case "patchlevel":
