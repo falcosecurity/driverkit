@@ -46,7 +46,7 @@ cd {{ .KernelBuildDir }}
 cp /module-builder/kernel.config /tmp/kernel.config
 
 {{ if .KernelLocalVersion}}
-sed -i 's/^CONFIG_LOCALVERSION=.*$/CONFIG_LOCALVERSION="-{{ .KernelLocalVersion }}"/' /tmp/kernel.config
+sed -i 's/^CONFIG_LOCALVERSION=.*$/CONFIG_LOCALVERSION="{{ .KernelLocalVersion }}"/' /tmp/kernel.config
 {{ end }}
 
 make KCONFIG_CONFIG=/tmp/kernel.config oldconfig
@@ -77,17 +77,14 @@ func (v Vanilla) Script(bc BuilderConfig) (string, error) {
 		return "", err
 	}
 
-	kv, err := kernelversion.FromString(bc.KernelVersion)
-	if err != nil {
-		return "", err
-	}
+	kv := kernelversion.FromString(bc.KernelVersion)
 
 	td := vanillaTemplateData{
 		KernelBuildDir:     KernelDirectory,
 		ModuleBuildDir:     ModuleDirectory,
 		ModuleDownloadURL:  fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.ModuleConfig.ModuleVersion),
-		KernelDownloadURL:  fetchVanillaKernelURLFromKernelVersion(kv.Version),
-		KernelLocalVersion: kv.LocalVersion,
+		KernelDownloadURL:  fetchVanillaKernelURLFromKernelVersion(kv),
+		KernelLocalVersion: kv.FullExtraversion,
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -98,7 +95,6 @@ func (v Vanilla) Script(bc BuilderConfig) (string, error) {
 	return buf.String(), nil
 }
 
-func fetchVanillaKernelURLFromKernelVersion(kernelVersion string) string {
-	// TODO: change base url 5.x based on kernel version
-	return fmt.Sprintf("https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-%s.tar.xz", kernelVersion)
+func fetchVanillaKernelURLFromKernelVersion(kv kernelversion.KernelVersion) string {
+	return fmt.Sprintf("https://cdn.kernel.org/pub/linux/kernel/v%s.x/linux-%s.tar.xz", kv.Version, kv.Fullversion)
 }
