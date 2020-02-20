@@ -13,6 +13,7 @@ func TestFromString(t *testing.T) {
 		"version with local version": {
 			kernelVersionStr: "5.5.2-arch1-1",
 			want: KernelVersion{
+				Fullversion: "5.5.2",
 				Version:      "5",
 				PatchLevel:   "5",
 				Sublevel:     "2",
@@ -23,6 +24,7 @@ func TestFromString(t *testing.T) {
 		"just kernel version": {
 			kernelVersionStr: "5.5.2",
 			want: KernelVersion{
+				Fullversion: "5.5.2",
 				Version:      "5",
 				PatchLevel:   "5",
 				Sublevel:     "2",
@@ -33,6 +35,7 @@ func TestFromString(t *testing.T) {
 		"an empty string": {
 			kernelVersionStr: "",
 			want: KernelVersion{
+				Fullversion: "",
 				Version:      "",
 				PatchLevel:   "",
 				Sublevel:     "",
@@ -43,6 +46,7 @@ func TestFromString(t *testing.T) {
 		"version with aws local version": {
 			kernelVersionStr: "4.15.0-1057-aws",
 			want: KernelVersion{
+				Fullversion: "4.15.0",
 				Version:      "4",
 				PatchLevel:   "15",
 				Sublevel:     "0",
