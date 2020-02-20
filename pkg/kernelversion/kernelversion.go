@@ -1,29 +1,42 @@
 package kernelversion
 
 import (
-	"errors"
-	"strings"
+	"regexp"
+)
+
+var (
+	kernelVersionPattern = regexp.MustCompile(`^(?P<version>0|[1-9]\d*)\.(?P<patchlevel>0|[1-9]\d*)\.(?P<sublevel>0|[1-9]\d*)(?P<fullextraversion>-(?P<extraversion>0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$`)
 )
 
 type KernelVersion struct {
 	Version      string
-	LocalVersion string
+	PatchLevel string
+	Sublevel string
+	Extraversion string
+	FullExtraversion string
 }
 
-func FromString(kernelVersionStr string) (KernelVersion, error) {
+func FromString(kernelVersionStr string) (KernelVersion) {
 	kv := KernelVersion{}
-	if len(kernelVersionStr) == 0 {
-		return kv, errors.New("kernelVersionStr can't be empty")
+	match := kernelVersionPattern.FindStringSubmatch(kernelVersionStr)
+	identifiers := make(map[string]string)
+	for i, name := range kernelVersionPattern.SubexpNames() {
+		if i > 0 && i <= len(match) {
+			identifiers[name] = match[i]
+			switch name {
+			case "version":
+				kv.Version = match[i]
+			case "patchlevel":
+				kv.PatchLevel = match[i]
+			case "sublevel":
+				kv.Sublevel = match[i]
+			case "extraversion":
+				kv.Extraversion = match[i]
+			case "fullextraversion":
+				kv.FullExtraversion = match[i]
+			}
+		}
 	}
 
-	sp := strings.SplitN(kernelVersionStr, "-", 2)
-	if len(sp) < 1 {
-		return kv, errors.New("could not determine a kernel version from the provided kernelVersionStr")
-	}
-
-	kv.Version = sp[0]
-	if len(sp) == 2 {
-		kv.LocalVersion = sp[1]
-	}
-	return kv, nil
+	return kv
 }
