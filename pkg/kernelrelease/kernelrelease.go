@@ -1,4 +1,4 @@
-package kernelversion
+package kernelrelease
 
 import (
 	"regexp"
@@ -8,19 +8,17 @@ var (
 	kernelVersionPattern = regexp.MustCompile(`(?P<fullversion>^(?P<version>0|[1-9]\d*)\.(?P<patchlevel>0|[1-9]\d*)\.(?P<sublevel>0|[1-9]\d*))(?P<fullextraversion>-(?P<extraversion>0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$`)
 )
 
-type KernelVersion struct {
-	Fullversion string
-	Version      string
-	PatchLevel string
-	Sublevel string
-	Extraversion string
+type KernelRelease struct {
+	Fullversion      string
+	Version          string
+	PatchLevel       string
+	Sublevel         string
+	Extraversion     string
 	FullExtraversion string
 }
 
-
-
-func FromString(kernelVersionStr string) (KernelVersion) {
-	kv := KernelVersion{}
+func FromString(kernelVersionStr string) KernelRelease {
+	kv := KernelRelease{}
 	match := kernelVersionPattern.FindStringSubmatch(kernelVersionStr)
 	identifiers := make(map[string]string)
 	for i, name := range kernelVersionPattern.SubexpNames() {

@@ -1,4 +1,4 @@
-package kernelversion
+package kernelrelease
 
 import (
 	"reflect"
@@ -8,11 +8,11 @@ import (
 func TestFromString(t *testing.T) {
 	tests := map[string]struct {
 		kernelVersionStr string
-		want             KernelVersion
+		want             KernelRelease
 	}{
 		"version with local version": {
 			kernelVersionStr: "5.5.2-arch1-1",
-			want: KernelVersion{
+			want: KernelRelease{
 				Fullversion: "5.5.2",
 				Version:      "5",
 				PatchLevel:   "5",
@@ -23,7 +23,7 @@ func TestFromString(t *testing.T) {
 		},
 		"just kernel version": {
 			kernelVersionStr: "5.5.2",
-			want: KernelVersion{
+			want: KernelRelease{
 				Fullversion: "5.5.2",
 				Version:      "5",
 				PatchLevel:   "5",
@@ -34,7 +34,7 @@ func TestFromString(t *testing.T) {
 		},
 		"an empty string": {
 			kernelVersionStr: "",
-			want: KernelVersion{
+			want: KernelRelease{
 				Fullversion: "",
 				Version:      "",
 				PatchLevel:   "",
@@ -45,7 +45,7 @@ func TestFromString(t *testing.T) {
 		},
 		"version with aws local version": {
 			kernelVersionStr: "4.15.0-1057-aws",
-			want: KernelVersion{
+			want: KernelRelease{
 				Fullversion: "4.15.0",
 				Version:      "4",
 				PatchLevel:   "15",
