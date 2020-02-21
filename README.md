@@ -40,15 +40,15 @@ echo '{"buildType": "vanilla", "architecture": "x86_64", "kernelrelease": "5.5.2
 
 #### Ubuntu AWS
 ```bash
- echo '{"buildType": "ubuntu-aws", "moduleVersion": "dev", "architecture": "x86_64", "kernelversion": "81", "kernelrelease": "4.15.0-72-generic",  "kernelConfigData": "'"$(cat /boot/config-4.15.0-72-generic |base64)"'"}' | 
-    curl  --header "Content-Type: application/json"   -d @-  -v http://bdb769cd.ngrok.io/v1/module
+ echo '{"buildType": "ubuntu-aws", "moduleVersion": "dev", "architecture": "x86_64", "kernelversion": "81", "kernelrelease": "4.15.0-72-generic",  "kernelConfigData": "'"$(cat /boot/config-4.15.0-72-generic|base64)"'"}' | 
+    curl --header "Content-Type: application/json" -d @- -v http://bdb769cd.ngrok.io/v1/module
 ```
 
 #### Ubuntu Generic
 
 ```bash
  echo '{"buildType": "ubuntu-aws", "moduleVersion": "dev", "architecture": "x86_64", "kernelversion": "59", "kernelrelease": "4.15.0-1057-aws",  "kernelConfigData": "'"$(cat /boot/config-4.15.0-1057-aws|base64)"'"}' | 
-    curl  --header "Content-Type: application/json"   -d @-  -v http://bdb769cd.ngrok.io/v1/module
+    curl --header "Content-Type: application/json" -d @- -v http://bdb769cd.ngrok.io/v1/module
 ```
 
 
@@ -58,7 +58,7 @@ When you request the build, the response will give you the final destination.
 In general this is the pattern:
 
 ```
-/v1/module/<buildtype>/<architecture>/<module-version>/<kernel-release>/<kernel-version>/<kernel-config-sha256sum>
+/v1/module/<buildtype>/<architecture>/<module-version>/<kernel-release>/<kernel-version>/<kernel-config-sha256sum>/falco.ko
 ```
 
 Here's an example:
@@ -84,6 +84,3 @@ curl -O  -v http://127.0.0.1:8093/v1/module/vanilla/x86_64/dev/5.5.2-arch1-1/1/5
 ## Interactions Diagram
 
 ![Interaction Diagram](docs/img/interactions.png)
-
-https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws/linux-headers-4.15.0-1057-aws_4.15.0-1057.59_amd64.deb
-https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws/linux-headers-4.15.0-1057-aws_4.15.0.59_amd64.deb  
