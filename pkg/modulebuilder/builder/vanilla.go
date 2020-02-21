@@ -3,18 +3,19 @@ package builder
 import (
 	"bytes"
 	"fmt"
+	"github.com/falcosecurity/build-service/pkg/modulebuilder/buildtype"
 	"text/template"
 
-	"github.com/falcosecurity/build-service/pkg/kernelversion"
+	"github.com/falcosecurity/build-service/pkg/kernelrelease"
 )
 
 type Vanilla struct {
 }
 
-const BuildTypeVanilla BuildType = "vanilla"
+const BuildTypeVanilla buildtype.BuildType = "vanilla"
 
 func init() {
-	EnabledBuildTypes[BuildTypeVanilla] = true
+	buildtype.EnabledBuildTypes[BuildTypeVanilla] = true
 }
 
 const vanillaTemplate = `
@@ -71,18 +72,18 @@ type vanillaTemplateData struct {
 }
 
 func (v Vanilla) Script(bc BuilderConfig) (string, error) {
-	t := template.New("vanilla")
+	t := template.New(string(BuildTypeVanilla))
 	parsed, err := t.Parse(vanillaTemplate)
 	if err != nil {
 		return "", err
 	}
 
-	kv := kernelversion.FromString(bc.KernelVersion)
+	kv := kernelrelease.FromString(bc.Build.KernelRelease)
 
 	td := vanillaTemplateData{
 		KernelBuildDir:     KernelDirectory,
 		ModuleBuildDir:     ModuleDirectory,
-		ModuleDownloadURL:  fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.ModuleConfig.ModuleVersion),
+		ModuleDownloadURL:  moduleDownloadURL(bc),
 		KernelDownloadURL:  fetchVanillaKernelURLFromKernelVersion(kv),
 		KernelLocalVersion: kv.FullExtraversion,
 	}
@@ -95,6 +96,6 @@ func (v Vanilla) Script(bc BuilderConfig) (string, error) {
 	return buf.String(), nil
 }
 
-func fetchVanillaKernelURLFromKernelVersion(kv kernelversion.KernelVersion) string {
+func fetchVanillaKernelURLFromKernelVersion(kv kernelrelease.KernelRelease) string {
 	return fmt.Sprintf("https://cdn.kernel.org/pub/linux/kernel/v%s.x/linux-%s.tar.xz", kv.Version, kv.Fullversion)
 }
