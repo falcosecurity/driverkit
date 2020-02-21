@@ -2,9 +2,9 @@ package builder
 
 import (
 	"fmt"
+	buildmeta "github.com/falcosecurity/build-service/pkg/modulebuilder/build"
+	"github.com/falcosecurity/build-service/pkg/modulebuilder/buildtype"
 	"path"
-
-	"github.com/asaskevich/govalidator"
 )
 
 const KernelDirectory = "/tmp/kernel"
@@ -13,25 +13,12 @@ const ModuleFileName = "falco.ko"
 
 var FalcoModuleFullPath = path.Join(ModuleDirectory, ModuleFileName)
 
-type BuildType string
-
-func (bt BuildType) String() string {
-	return string(bt)
-}
-
-var EnabledBuildTypes = map[BuildType]bool{}
-
-func init() {
-	govalidator.TagMap["buildtype"] = isBuildTypeEnabled
-}
-
 type BuilderConfig struct {
-	ModuleConfig  ModuleConfig
-	KernelVersion string
+	ModuleConfig ModuleConfig
+	Build        buildmeta.Build
 }
 
 type ModuleConfig struct {
-	ModuleVersion   string
 	ModuleName      string
 	DeviceName      string
 	DownloadBaseURL string
@@ -41,17 +28,20 @@ type Builder interface {
 	Script(bc BuilderConfig) (string, error)
 }
 
-func Factory(buildType BuildType) (Builder, error) {
+func Factory(buildType buildtype.BuildType) (Builder, error) {
+	// TODO(fntlnz): avoid duplicating this information, we already know which ones are enabled
+	// look at buildtype.EnabledBuildTypes
 	switch buildType {
 	case BuildTypeVanilla:
 		return &Vanilla{}, nil
+	case BuildTypeUbuntuGeneric:
+		return &UbuntuGeneric{}, nil
+	case BuildTypeUbuntuAWS:
+		return &UbuntuAWS{}, nil
 	}
 	return nil, fmt.Errorf("build type not found: %s", buildType)
 }
 
-func isBuildTypeEnabled(str string) bool {
-	if val, ok := EnabledBuildTypes[BuildType(str)]; ok {
-		return val
-	}
-	return false
+func moduleDownloadURL(bc BuilderConfig) string {
+	return fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.Build.ModuleVersion)
 }
