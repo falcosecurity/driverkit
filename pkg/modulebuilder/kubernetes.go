@@ -87,7 +87,7 @@ func (bp *KubernetesBuildProcessor) Start() error {
 		buildlogger := bp.logger.With(
 			zap.String("Architecture", b.Architecture),
 			zap.String("BuildType", string(b.BuildType)),
-			zap.String("KernelVersion", b.KernelVersion),
+			zap.String("KernelRelease", b.KernelVersion),
 			zap.String("ModuleVersion", b.ModuleVersion),
 		)
 		sha, err := b.SHA256()
@@ -135,12 +135,11 @@ func (bp *KubernetesBuildProcessor) buildModule(build buildmeta.Build) error {
 
 	bc := builder.BuilderConfig{
 		ModuleConfig: builder.ModuleConfig{
-			ModuleVersion:   build.ModuleVersion,
 			ModuleName:      "falco",                                    // TODO: make this configurable at startup
 			DeviceName:      "falco",                                    // TODO: make this configurable at startup
 			DownloadBaseURL: "https://github.com/draios/sysdig/archive", // TODO: make this configurable at startup
 		},
-		KernelVersion: build.KernelVersion,
+		Build: build,
 	}
 
 	// generate the build script from the builder
@@ -168,7 +167,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build buildmeta.Build) error {
 
 	// Prepare driver config template
 	bufDriverConfig := bytes.NewBuffer(nil)
-	err = renderDriverConfig(bufDriverConfig, driverConfigData{ModuleVersion: bc.ModuleConfig.ModuleVersion, ModuleName: bc.ModuleConfig.ModuleName, DeviceName: bc.ModuleConfig.DeviceName})
+	err = renderDriverConfig(bufDriverConfig, driverConfigData{ModuleVersion: bc.Build.ModuleVersion, ModuleName: bc.ModuleConfig.ModuleName, DeviceName: bc.ModuleConfig.DeviceName})
 	if err != nil {
 		return err
 	}

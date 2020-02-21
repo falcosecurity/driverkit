@@ -4,17 +4,18 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"github.com/falcosecurity/build-service/pkg/modulebuilder/buildtype"
 
 	"github.com/asaskevich/govalidator"
-	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
 )
 
 type Build struct {
-	BuildType        builder.BuildType `valid:"buildtype"`
-	KernelConfigData string            `valid:"base64"`
-	KernelVersion    string            `valid:"ascii"` // TODO(fntlnz): make specific validator for this?
-	ModuleVersion    string            `valid:"ascii"` // TODO(fntlnz):make specific validator for this? (check govalidator semver)
-	Architecture     string            `valid:"buildarchitecture"`
+	BuildType        buildtype.BuildType `valid:"buildtype,required"`
+	KernelConfigData string              `valid:"base64,required"`
+	KernelRelease    string              `valid:"ascii,required"` // TODO(fntlnz): make specific validator for this?
+	KernelVersion    string              `valid:"int,required"`
+	ModuleVersion    string              `valid:"ascii,required"` // TODO(fntlnz):make specific validator for this? (check govalidator semver)
+	Architecture     string              `valid:"buildarchitecture,required"`
 }
 
 func (b *Build) Validate() (bool, error) {
