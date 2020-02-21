@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/falcosecurity/build-service/pkg/modulebuilder/buildtype"
 	"io"
 	"net/http"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/falcosecurity/build-service/pkg/filesystem"
 	"github.com/falcosecurity/build-service/pkg/modulebuilder"
 	"github.com/falcosecurity/build-service/pkg/modulebuilder/build"
-	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
 	"github.com/falcosecurity/build-service/pkg/server/types"
 	"go.uber.org/zap"
 )
@@ -54,8 +54,9 @@ func (h *Handlers) ModuleHandlerGet(w http.ResponseWriter, req *http.Request) {
 	logger := h.logger.With(zap.String("handler", "ModuleHandlerGet"))
 	vars := mux.Vars(req)
 	mrr := types.ModuleRetrieveRequest{
-		BuildType:     builder.BuildType(vars["buildtype"]),
+		BuildType:     buildtype.BuildType(vars["buildtype"]),
 		Architecture:  vars["architecture"],
+		KernelRelease: vars["kernelrelease"],
 		KernelVersion: vars["kernelversion"],
 		ModuleVersion: vars["moduleversion"],
 		ConfigSHA256:  vars["configsha256"],

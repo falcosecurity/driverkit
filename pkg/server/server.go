@@ -54,7 +54,7 @@ func NewServer(addr string) *Server {
 
 	v1Router := router.PathPrefix("/v1").Subrouter()
 
-	v1Router.HandleFunc(fmt.Sprintf("/module/{buildtype}/{architecture}/{moduleversion}/{kernelversion}/{configsha256}/%s", builder.ModuleFileName), handlers.ModuleHandlerGet).Methods(http.MethodGet)
+	v1Router.HandleFunc(fmt.Sprintf("/module/{buildtype}/{architecture}/{moduleversion}/{kernelrelease}/{kernelversion}/{configsha256}/%s", builder.ModuleFileName), handlers.ModuleHandlerGet).Methods(http.MethodGet)
 	v1Router.HandleFunc("/module", handlers.ModuleHandlerPost).Methods(http.MethodPost)
 	router.Use(s.loggingMiddleware)
 	return s
