@@ -47,14 +47,14 @@ func (ms *ModuleStorage) openModule(name string) (io.ReadCloser, error) {
 
 func moduleFilenameFromBuild(b build.Build) string {
 	s, _ := b.SHA256()
-	return moduleFilenameFromParams(string(b.BuildType), b.Architecture, b.KernelVersion, b.ModuleVersion, s)
+	return moduleFilenameFromParams(string(b.BuildType), b.Architecture, b.KernelRelease, b.KernelVersion, b.ModuleVersion, s)
 }
 func moduleFilenameFromModuleRetrieveRequest(b types.ModuleRetrieveRequest) string {
-	return moduleFilenameFromParams(string(b.BuildType), b.Architecture, b.KernelVersion, b.ModuleVersion, b.ConfigSHA256)
+	return moduleFilenameFromParams(string(b.BuildType), b.Architecture, b.KernelRelease, b.KernelVersion, b.ModuleVersion, b.ConfigSHA256)
 }
 
-func moduleFilenameFromParams(buildType, architecture, kernelVersion, moduleVersion, sha256 string) string {
-	return path.Clean(path.Base(fmt.Sprintf("falco-%s-%s-%s-%s-%s.ko", buildType, architecture, kernelVersion, moduleVersion, sha256)))
+func moduleFilenameFromParams(buildType, architecture, kernelRelease, kernelVersion, moduleVersion, sha256 string) string {
+	return path.Clean(path.Base(fmt.Sprintf("falco-%s-%s--%s-%s-%s-%s.ko", buildType, architecture, kernelRelease, kernelVersion, moduleVersion, sha256)))
 }
 
 func ErrIsModuleDoesNotExists(err error) bool {
