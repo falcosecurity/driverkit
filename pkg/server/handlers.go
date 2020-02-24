@@ -97,6 +97,7 @@ func (h *Handlers) ModuleHandlerPost(w http.ResponseWriter, req *http.Request) {
 	logger := h.logger.With(zap.String("handler", "ModuleHandlerPost"))
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
+	// Validate request headers
 	if req.Header.Get("Content-Type") != "application/json" {
 		w.WriteHeader(http.StatusBadRequest)
 		e := json.NewEncoder(w)
@@ -106,6 +107,8 @@ func (h *Handlers) ModuleHandlerPost(w http.ResponseWriter, req *http.Request) {
 		}
 		return
 	}
+
+	// Construct the build and decode it from the request
 	b := build.Build{}
 	if err := JsonRequestDecode(req.Body, &b); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -113,6 +116,7 @@ func (h *Handlers) ModuleHandlerPost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// Check if the build parameters are all right
 	if valid, err := b.Validate(); !valid || err != nil {
 		logger.Info("build not valid", zap.Error(err))
 		w.WriteHeader(http.StatusBadRequest)
@@ -124,11 +128,31 @@ func (h *Handlers) ModuleHandlerPost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// TODO(fntlnz): here we must also check if there's any other build
+	// going on for this specific configuration and return the reference to it
+	// just as we do with modules that exists.
+
+	// Check if module is already on filesystem, in that case just return
+	// the build response with the location to it
+	if h.moduleStorage.ExistsFromBuild(b) {
+		w.WriteHeader(http.StatusOK)
+		e := json.NewEncoder(w)
+		if err := e.Encode(types.NewBuildResponseFromBuild(b)); err != nil {
+			logger.Error("error decoding response", zap.Error(err))
+			return
+		}
+		return
+	}
+
+	// Since we didn't have the module, we need to build it
+	// Let's tell the build processor to do that
 	if err := h.buildProcessor.Request(b); err != nil {
 		w.WriteHeader(http.StatusBadGateway)
 		return
 	}
 
+	// Return that we accepted the build and the location
+	// where you can get it
 	w.WriteHeader(http.StatusAccepted)
 	e := json.NewEncoder(w)
 	if err := e.Encode(types.NewBuildResponseFromBuild(b)); err != nil {

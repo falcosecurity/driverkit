@@ -29,6 +29,11 @@ func (ms *ModuleStorage) FindModuleWithBuild(b build.Build) (io.ReadCloser, erro
 	return ms.openModule(n)
 }
 
+func (ms *ModuleStorage) ExistsFromBuild(b build.Build) (bool) {
+	n := moduleFilenameFromBuild(b)
+	return ms.filesystem.Exists(n)
+}
+
 func (ms *ModuleStorage) FindModuleWithModuleRetrieveRequest(b types.ModuleRetrieveRequest) (io.ReadCloser, error) {
 	n := moduleFilenameFromModuleRetrieveRequest(b)
 	return ms.openModule(n)
