@@ -7,7 +7,6 @@ import (
 	"path"
 )
 
-const KernelDirectory = "/tmp/kernel"
 const ModuleDirectory = "/tmp/module"
 const ModuleFileName = "falco.ko"
 

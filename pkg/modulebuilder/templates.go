@@ -42,22 +42,22 @@ rm /tmp/module-download.lock 1>&/dev/null
 
 type makefileData struct {
 	ModuleName     string
-	KernelBuildDir string
 	ModuleBuildDir string
 }
 
 const makefileTemplate = `
 {{ .ModuleName }}-y += main.o dynamic_params_table.o fillers_table.o flags_table.o ppm_events.o ppm_fillers.o event_table.o syscall_table.o ppm_cputime.o
 obj-m += {{ .ModuleName }}.o
+KERNELDIR ?= /lib/modules/$(shell uname -r)/build
 
 all:
-	make -C {{ .KernelBuildDir }} M={{ .ModuleBuildDir }} modules
+	make -C $(KERNELDIR) M={{ .ModuleBuildDir }} modules
 
 clean:
-	make -C {{ .KernelBuildDir }} M={{ .KernelBuildDir }} clean
+	make -C $(KERNELDIR) M={{ .ModuleBuildDir }} clean
 
 install: all
-	make -C {{ .KernelBuildDir }} M={{ .KernelBuildDir }} modules_install
+	make -C $(KERNELDIR) M={{ .ModuleBuildDir }} modules_install
 `
 
 func renderMakefile(w io.Writer, md makefileData) error {
