@@ -37,13 +37,13 @@ cp /module-builder/module-driver-config.h {{ .ModuleBuildDir }}/driver_config.h
 cd /tmp
 mkdir /tmp/kernel-download
 curl -SL {{ .KernelDownloadURL }} | tar -Jxf - -C /tmp/kernel-download
-rm -Rf {{ .KernelBuildDir }}
-mkdir -p {{ .KernelBuildDir }}
-mv /tmp/kernel-download/*/* {{ .KernelBuildDir }}
+rm -Rf /tmp/kernel
+mkdir -p /tmp/kernel
+mv /tmp/kernel-download/*/* /tmp/kernel
 
 # Prepare the kernel
 
-cd {{ .KernelBuildDir }}
+cd /tmp/kernel
 cp /module-builder/kernel.config /tmp/kernel.config
 
 {{ if .KernelLocalVersion}}
@@ -56,7 +56,7 @@ make KCONFIG_CONFIG=/tmp/kernel.config modules_prepare
 
 # Build the module
 cd {{ .ModuleBuildDir }}
-make
+make KERNELDIR=/tmp/kernel
 # print results
 ls -la
 
@@ -64,7 +64,6 @@ modinfo falco.ko
 `
 
 type vanillaTemplateData struct {
-	KernelBuildDir     string
 	ModuleBuildDir     string
 	ModuleDownloadURL  string
 	KernelDownloadURL  string
@@ -81,7 +80,6 @@ func (v Vanilla) Script(bc BuilderConfig) (string, error) {
 	kv := kernelrelease.FromString(bc.Build.KernelRelease)
 
 	td := vanillaTemplateData{
-		KernelBuildDir:     KernelDirectory,
 		ModuleBuildDir:     ModuleDirectory,
 		ModuleDownloadURL:  moduleDownloadURL(bc),
 		KernelDownloadURL:  fetchVanillaKernelURLFromKernelVersion(kv),
