@@ -174,7 +174,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build buildmeta.Build) error {
 
 	// Prepare makefile template
 	bufMakefile := bytes.NewBuffer(nil)
-	err = renderMakefile(bufMakefile, makefileData{ModuleName: bc.ModuleConfig.ModuleName, KernelBuildDir: builder.KernelDirectory, ModuleBuildDir: builder.ModuleDirectory})
+	err = renderMakefile(bufMakefile, makefileData{ModuleName: bc.ModuleConfig.ModuleName, ModuleBuildDir: builder.ModuleDirectory})
 	if err != nil {
 		return err
 	}
