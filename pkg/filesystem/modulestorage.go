@@ -54,7 +54,7 @@ func moduleFilenameFromModuleRetrieveRequest(b types.ModuleRetrieveRequest) stri
 }
 
 func moduleFilenameFromParams(buildType, architecture, kernelRelease, kernelVersion, moduleVersion, sha256 string) string {
-	return path.Clean(path.Base(fmt.Sprintf("falco-%s-%s--%s-%s-%s-%s.ko", buildType, architecture, kernelRelease, kernelVersion, moduleVersion, sha256)))
+	return path.Clean(path.Base(fmt.Sprintf("falco-%s-%s-%s-%s-%s-%s.ko", buildType, architecture, kernelRelease, kernelVersion, moduleVersion, sha256)))
 }
 
 func ErrIsModuleDoesNotExists(err error) bool {
