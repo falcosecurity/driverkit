@@ -31,10 +31,9 @@ func (v UbuntuGeneric) Script(bc BuilderConfig) (string, error) {
 	kr := kernelrelease.FromString(bc.Build.KernelRelease)
 
 	td := ubuntuTemplateData{
-		KernelBuildDir:     KernelDirectory,
 		ModuleBuildDir:     ModuleDirectory,
 		ModuleDownloadURL:  fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.Build.ModuleVersion),
-		KernelDownloadURL:  fetchUbuntuGenericKernelURL(kr, bc.Build.KernelVersion),
+		KernelDownloadURLS:  fetchUbuntuGenericKernelURL(kr, bc.Build.KernelVersion),
 		KernelLocalVersion: kr.FullExtraversion,
 	}
 
@@ -59,10 +58,9 @@ func (v UbuntuAWS) Script(bc BuilderConfig) (string, error) {
 	kr := kernelrelease.FromString(bc.Build.KernelRelease)
 
 	td := ubuntuTemplateData{
-		KernelBuildDir:     KernelDirectory,
 		ModuleBuildDir:     ModuleDirectory,
 		ModuleDownloadURL:  moduleDownloadURL(bc),
-		KernelDownloadURL:  fetchUbuntuAWSKernelURL(kr, bc.Build.KernelVersion),
+		KernelDownloadURLS:  fetchUbuntuAWSKernelURLS(kr, bc.Build.KernelVersion),
 		KernelLocalVersion: kr.FullExtraversion,
 	}
 
@@ -74,29 +72,40 @@ func (v UbuntuAWS) Script(bc BuilderConfig) (string, error) {
 	return buf.String(), nil
 }
 
-func fetchUbuntuGenericKernelURL(kr kernelrelease.KernelRelease, kernelVersion string) string {
-	firstExtraSplit := strings.Split(kr.Extraversion, "-")
-	firstExtra := ""
-	if len(firstExtraSplit) > 0 {
-		firstExtra = firstExtraSplit[0]
-	}
-	return fmt.Sprintf("https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-%s%s_%s-%s.%s_amd64.deb", kr.Fullversion, kr.FullExtraversion, kr.Fullversion, firstExtra, kernelVersion)
+func fetchUbuntuGenericKernelURL(kr kernelrelease.KernelRelease, kernelVersion string) []string {
+	panic("not implemented yet")
 }
 
-func fetchUbuntuAWSKernelURL(kr kernelrelease.KernelRelease, kernelVersion string) string {
+func fetchUbuntuAWSKernelURLS(kr kernelrelease.KernelRelease, kernelVersion string) []string {
 	firstExtraSplit := strings.Split(kr.Extraversion, "-")
 	firstExtra := ""
 	if len(firstExtraSplit) > 0 {
 		firstExtra = firstExtraSplit[0]
 	}
-	return fmt.Sprintf("https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws/linux-headers-%s%s_%s-%s.%s_amd64.deb", kr.Fullversion, kr.FullExtraversion, kr.Fullversion, firstExtra, kernelVersion)
+	return []string{
+		fmt.Sprintf(
+			"https://mirrors.kernel.org/ubuntu/pool/main/l/linux-aws/linux-aws-headers-%s-%s_%s-%s.%s_all.deb",
+			kr.Fullversion,
+			firstExtra,
+			kr.Fullversion,
+			firstExtra,
+			kernelVersion,
+		),
+		fmt.Sprintf(
+			"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws/linux-headers-%s%s_%s-%s.%s_amd64.deb",
+			kr.Fullversion,
+			kr.FullExtraversion,
+			kr.Fullversion,
+			firstExtra,
+			kernelVersion,
+		),
+	}
 }
 
 type ubuntuTemplateData struct {
-	KernelBuildDir     string
 	ModuleBuildDir     string
 	ModuleDownloadURL  string
-	KernelDownloadURL  string
+	KernelDownloadURLS  []string
 	KernelLocalVersion string
 }
 
@@ -116,33 +125,32 @@ cp /module-builder/module-Makefile {{ .ModuleBuildDir }}/Makefile
 cp /module-builder/module-driver-config.h {{ .ModuleBuildDir }}/driver_config.h
 
 # Fetch the kernel
-cd /tmp
 mkdir /tmp/kernel-download
-curl -o kernel.deb -SL {{ .KernelDownloadURL }}
+cd /tmp/kernel-download
+{{range $url := .KernelDownloadURLS}}
+curl -o kernel.deb -SL {{ $url }}
 ar x kernel.deb
 tar -xvf data.tar.xz
-rm -Rf {{ .KernelBuildDir }}
-mkdir -p {{ .KernelBuildDir }}
-mv /tmp/kernel-download/usr/src/linux-headers-*/* {{ .KernelBuildDir }}
+{{end}}
+ls -la /tmp/kernel-download
 
+cd /tmp/kernel-download/usr/src/
+sourcedir=$(find . -type d -name "linux-headers*" | head -n 1 | xargs readlink -f)
 
-
+ls -la $sourcedir
 # Prepare the kernel
 
-cd {{ .KernelBuildDir }}
+cd $sourcedir
 cp /module-builder/kernel.config /tmp/kernel.config
 
 {{ if .KernelLocalVersion}}
 sed -i 's/^CONFIG_LOCALVERSION=.*$/CONFIG_LOCALVERSION="{{ .KernelLocalVersion }}"/' /tmp/kernel.config
 {{ end }}
 
-make KCONFIG_CONFIG=/tmp/kernel.config oldconfig
-make KCONFIG_CONFIG=/tmp/kernel.config prepare
-make KCONFIG_CONFIG=/tmp/kernel.config modules_prepare
 
 # Build the module
 cd {{ .ModuleBuildDir }}
-make
+make KERNELDIR=$sourcedir
 # print results
 ls -la
 
