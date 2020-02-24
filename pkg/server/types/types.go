@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
 	"github.com/falcosecurity/build-service/pkg/modulebuilder/buildtype"
 	"path"
 
@@ -40,5 +41,5 @@ type ModuleBuildResponse struct {
 
 func NewBuildResponseFromBuild(b build.Build) ModuleBuildResponse {
 	s, _ := b.SHA256()
-	return ModuleBuildResponse{Href: path.Join("/module", b.BuildType.String(), b.Architecture, b.ModuleVersion, b.KernelRelease, b.KernelVersion, s)}
+	return ModuleBuildResponse{Href: path.Join("/v1/module", b.BuildType.String(), b.Architecture, b.ModuleVersion, b.KernelRelease, b.KernelVersion, s, builder.ModuleFileName)}
 }
