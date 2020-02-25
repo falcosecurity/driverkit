@@ -3,9 +3,10 @@ package builder
 import (
 	"bytes"
 	"fmt"
-	"github.com/falcosecurity/build-service/pkg/modulebuilder/buildtype"
 	"strings"
 	"text/template"
+
+	"github.com/falcosecurity/build-service/pkg/modulebuilder/buildtype"
 
 	"github.com/falcosecurity/build-service/pkg/kernelrelease"
 )
@@ -33,7 +34,7 @@ func (v UbuntuGeneric) Script(bc BuilderConfig) (string, error) {
 	td := ubuntuTemplateData{
 		ModuleBuildDir:     ModuleDirectory,
 		ModuleDownloadURL:  fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.Build.ModuleVersion),
-		KernelDownloadURLS:  fetchUbuntuGenericKernelURL(kr, bc.Build.KernelVersion),
+		KernelDownloadURLS: fetchUbuntuGenericKernelURL(kr, bc.Build.KernelVersion),
 		KernelLocalVersion: kr.FullExtraversion,
 	}
 
@@ -60,7 +61,7 @@ func (v UbuntuAWS) Script(bc BuilderConfig) (string, error) {
 	td := ubuntuTemplateData{
 		ModuleBuildDir:     ModuleDirectory,
 		ModuleDownloadURL:  moduleDownloadURL(bc),
-		KernelDownloadURLS:  fetchUbuntuAWSKernelURLS(kr, bc.Build.KernelVersion),
+		KernelDownloadURLS: fetchUbuntuAWSKernelURLS(kr, bc.Build.KernelVersion),
 		KernelLocalVersion: kr.FullExtraversion,
 	}
 
@@ -73,15 +74,29 @@ func (v UbuntuAWS) Script(bc BuilderConfig) (string, error) {
 }
 
 func fetchUbuntuGenericKernelURL(kr kernelrelease.KernelRelease, kernelVersion string) []string {
-	panic("not implemented yet")
+	firstExtra := extractExtraNumber(kr.Extraversion)
+	return []string{
+		fmt.Sprintf(
+			"https://mirrors.kernel.org/ubuntu/pool/main/l/linux/linux-headers-%s-%s_%s-%s.%s_all.deb",
+			kr.Fullversion,
+			firstExtra,
+			kr.Fullversion,
+			firstExtra,
+			kernelVersion,
+		),
+		fmt.Sprintf(
+			"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-%s%s_%s-%s.%s_amd64.deb",
+			kr.Fullversion,
+			kr.FullExtraversion,
+			kr.Fullversion,
+			firstExtra,
+			kernelVersion,
+		),
+	}
 }
 
 func fetchUbuntuAWSKernelURLS(kr kernelrelease.KernelRelease, kernelVersion string) []string {
-	firstExtraSplit := strings.Split(kr.Extraversion, "-")
-	firstExtra := ""
-	if len(firstExtraSplit) > 0 {
-		firstExtra = firstExtraSplit[0]
-	}
+	firstExtra := extractExtraNumber(kr.Extraversion)
 	return []string{
 		fmt.Sprintf(
 			"https://mirrors.kernel.org/ubuntu/pool/main/l/linux-aws/linux-aws-headers-%s-%s_%s-%s.%s_all.deb",
@@ -102,10 +117,18 @@ func fetchUbuntuAWSKernelURLS(kr kernelrelease.KernelRelease, kernelVersion stri
 	}
 }
 
+func extractExtraNumber(extraversion string) string {
+	firstExtraSplit := strings.Split(extraversion, "-")
+	if len(firstExtraSplit) > 0 {
+		return firstExtraSplit[0]
+	}
+	return ""
+}
+
 type ubuntuTemplateData struct {
 	ModuleBuildDir     string
 	ModuleDownloadURL  string
-	KernelDownloadURLS  []string
+	KernelDownloadURLS []string
 	KernelLocalVersion string
 }
 
