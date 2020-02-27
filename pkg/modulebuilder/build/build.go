@@ -11,11 +11,12 @@ import (
 
 type Build struct {
 	BuildType        buildtype.BuildType `valid:"buildtype,required"`
-	KernelConfigData string              `valid:"base64,required"`
+	KernelConfigData string              `valid:"base64"`
 	KernelRelease    string              `valid:"ascii,required"` // TODO(fntlnz): make specific validator for this?
 	KernelVersion    string              `valid:"int,required"`
 	ModuleVersion    string              `valid:"ascii,required"` // TODO(fntlnz):make specific validator for this? (check govalidator semver)
 	Architecture     string              `valid:"buildarchitecture,required"`
+	OutputFilePath   string              `valid:"ascii,required"`
 }
 
 func (b *Build) Validate() (bool, error) {
