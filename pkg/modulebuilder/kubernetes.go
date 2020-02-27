@@ -7,9 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"time"
 
-	"github.com/falcosecurity/build-service/pkg/filesystem"
 	buildmeta "github.com/falcosecurity/build-service/pkg/modulebuilder/build"
 	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
 	"go.uber.org/zap"
@@ -29,31 +29,22 @@ var builderBaseImage = "falcosecurity/falco-builder-service-base:latest" // This
 const falcoBuilderUIDLabel = "org.falcosecurity/falco-builder-uid"
 
 type KubernetesBuildProcessor struct {
-	buildsch      chan buildmeta.Build
-	ctx           context.Context
-	logger        *zap.Logger
-	coreV1Client  v1.CoreV1Interface
-	clientConfig  *restclient.Config
-	bufferSize    int
-	modulestorage *filesystem.ModuleStorage
-	namespace     string
+	logger       *zap.Logger
+	coreV1Client v1.CoreV1Interface
+	clientConfig *restclient.Config
+	namespace    string
 }
 
 // NewKubernetesBuildProcessor constructs a KubernetesBuildProcessor
 // starting from a kubernetes.Clientset. bufferSize represents the length of the
 // channel we use to do the builds. A bigger bufferSize will mean that we can save more Builds
 // for processing, however setting this to a big value will have impacts
-func NewKubernetesBuildProcessor(corev1Client v1.CoreV1Interface, clientConfig *restclient.Config, bufferSize int, namespace string) *KubernetesBuildProcessor {
-	buildsch := make(chan buildmeta.Build, bufferSize)
+func NewKubernetesBuildProcessor(corev1Client v1.CoreV1Interface, clientConfig *restclient.Config, namespace string) *KubernetesBuildProcessor {
 	return &KubernetesBuildProcessor{
-		buildsch:      buildsch,
-		ctx:           context.TODO(),
-		logger:        zap.NewNop(),
-		coreV1Client:  corev1Client,
-		clientConfig:  clientConfig,
-		bufferSize:    bufferSize,
-		modulestorage: filesystem.NewModuleStorage(filesystem.NewNop()),
-		namespace:     namespace,
+		logger:       zap.NewNop(),
+		coreV1Client: corev1Client,
+		clientConfig: clientConfig,
+		namespace:    namespace,
 	}
 }
 
@@ -61,56 +52,26 @@ func (bp *KubernetesBuildProcessor) String() string {
 	return KubernetesBuildProcessorName
 }
 
-func (bp *KubernetesBuildProcessor) WithContext(c context.Context) {
-	bp.ctx = c
-}
-
 func (bp *KubernetesBuildProcessor) WithLogger(logger *zap.Logger) {
 	bp.logger = logger
 	bp.logger.With(zap.String("processor", bp.String()))
 }
 
-func (bp *KubernetesBuildProcessor) WithModuleStorage(ms *filesystem.ModuleStorage) {
-	bp.modulestorage = ms
-}
-
-func (bp *KubernetesBuildProcessor) Request(b buildmeta.Build) error {
-	if len(bp.buildsch) >= bp.bufferSize {
-		return fmt.Errorf("too many queued elements right now, retry later")
+func (bp *KubernetesBuildProcessor) Start(b buildmeta.Build) error {
+	buildlogger := bp.logger.With(
+		zap.String("Architecture", b.Architecture),
+		zap.String("BuildType", string(b.BuildType)),
+		zap.String("KernelRelease", b.KernelVersion),
+		zap.String("ModuleVersion", b.ModuleVersion),
+	)
+	sha, err := b.SHA256()
+	if err != nil {
+		buildlogger.Error("build sha256 error", zap.Error(err))
+		return err
 	}
-	bp.buildsch <- b
-	return nil // TODO(fntlnz): do validation and error in case
-}
-
-func (bp *KubernetesBuildProcessor) Start() error {
-	for b := range bp.buildsch {
-		buildlogger := bp.logger.With(
-			zap.String("Architecture", b.Architecture),
-			zap.String("BuildType", string(b.BuildType)),
-			zap.String("KernelRelease", b.KernelVersion),
-			zap.String("ModuleVersion", b.ModuleVersion),
-		)
-		sha, err := b.SHA256()
-		if err != nil {
-			buildlogger.Error("build sha256 error", zap.Error(err))
-			continue
-		}
-
-		buildlogger = buildlogger.With(zap.String("SHA256", sha))
-		select {
-		case <-bp.ctx.Done():
-			bp.logger.Info("graceful stop of the kubernetes build processor")
-			return nil
-		default:
-			buildlogger.Info("doing a new build")
-			err := bp.buildModule(b)
-			if err != nil {
-				buildlogger.Error("build errored", zap.Error(err))
-				continue
-			}
-		}
-	}
-	return nil
+	buildlogger = buildlogger.With(zap.String("SHA256", sha))
+	buildlogger.Info("doing a new build")
+	return bp.buildModule(b)
 }
 
 func int64Ptr(i int64) *int64 { return &i }
@@ -250,7 +211,8 @@ func (bp *KubernetesBuildProcessor) buildModule(build buildmeta.Build) error {
 		return err
 	}
 
-	out, err := bp.modulestorage.CreateModuleWriter(build)
+	out, err := os.Create(build.OutputFilePath)
+
 	if err != nil {
 		return err
 	}
@@ -269,7 +231,7 @@ func (bp *KubernetesBuildProcessor) copyModuleFromPodWithUID(out io.Writer, name
 	}
 	// Give it ten minutes to complete, if it doesn't give an error
 	// TODO(fntlnz): maybe pass this from the outside?
-	ctx, cancel := context.WithTimeout(bp.ctx, 10*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 	for {
 		select {
