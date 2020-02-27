@@ -1,6 +1,8 @@
 package buildtype
 
-import "github.com/asaskevich/govalidator"
+import (
+	"github.com/asaskevich/govalidator"
+)
 
 type BuildType string
 
