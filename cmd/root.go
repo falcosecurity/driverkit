@@ -17,7 +17,7 @@ var cfgFile string
 var rootCmd = &cobra.Command{
 	Use:   "build-service",
 	Short: "Falco Build Service",
-	Long:  "Service for on-demand kernel module builds and artifacts hosting",
+	Long:  "Command line tool to build Falco Kernel modules",
 }
 
 var logger *zap.Logger
@@ -35,7 +35,20 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.falco-build-service.yaml)")
+	pf := rootCmd.PersistentFlags()
+	pf.StringVar(&cfgFile, "config", "", "config file (default is $HOME/.falco-build-service.yaml)")
+	pf.StringP("output", "o", "", "filepath where to save the resulting kernel module")
+	pf.String("moduleversion", "dev", "kernel module version as a git reference")
+	pf.String("kernelversion", "1", "kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v'")
+	pf.String("kernelrelease", "", "kernel release to build the module for, it can be found by executing 'uname -v'")
+	pf.String("buildtype", "", "type of build to execute")
+	pf.String("kernelconfigdata", "", "kernel config data, base64 encoded. In some systems this can be found under the /boot directory, in oder is gzip compressed under /proc")
+
+	_ = cobra.MarkFlagRequired(pf, "output")
+	_ = cobra.MarkFlagRequired(pf, "moduleversion")
+	_ = cobra.MarkFlagRequired(pf, "kernelrelease")
+	_ = cobra.MarkFlagRequired(pf, "kernelversion")
+	_ = cobra.MarkFlagRequired(pf, "buildtype")
 
 }
 
