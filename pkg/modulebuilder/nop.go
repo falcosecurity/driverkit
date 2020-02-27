@@ -1,7 +1,7 @@
 package modulebuilder
 
 import (
-	"github.com/falcosecurity/build-service/pkg/modulebuilder/build"
+	"github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
 	"go.uber.org/zap"
 )
 

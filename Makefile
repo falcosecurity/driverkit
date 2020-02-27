@@ -8,22 +8,22 @@ GIT_COMMIT := $(if $(shell git status --porcelain --untracked-files=no),${COMMIT
 GIT_BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
 GIT_BRANCH_CLEAN := $(shell echo $(GIT_BRANCH) | sed -e "s/[^[:alnum:]]/-/g")
 
-IMAGE_NAME_BUILDER_BASE ?= docker.io/falcosecurity/falco-builder-service-base
+IMAGE_NAME_BUILDER_BASE ?= docker.io/falcosecurity/driverkit-builder-base
 
 IMAGE_NAME_BUILDER_BASE_BRANCH := $(IMAGE_NAME_BUILDER_BASE):$(GIT_BRANCH_CLEAN)
 IMAGE_NAME_BUILDER_BASE_COMMIT := $(IMAGE_NAME_BUILDER_BASE):$(GIT_COMMIT)
 IMAGE_NAME_BUILDER_BASE_LATEST := $(IMAGE_NAME_BUILDER_BASE):latest
 
-LDFLAGS := -ldflags '-X github.com/falcosecurity/build-service/pkg/version.buildTime=$(shell date +%s) -X github.com/falcosecurity/build-service/pkg/version.gitCommit=${GIT_COMMIT} -X github.com/falcosecurity/build-service/pkg/modulebuilder.builderBaseImage=${IMAGE_NAME_BUILDER_BASE_COMMIT}'
+LDFLAGS := -ldflags '-X github.com/falcosecurity/driverkit/pkg/version.buildTime=$(shell date +%s) -X github.com/falcosecurity/driverkit/pkg/version.gitCommit=${GIT_COMMIT} -X github.com/falcosecurity/driverkit/pkg/modulebuilder.builderBaseImage=${IMAGE_NAME_BUILDER_BASE_COMMIT}'
 
 TESTPACKAGES := $(shell go list ./...)
 
-build_service ?= _output/bin/build-service
+driverkit ?= _output/bin/driverkit
 
 .PHONY: build
-build: clean ${build_service}
+build: clean ${driverkit}
 
-${build_service}:
+${driverkit}:
 	CGO_ENABLED=0 $(GO) build ${LDFLAGS} -o $@ .
 
 .PHONY: clean

@@ -6,9 +6,9 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/falcosecurity/build-service/pkg/modulebuilder/buildtype"
+	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
 
-	"github.com/falcosecurity/build-service/pkg/kernelrelease"
+	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
 const BuildTypeUbuntuGeneric buildtype.BuildType = "ubuntu-generic"

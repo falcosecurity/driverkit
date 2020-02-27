@@ -4,7 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
-	"github.com/falcosecurity/build-service/pkg/modulebuilder/buildtype"
+	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
 
 	"github.com/asaskevich/govalidator"
 )

@@ -13,30 +13,15 @@ import (
 
 var cfgFile string
 
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:   "build-service",
-	Short: "Falco Build Service",
-	Long:  "Command line tool to build Falco Kernel modules",
-}
-
-var logger *zap.Logger
-
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	logger, _ = zap.NewProduction()
-	defer logger.Sync()
-	if err := rootCmd.Execute(); err != nil {
-		logger.Fatal("error", zap.Error(err))
+func NewRootCmd() *cobra.Command {
+	rootCmd := &cobra.Command{
+		Use:   "driverkit",
+		Short: "driverkit, a command line tool to build Falco kernel modules and eBPF probes",
 	}
-}
-
-func init() {
-	cobra.OnInitialize(initConfig)
-
 	pf := rootCmd.PersistentFlags()
-	pf.StringVar(&cfgFile, "config", "", "config file (default is $HOME/.falco-build-service.yaml)")
+	pf.StringVar(&cfgFile, "config", "", "config file (default is $HOME/.driverkit.yaml)")
+
+	// common build flags
 	pf.StringP("output", "o", "", "filepath where to save the resulting kernel module")
 	pf.String("moduleversion", "dev", "kernel module version as a git reference")
 	pf.String("kernelversion", "1", "kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v'")
@@ -50,6 +35,27 @@ func init() {
 	_ = cobra.MarkFlagRequired(pf, "kernelversion")
 	_ = cobra.MarkFlagRequired(pf, "buildtype")
 
+	// subcommands
+	rootCmd.AddCommand(NewKubernetesCmd())
+
+	return rootCmd
+}
+
+var logger *zap.Logger
+
+// Execute adds all child commands to the root command and sets flags appropriately.
+// This is called by main.main(). It only needs to happen once to the rootCmd.
+func Execute() {
+	logger, _ = zap.NewProduction()
+	defer logger.Sync()
+	rcmd := NewRootCmd()
+	if err := rcmd.Execute(); err != nil {
+		logger.Fatal("error", zap.Error(err))
+	}
+}
+
+func init() {
+	cobra.OnInitialize(initConfig)
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -65,9 +71,9 @@ func initConfig() {
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".falco-build-service" (without extension).
+		// Search config in home directory with name ".driverkit" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".falco-build-service")
+		viper.SetConfigName(".driverkit")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
