@@ -1,11 +1,9 @@
 package modulebuilder
 
 import (
-	"context"
+	"github.com/falcosecurity/build-service/pkg/modulebuilder/build"
 
 	"github.com/asaskevich/govalidator"
-	"github.com/falcosecurity/build-service/pkg/filesystem"
-	"github.com/falcosecurity/build-service/pkg/modulebuilder/build"
 	"go.uber.org/zap"
 )
 
@@ -25,11 +23,8 @@ func init() {
 }
 
 type BuildProcessor interface {
-	Start() error
-	Request(b build.Build) error
-	WithContext(c context.Context)
+	Start(b build.Build) error
 	WithLogger(logger *zap.Logger)
-	WithModuleStorage(ms *filesystem.ModuleStorage)
 	String() string
 }
 
