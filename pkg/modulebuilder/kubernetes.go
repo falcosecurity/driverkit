@@ -10,8 +10,8 @@ import (
 	"os"
 	"time"
 
-	buildmeta "github.com/falcosecurity/build-service/pkg/modulebuilder/build"
-	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
+	buildmeta "github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
+	"github.com/falcosecurity/driverkit/pkg/modulebuilder/builder"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -25,7 +25,7 @@ import (
 
 const KubernetesBuildProcessorName = "kubernetes"
 
-var builderBaseImage = "falcosecurity/falco-builder-service-base:latest" // This is overwritten when using the Makefile to build
+var builderBaseImage = "falcosecurity/driverkit-builder-base:latest" // This is overwritten when using the Makefile to build
 const falcoBuilderUIDLabel = "org.falcosecurity/falco-builder-uid"
 
 type KubernetesBuildProcessor struct {

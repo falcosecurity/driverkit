@@ -4,7 +4,7 @@ import (
 	"io"
 	"text/template"
 
-	"github.com/falcosecurity/build-service/pkg/modulebuilder/builder"
+	"github.com/falcosecurity/driverkit/pkg/modulebuilder/builder"
 )
 
 var waitForModuleScript = `

@@ -1,7 +1,7 @@
 package main
 
-import "github.com/falcosecurity/build-service/cmd"
+import "github.com/falcosecurity/driverkit/cmd"
 
 func main() {
-  cmd.Execute()
+	cmd.Execute()
 }

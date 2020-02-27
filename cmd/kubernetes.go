@@ -2,23 +2,19 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/falcosecurity/build-service/pkg/kubernetes/factory"
-	"github.com/falcosecurity/build-service/pkg/modulebuilder"
-	"github.com/falcosecurity/build-service/pkg/modulebuilder/build"
-	"github.com/falcosecurity/build-service/pkg/modulebuilder/buildtype"
+	"github.com/falcosecurity/driverkit/pkg/kubernetes/factory"
+	"github.com/falcosecurity/driverkit/pkg/modulebuilder"
+	"github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
+	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-func init() {
-	rootCmd.AddCommand(NewKubernetesCmd())
-}
-
 func NewKubernetesCmd() *cobra.Command {
 	kubernetesCmd := &cobra.Command{
 		Use:   "kubernetes",
-		Short: "Build Falco kernel module using a Kubernetes cluster",
-		Long:  "This is the actual command to use a Kubernetes cluster for building the Falco Kernel module",
+		Short: "run driverkit against a Kubernetes cluster",
+		Long:  "This is the actual command to use a Kubernetes cluster with driverkit",
 	}
 
 	// Add Kubernetes client Flags

@@ -2,8 +2,8 @@ package builder
 
 import (
 	"fmt"
-	buildmeta "github.com/falcosecurity/build-service/pkg/modulebuilder/build"
-	"github.com/falcosecurity/build-service/pkg/modulebuilder/buildtype"
+	buildmeta "github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
+	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
 	"path"
 )
 

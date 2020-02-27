@@ -3,10 +3,10 @@ package builder
 import (
 	"bytes"
 	"fmt"
-	"github.com/falcosecurity/build-service/pkg/modulebuilder/buildtype"
+	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
 	"text/template"
 
-	"github.com/falcosecurity/build-service/pkg/kernelrelease"
+	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
 type Vanilla struct {
