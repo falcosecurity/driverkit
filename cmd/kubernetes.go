@@ -32,7 +32,7 @@ func NewKubernetesCmd() *cobra.Command {
 }
 func kubernetesCmdRunE(kubefactory factory.Factory) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		pf := cmd.PersistentFlags()
+		pf := cmd.Flags()
 		b, err := a(pf)
 		if err != nil {
 			return err
