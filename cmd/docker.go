@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder"
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
@@ -22,7 +21,7 @@ func NewDockerCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			spew.Dump(b)
+			// spew.Dump(b)
 
 			processor := modulebuilder.NewDockerBuildProcessor()
 			return processor.Start(*b)
