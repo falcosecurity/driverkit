@@ -2,10 +2,9 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/falcosecurity/driverkit/pkg/kubernetes/factory"
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder"
-	"github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
-	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
@@ -34,32 +33,9 @@ func NewKubernetesCmd() *cobra.Command {
 func kubernetesCmdRunE(kubefactory factory.Factory) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		pf := cmd.PersistentFlags()
-		outputFileName, err := pf.GetString("output")
+		b, err := a(pf)
 		if err != nil {
 			return err
-		}
-		moduleVersion, err := pf.GetString("moduleversion")
-		if err != nil {
-			return err
-		}
-		kernelVersion, err := pf.GetString("kernelversion")
-		if err != nil {
-			return err
-		}
-		kernelRelease, err := pf.GetString("kernelrelease")
-		if err != nil {
-			return err
-		}
-		buildType, err := pf.GetString("buildtype")
-		if err != nil {
-			return err
-		}
-		kernelConfigData, err := pf.GetString("kernelconfigdata")
-		if err != nil {
-			return err
-		}
-		if len(kernelConfigData) == 0 {
-			kernelConfigData = "bm8tZGF0YQ==" // no-data
 		}
 
 		namespaceStr, err := pf.GetString("namespace")
@@ -68,16 +44,6 @@ func kubernetesCmdRunE(kubefactory factory.Factory) func(cmd *cobra.Command, arg
 		}
 		if len(namespaceStr) == 0 {
 			namespaceStr = "default"
-		}
-
-		b := build.Build{
-			ModuleVersion:    moduleVersion,
-			KernelVersion:    kernelVersion,
-			KernelRelease:    kernelRelease,
-			Architecture:     string(modulebuilder.BuildArchitectureX86_64), // TODO(fntlnz,leodido): make this configurable
-			BuildType:        buildtype.BuildType(buildType),
-			KernelConfigData: kernelConfigData,
-			OutputFilePath:   outputFileName,
 		}
 
 		if _, err := b.Validate(); err != nil {
@@ -99,7 +65,7 @@ func kubernetesCmdRunE(kubefactory factory.Factory) func(cmd *cobra.Command, arg
 		buildProcessor := modulebuilder.NewKubernetesBuildProcessor(kc.CoreV1(), clientConfig, namespaceStr)
 		buildProcessor.WithLogger(logger)
 
-		return buildProcessor.Start(b)
+		return buildProcessor.Start(*b)
 	}
 }
 
