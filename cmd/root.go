@@ -3,6 +3,8 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -13,30 +15,35 @@ import (
 
 var cfgFile string
 
+// NewRootCmd ...
 func NewRootCmd() *cobra.Command {
+	rootOpts := NewRootOptions()
 	rootCmd := &cobra.Command{
 		Use:   "driverkit",
-		Short: "driverkit, a command line tool to build Falco kernel modules and eBPF probes",
+		Short: "A command line tool to build Falco kernel modules and eBPF probes.",
+		// Run: func(c *cobra.Command, args []string) {
+		// 	spew.Dump(rootOpts)
+		// 	os.Exit(1)
+		// },
 	}
-	pf := rootCmd.PersistentFlags()
-	pf.StringVar(&cfgFile, "config", "", "config file (default is $HOME/.driverkit.yaml)")
 
-	// common build flags
-	pf.StringP("output", "o", "", "filepath where to save the resulting kernel module")
-	pf.String("moduleversion", "dev", "kernel module version as a git reference")
-	pf.String("kernelversion", "1", "kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v'")
-	pf.String("kernelrelease", "", "kernel release to build the module for, it can be found by executing 'uname -v'")
-	pf.String("buildtype", "", "type of build to execute")
-	pf.String("kernelconfigdata", "", "kernel config data, base64 encoded. In some systems this can be found under the /boot directory, in oder is gzip compressed under /proc")
+	flags := rootCmd.PersistentFlags()
+	flags.StringVar(&rootOpts.ConfigFile, "config", rootOpts.ConfigFile, "config file path")
 
-	_ = cobra.MarkFlagRequired(pf, "output")
-	_ = cobra.MarkFlagRequired(pf, "moduleversion")
-	_ = cobra.MarkFlagRequired(pf, "kernelrelease")
-	_ = cobra.MarkFlagRequired(pf, "kernelversion")
-	_ = cobra.MarkFlagRequired(pf, "buildtype")
+	initConfig(rootOpts.ConfigFile)
 
-	// subcommands
+	flags.StringVarP(&rootOpts.Output, "output", "o", viper.GetString("output"), "filepath where to save the resulting kernel module")
+	flags.StringVar(&rootOpts.ModuleVersion, "moduleversion", viper.GetString("moduleversion"), "kernel module version as a git reference")
+	flags.StringVar(&rootOpts.KernelVersion, "kernelversion", viper.GetString("kernelversion"), "kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v'")
+	flags.StringVar(&rootOpts.KernelRelease, "kernelrelease", viper.GetString("kernelrelease"), "kernel release to build the module for, it can be found by executing 'uname -v'")
+	flags.StringVarP(&rootOpts.Target, "target", "t", viper.GetString("target"), "the system to target the build for")
+	flags.StringVar(&rootOpts.KernelConfigData, "kernelconfigdata", viper.GetString("kernelconfigdata"), "kernel config data, base64 encoded. In some systems this can be found under the /boot directory, in oder is gzip compressed under /proc")
+
+	viper.BindPFlags(flags)
+
+	// Subcommands
 	rootCmd.AddCommand(NewKubernetesCmd())
+	rootCmd.AddCommand(NewDockerCmd())
 
 	return rootCmd
 }
@@ -48,21 +55,16 @@ var logger *zap.Logger
 func Execute() {
 	logger, _ = zap.NewProduction()
 	defer logger.Sync()
-	rcmd := NewRootCmd()
-	if err := rcmd.Execute(); err != nil {
+	root := NewRootCmd()
+	if err := root.Execute(); err != nil {
 		logger.Fatal("error", zap.Error(err))
 	}
 }
 
-func init() {
-	cobra.OnInitialize(initConfig)
-}
-
 // initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
+func initConfig(configFile string) {
+	if filepath.IsAbs(configFile) {
+		viper.SetConfigFile(configFile)
 	} else {
 		// Find home directory.
 		home, err := homedir.Dir()
@@ -71,15 +73,21 @@ func initConfig() {
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".driverkit" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".driverkit")
+		viper.SetConfigFile(filepath.Join(home, strings.TrimPrefix(configFile, "~/")))
 	}
 
-	viper.AutomaticEnv() // read in environment variables that match
+	viper.AutomaticEnv()
+	viper.SetEnvPrefix("driverkit")
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	} else {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			// Config file not found; ignore error if desired
+		} else {
+			// Config file was found but another error was produced
+		}
 	}
 }
