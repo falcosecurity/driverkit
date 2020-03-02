@@ -6,7 +6,7 @@ A command line tool that can be used to build the Falco kernel module and eBPF p
 
 
 ```
-driverkit kubernetes -o /tmp/falco.ko --kernelversion=81 --kernelrelease=4.15.0-72-generic --moduleversion=dev --buildtype=ubuntu-generic 
+driverkit kubernetes -o /tmp/falco-renzo.ko --kernelversion=81 --kernelrelease=4.15.0-72-generic --moduleversion=dev --target=ubuntu-generic
 ```
 
 ## Goals

@@ -96,9 +96,9 @@ func (bp *KubernetesBuildProcessor) buildModule(build buildmeta.Build) error {
 
 	bc := builder.BuilderConfig{
 		ModuleConfig: builder.ModuleConfig{
-			ModuleName:      "falco",                                    // TODO: make this configurable at startup
-			DeviceName:      "falco",                                    // TODO: make this configurable at startup
-			DownloadBaseURL: "https://github.com/draios/sysdig/archive", // TODO: make this configurable at startup
+			ModuleName:      "falco",                                    // TODO: make this configurable
+			DeviceName:      "falco",                                    // TODO: make this configurable
+			DownloadBaseURL: "https://github.com/draios/sysdig/archive", // TODO: make this configurable
 		},
 		Build: build,
 	}

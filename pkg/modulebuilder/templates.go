@@ -26,6 +26,10 @@ while true; do
 done
 `
 
+var tarModuleScript = `
+tar -jcvf /tmp/module.tar ` + builder.FalcoModuleFullPath + `
+`
+
 // waitForModuleAndCat MUST only output the file, any other output will break
 // the download file itself because it goes trough stdout
 var waitForModuleAndCat = `
