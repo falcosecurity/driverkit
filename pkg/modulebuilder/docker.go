@@ -2,6 +2,7 @@ package modulebuilder
 
 import (
 	"archive/tar"
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/base64"
@@ -13,6 +14,7 @@ import (
 	buildmeta "github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder/builder"
 	"github.com/falcosecurity/driverkit/pkg/signals"
+	"k8s.io/apimachinery/pkg/util/uuid"
 	logger "github.com/sirupsen/logrus"
 	"io"
 	"os"
@@ -154,7 +156,9 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 		Init:            nil,
 	}
 	networkCfg := &network.NetworkingConfig{}
-	cdata, err := cli.ContainerCreate(ctx, containerCfg, hostCfg, networkCfg, "yayyyyy")
+	uid := uuid.NewUUID()
+	name := fmt.Sprintf("driverkit-%s", string(uid))
+	cdata, err := cli.ContainerCreate(ctx, containerCfg, hostCfg, networkCfg, name)
 	if err != nil {
 		return err
 	}
@@ -203,10 +207,12 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 		return err
 	}
 
-	err = cli.ContainerExecStart(ctx, edata.ID, types.ExecStartCheck{})
+	hr, err := cli.ContainerExecAttach(ctx, edata.ID, types.ExecStartCheck{})
 	if err != nil {
 		return err
 	}
+
+	forwardLogs(hr.Reader)
 
 	rc, _, err := cli.CopyFromContainer(ctx, cdata.ID, "/tmp/module.tar")
 	if err != nil {
@@ -251,4 +257,21 @@ func tarWriterFiles(buf io.Writer, files []dockerCopyFile) error {
 		}
 	}
 	return nil
+}
+
+func forwardLogs(logPipe io.Reader) {
+	lineReader := bufio.NewReader(logPipe)
+	for {
+		line, err := lineReader.ReadBytes('\n')
+		if len(line) > 0 {
+			logger.Debugf("%s", line)
+		}
+		if err == io.EOF {
+			logger.WithError(err).Debug("log pipe close")
+			return
+		}
+		if err != nil {
+			logger.WithError(err).Error("log pipe error")
+		}
+	}
 }
