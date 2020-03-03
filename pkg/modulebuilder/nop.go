@@ -15,6 +15,6 @@ func (bp *NopBuildProcessor) String() string {
 	return "no-op"
 }
 
-func (bp *NopBuildProcessor) Start(b build.Build) error {
+func (bp *NopBuildProcessor) Start(b *build.Build) error {
 	return nil
 }

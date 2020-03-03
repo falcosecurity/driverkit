@@ -14,7 +14,7 @@ var FalcoModuleFullPath = path.Join(ModuleDirectory, ModuleFileName)
 
 type BuilderConfig struct {
 	ModuleConfig ModuleConfig
-	Build        buildmeta.Build
+	Build        *buildmeta.Build
 }
 
 type ModuleConfig struct {
