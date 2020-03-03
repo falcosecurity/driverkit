@@ -1,21 +1,35 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
 	"strings"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
 	homedir "github.com/mitchellh/go-homedir"
+	logger "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"go.uber.org/zap"
 )
 
-var configFile string
-var logger *zap.Logger
+func persistentValidateFunc(rootCommand *cobra.Command, rootOpts *RootOptions) func(c *cobra.Command, args []string) {
+	return func(c *cobra.Command, args []string) {
+		// Merge environment variables or config file values into the options instance
+		rootCommand.PersistentFlags().VisitAll(func(f *pflag.Flag) {
+			if f.Name != "config" {
+				if val := viper.Get(f.Name); val != "" {
+					rootCommand.PersistentFlags().Set(f.Name, val.(string))
+				}
+			}
+		})
+
+		if errs := rootOpts.Validate(); errs != nil {
+			for _, err := range errs {
+				logger.WithError(err).Error("error validating build options")
+			}
+			logger.Fatal("exiting for validation errors")
+		}
+	}
+}
 
 // NewRootCmd ...
 func NewRootCmd() *cobra.Command {
@@ -23,29 +37,17 @@ func NewRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "driverkit",
 		Short: "A command line tool to build Falco kernel modules and eBPF probes.",
-		PersistentPreRun: func(c *cobra.Command, args []string) {
-			// Merge environment variables or config file values into the options instance
-			c.PersistentFlags().VisitAll(func(f *pflag.Flag) {
-				if f.Name != "config" {
-					if val := viper.Get(f.Name); val != "" {
-						c.PersistentFlags().Set(f.Name, val.(string))
-					}
-				}
-			})
-			spew.Dump(rootOpts)
-			if err := rootOpts.Validate(); err != nil {
-				fmt.Fprintf(os.Stderr, err.Error())
-				os.Exit(1)
-			}
-		},
 		Run: func(c *cobra.Command, args []string) {
 			// This is needed to make `PersistentPreRunE` always run
 		},
 	}
+	rootCmd.PersistentPreRun = persistentValidateFunc(rootCmd, rootOpts)
 
 	flags := rootCmd.PersistentFlags()
 
-	flags.StringVar(&configFile, "config", "", "config file path (default $HOME/.driverkit.yaml if exists)")
+	flags.StringVarP(&configOptions.ConfigFile, "config", "c", configOptions.ConfigFile, "config file path (default $HOME/.driverkit.yaml if exists)")
+
+	flags.StringVarP(&configOptions.LogLevel, "loglevel", "l", "info", "log level")
 
 	flags.StringVarP(&rootOpts.Output, "output", "o", rootOpts.Output, "filepath where to save the resulting kernel module")
 	flags.StringVar(&rootOpts.ModuleVersion, "moduleversion", rootOpts.ModuleVersion, "kernel module version as a git reference")
@@ -57,19 +59,17 @@ func NewRootCmd() *cobra.Command {
 	viper.BindPFlags(flags)
 
 	// Subcommands
-	rootCmd.AddCommand(NewKubernetesCmd())
-	rootCmd.AddCommand(NewDockerCmd())
+	rootCmd.AddCommand(NewKubernetesCmd(rootOpts))
+	rootCmd.AddCommand(NewDockerCmd(rootOpts))
 
 	return rootCmd
 }
 
 // Start creates the root command and runs it.
 func Start() {
-	logger, _ = zap.NewProduction()
-	defer logger.Sync()
 	root := NewRootCmd()
 	if err := root.Execute(); err != nil {
-		logger.Fatal("error", zap.Error(err))
+		logger.WithError(err).Fatal("error executing root command")
 	}
 }
 
@@ -79,14 +79,19 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if configFile != "" {
-		viper.SetConfigFile(configFile)
+	if errs := configOptions.Validate(); errs != nil {
+		for _, err := range errs {
+			logger.WithError(err).Error("error validating config options")
+		}
+		logger.Fatal("exiting for validation errors")
+	}
+	if configOptions.ConfigFile != "" {
+		viper.SetConfigFile(configOptions.ConfigFile)
 	} else {
 		// Find home directory.
 		home, err := homedir.Dir()
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			logger.WithError(err).Fatal("error getting the home directory")
 		}
 
 		viper.AddConfigPath(home)
@@ -99,16 +104,14 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+		logger.WithField("file", viper.ConfigFileUsed()).Info("Using config file")
 	} else {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// Config file not found, ignore ...
-			fmt.Println("Running without config file...")
+			logger.Debug("Running without a configuration file")
 		} else {
 			// Config file was found but another error was produced
-			fmt.Fprintf(os.Stderr, "Running with config file:%s\n", viper.ConfigFileUsed())
-			fmt.Fprintf(os.Stderr, "%s\n", err)
-			os.Exit(1)
+			logger.WithField("file", viper.ConfigFileUsed()).WithError(err).Fatal("Error running with config file")
 		}
 	}
 }
