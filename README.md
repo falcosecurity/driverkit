@@ -5,9 +5,44 @@ Status: **Under development**
 A command line tool that can be used to build the Falco kernel module and eBPF probe.
 
 
+## Usage
+
+### Against a Kubernetes cluster
+
+```bash
+driverkit kubernetes -o /tmp/falco.ko --kernelversion=81 --kernelrelease=4.15.0-72-generic --moduleversion=dev --target=ubuntu-generic
 ```
-driverkit kubernetes -o /tmp/falco-renzo.ko --kernelversion=81 --kernelrelease=4.15.0-72-generic --moduleversion=dev --target=ubuntu-generic
+
+### Against a Docker daemon
+
+```bash
+driverkit docker -o /tmp/falco.ko --kernelversion=81 --kernelrelease=4.15.0-72-generic --moduleversion=dev --target=ubuntu-generic
 ```
+
+
+### Build using a configuration file
+
+Create a file named `ubuntu-aws.yaml` containing the following content:
+
+```yaml
+kernelrelease: 4.15.0-1057-aws
+kernelversion: 59
+target: ubuntu-aws
+output: /tmp/falco-ubuntu-aws.ko
+moduleversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
+```
+
+Now run driverkit using the configuration file:
+
+```bash
+driverkit docker -c ubuntu-aws.yaml
+```
+
+## Supported targets
+
+- ubuntu-generic
+- ubuntu-aws
+- vanilla
 
 ## Goals
 
