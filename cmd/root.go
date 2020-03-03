@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/falcosecurity/driverkit/validate"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
@@ -24,7 +23,7 @@ func NewRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "driverkit",
 		Short: "A command line tool to build Falco kernel modules and eBPF probes.",
-		PersistentPreRunE: func(c *cobra.Command, args []string) error {
+		PersistentPreRun: func(c *cobra.Command, args []string) {
 			// Merge environment variables or config file values into the options instance
 			c.PersistentFlags().VisitAll(func(f *pflag.Flag) {
 				if f.Name != "config" {
@@ -34,8 +33,10 @@ func NewRootCmd() *cobra.Command {
 				}
 			})
 			spew.Dump(rootOpts)
-			spew.Dump(validate.V.Struct(rootOpts))
-			return fmt.Errorf("ciao")
+			if err := rootOpts.Validate(); err != nil {
+				fmt.Fprintf(os.Stderr, err.Error())
+				os.Exit(1)
+			}
 		},
 		Run: func(c *cobra.Command, args []string) {
 			// This is needed to make `PersistentPreRunE` always run
