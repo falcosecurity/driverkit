@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
+	"strings"
 
 	"github.com/creasty/defaults"
 	"github.com/falcosecurity/driverkit/validate"
@@ -10,12 +12,12 @@ import (
 
 // RootOptions ...
 type RootOptions struct {
-	Output           string `validate:"required,file"`
-	ModuleVersion    string `default:"dev" validate:"required,ascii"` // todo > semver validator?
-	KernelVersion    string `validate:"required,number"`              // todo > semver validator?
-	KernelRelease    string `validate:"required,ascii"`
-	Target           string `validate:"oneof=vanilla ubuntu-generic ubuntu-aws"`
-	KernelConfigData string `validate:"omitempty,base64"` // todo > tie to target field - e.g, `required_without_ubuntu`
+	Output           string `validate:"file" name:"output"`
+	ModuleVersion    string `default:"dev" validate:"ascii" name:"module version"` // todo > semver validator?
+	KernelVersion    string `validate:"number" name:"kernel version"`              // todo > semver validator?
+	KernelRelease    string `validate:"required,ascii" name:"kernel release"`
+	Target           string `validate:"oneof=vanilla ubuntu-generic ubuntu-aws" name:"target"`
+	KernelConfigData string `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level
 }
 
 func init() {
@@ -34,7 +36,17 @@ func NewRootOptions() *RootOptions {
 
 // Validate validates the RootOptions fields.
 func (ro *RootOptions) Validate() error {
-	return validate.V.Struct(ro)
+	if err := validate.V.Struct(ro); err != nil {
+		errors := err.(validator.ValidationErrors)
+		errstr := ""
+		for _, e := range errors {
+			// Translate each error one at a time
+			errstr += fmt.Sprintf("%s\n", e.Translate(validate.T))
+		}
+		strings.TrimSuffix(errstr, "\n")
+		return fmt.Errorf(errstr)
+	}
+	return nil
 }
 
 // RootOptionsLevelValidation validates KernelConfigData and Target at the same time.
