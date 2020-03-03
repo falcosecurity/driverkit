@@ -19,9 +19,11 @@ func init() {
 	buildtype.EnabledBuildTypes[BuildTypeUbuntuAWS] = true
 }
 
+// UbuntuGeneric ...
 type UbuntuGeneric struct {
 }
 
+// Script ...
 func (v UbuntuGeneric) Script(bc BuilderConfig) (string, error) {
 	t := template.New(string(BuildTypeUbuntuGeneric))
 	parsed, err := t.Parse(ubuntuTemplate)
@@ -32,10 +34,11 @@ func (v UbuntuGeneric) Script(bc BuilderConfig) (string, error) {
 	kr := kernelrelease.FromString(bc.Build.KernelRelease)
 
 	td := ubuntuTemplateData{
-		ModuleBuildDir:     ModuleDirectory,
-		ModuleDownloadURL:  fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.Build.ModuleVersion),
-		KernelDownloadURLS: fetchUbuntuGenericKernelURL(kr, bc.Build.KernelVersion),
-		KernelLocalVersion: kr.FullExtraversion,
+		ModuleBuildDir:       ModuleDirectory,
+		ModuleDownloadURL:    fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.Build.ModuleVersion),
+		KernelDownloadURLS:   fetchUbuntuGenericKernelURL(kr, bc.Build.KernelVersion),
+		KernelLocalVersion:   kr.FullExtraversion,
+		KernelHeadersPattern: "*generic",
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -46,9 +49,11 @@ func (v UbuntuGeneric) Script(bc BuilderConfig) (string, error) {
 	return buf.String(), nil
 }
 
+// UbuntuAWS ...
 type UbuntuAWS struct {
 }
 
+// Script ...
 func (v UbuntuAWS) Script(bc BuilderConfig) (string, error) {
 	t := template.New(string(BuildTypeUbuntuGeneric))
 	parsed, err := t.Parse(ubuntuTemplate)
@@ -59,10 +64,11 @@ func (v UbuntuAWS) Script(bc BuilderConfig) (string, error) {
 	kr := kernelrelease.FromString(bc.Build.KernelRelease)
 
 	td := ubuntuTemplateData{
-		ModuleBuildDir:     ModuleDirectory,
-		ModuleDownloadURL:  moduleDownloadURL(bc),
-		KernelDownloadURLS: fetchUbuntuAWSKernelURLS(kr, bc.Build.KernelVersion),
-		KernelLocalVersion: kr.FullExtraversion,
+		ModuleBuildDir:       ModuleDirectory,
+		ModuleDownloadURL:    moduleDownloadURL(bc),
+		KernelDownloadURLS:   fetchUbuntuAWSKernelURLS(kr, bc.Build.KernelVersion),
+		KernelLocalVersion:   kr.FullExtraversion,
+		KernelHeadersPattern: "*",
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -126,10 +132,11 @@ func extractExtraNumber(extraversion string) string {
 }
 
 type ubuntuTemplateData struct {
-	ModuleBuildDir     string
-	ModuleDownloadURL  string
-	KernelDownloadURLS []string
-	KernelLocalVersion string
+	ModuleBuildDir       string
+	ModuleDownloadURL    string
+	KernelDownloadURLS   []string
+	KernelLocalVersion   string
+	KernelHeadersPattern string
 }
 
 const ubuntuTemplate = `
@@ -158,7 +165,7 @@ tar -xvf data.tar.xz
 ls -la /tmp/kernel-download
 
 cd /tmp/kernel-download/usr/src/
-sourcedir=$(find . -type d -name "linux-headers*" | head -n 1 | xargs readlink -f)
+sourcedir=$(find . -type d -name "linux-headers{{ .KernelHeadersPattern }}" | head -n 1 | xargs readlink -f)
 
 ls -la $sourcedir
 # Prepare the kernel
@@ -174,7 +181,7 @@ sed -i 's/^CONFIG_LOCALVERSION=.*$/CONFIG_LOCALVERSION="{{ .KernelLocalVersion }
 # Build the module
 cd {{ .ModuleBuildDir }}
 make KERNELDIR=$sourcedir
-# print results
+# Print results
 ls -la
 
 modinfo falco.ko
