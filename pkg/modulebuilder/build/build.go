@@ -5,22 +5,16 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
-
-	"github.com/asaskevich/govalidator"
 )
 
 type Build struct {
-	BuildType        buildtype.BuildType `valid:"buildtype,required"`
-	KernelConfigData string              `valid:"base64"`
-	KernelRelease    string              `valid:"ascii,required"` // TODO(fntlnz): make specific validator for this?
-	KernelVersion    string              `valid:"int,required"`
-	ModuleVersion    string              `valid:"ascii,required"` // TODO(fntlnz):make specific validator for this? (check govalidator semver)
-	Architecture     string              `valid:"buildarchitecture,required"`
-	OutputFilePath   string              `valid:"ascii,required"`
-}
-
-func (b *Build) Validate() (bool, error) {
-	return govalidator.ValidateStruct(b)
+	BuildType        buildtype.BuildType
+	KernelConfigData string
+	KernelRelease    string // TODO(fntlnz): make specific validator for this?
+	KernelVersion    string
+	ModuleVersion    string // TODO(fntlnz):make specific validator for this?
+	Architecture     string
+	OutputFilePath   string
 }
 
 func (b *Build) SHA256() (string, error) {

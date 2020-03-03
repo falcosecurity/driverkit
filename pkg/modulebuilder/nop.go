@@ -2,7 +2,6 @@ package modulebuilder
 
 import (
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
-	"go.uber.org/zap"
 )
 
 type NopBuildProcessor struct {
@@ -10,9 +9,6 @@ type NopBuildProcessor struct {
 
 func NewNopBuildProcessor() *NopBuildProcessor {
 	return &NopBuildProcessor{}
-}
-
-func (bp *NopBuildProcessor) WithLogger(logger *zap.Logger) {
 }
 
 func (bp *NopBuildProcessor) String() string {
