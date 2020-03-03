@@ -27,7 +27,7 @@ mkdir {{ .ModuleBuildDir }}
 rm -Rf /tmp/module-download
 mkdir -p /tmp/module-download
 
-curl -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
+curl --silent -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
 mv /tmp/module-download/*/driver/* {{ .ModuleBuildDir }}
 
 cp /module-builder/module-Makefile {{ .ModuleBuildDir }}/Makefile
@@ -36,7 +36,7 @@ cp /module-builder/module-driver-config.h {{ .ModuleBuildDir }}/driver_config.h
 # Fetch the kernel
 cd /tmp
 mkdir /tmp/kernel-download
-curl -SL {{ .KernelDownloadURL }} | tar -Jxf - -C /tmp/kernel-download
+curl --silent -SL {{ .KernelDownloadURL }} | tar -Jxf - -C /tmp/kernel-download
 rm -Rf /tmp/kernel
 mkdir -p /tmp/kernel
 mv /tmp/kernel-download/*/* /tmp/kernel
