@@ -148,7 +148,7 @@ mkdir {{ .ModuleBuildDir }}
 rm -Rf /tmp/module-download
 mkdir -p /tmp/module-download
 
-curl -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
+curl --silent -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
 mv /tmp/module-download/*/driver/* {{ .ModuleBuildDir }}
 
 cp /module-builder/module-Makefile {{ .ModuleBuildDir }}/Makefile
@@ -158,7 +158,7 @@ cp /module-builder/module-driver-config.h {{ .ModuleBuildDir }}/driver_config.h
 mkdir /tmp/kernel-download
 cd /tmp/kernel-download
 {{range $url := .KernelDownloadURLS}}
-curl -o kernel.deb -SL {{ $url }}
+curl --silent -o kernel.deb -SL {{ $url }}
 ar x kernel.deb
 tar -xvf data.tar.xz
 {{end}}
