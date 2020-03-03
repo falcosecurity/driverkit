@@ -9,7 +9,7 @@ import (
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
-func NewKubernetesCmd() *cobra.Command {
+func NewKubernetesCmd(rootOpts *RootOptions) *cobra.Command {
 	kubernetesCmd := &cobra.Command{
 		Use:   "kubernetes",
 		Short: "run driverkit against a Kubernetes cluster",
@@ -21,7 +21,7 @@ func NewKubernetesCmd() *cobra.Command {
 	configFlags.AddFlags(kubernetesCmd.PersistentFlags())
 	kubefactory := factory.NewFactory(configFlags)
 
-	kubernetesCmd.RunE = kubernetesCmdRunE(kubefactory)
+	kubernetesCmd.RunE = kubernetesCmdRunE(rootOpts, kubefactory)
 
 	// Override help on all the commands tree
 	walk(kubernetesCmd, func(c *cobra.Command) {
@@ -30,13 +30,10 @@ func NewKubernetesCmd() *cobra.Command {
 
 	return kubernetesCmd
 }
-func kubernetesCmdRunE(kubefactory factory.Factory) func(cmd *cobra.Command, args []string) error {
+func kubernetesCmdRunE(rootOpts *RootOptions, kubefactory factory.Factory) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		pf := cmd.Flags()
-		b, err := a(pf)
-		if err != nil {
-			return err
-		}
+		b := rootOpts.toBuild()
 
 		namespaceStr, err := pf.GetString("namespace")
 		if err != nil {
@@ -44,10 +41,6 @@ func kubernetesCmdRunE(kubefactory factory.Factory) func(cmd *cobra.Command, arg
 		}
 		if len(namespaceStr) == 0 {
 			namespaceStr = "default"
-		}
-
-		if _, err := b.Validate(); err != nil {
-			return err
 		}
 
 		kc, err := kubefactory.KubernetesClientSet()
@@ -63,9 +56,8 @@ func kubernetesCmdRunE(kubefactory factory.Factory) func(cmd *cobra.Command, arg
 		}
 
 		buildProcessor := modulebuilder.NewKubernetesBuildProcessor(kc.CoreV1(), clientConfig, namespaceStr)
-		buildProcessor.WithLogger(logger)
 
-		return buildProcessor.Start(*b)
+		return buildProcessor.Start(b)
 	}
 }
 
