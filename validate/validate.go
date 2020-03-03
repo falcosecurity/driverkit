@@ -1,6 +1,7 @@
 package validate
 
 import (
+	logger "github.com/sirupsen/logrus"
 	"reflect"
 	"strings"
 
@@ -28,6 +29,16 @@ func init() {
 			return ""
 		}
 		return name
+	})
+
+	V.RegisterValidation("logrus", func(fl validator.FieldLevel) bool {
+		level := fl.Field().String()
+		lvl, err := logger.ParseLevel(level)
+		if err != nil {
+			return false
+		}
+		logger.SetLevel(lvl)
+		return true
 	})
 
 	eng := en.New()
@@ -60,4 +71,18 @@ func init() {
 			return t
 		},
 	)
+
+	V.RegisterTranslation(
+		"logrus",
+		T,
+		func(ut ut.Translator) error {
+			return ut.Add("logrus", "{0} must be a valid logrus level", true)
+		},
+		func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T("logrus", fe.Field())
+
+			return t
+		},
+	)
+
 }
