@@ -22,6 +22,8 @@ func persistentValidateFunc(rootCommand *cobra.Command, rootOpts *RootOptions) f
 					case "uint16":
 						rootCommand.PersistentFlags().Set(f.Name, strconv.Itoa(val.(int)))
 						break
+					case "string":
+						fallthrough
 					default:
 						rootCommand.PersistentFlags().Set(f.Name, val.(string))
 						break
@@ -77,7 +79,7 @@ func NewRootCmd() *cobra.Command {
 func Start() {
 	root := NewRootCmd()
 	if err := root.Execute(); err != nil {
-		logger.WithError(err).Fatal("error executing root command")
+		logger.WithError(err).Fatal("error executing driverkit")
 	}
 }
 

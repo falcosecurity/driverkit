@@ -12,7 +12,7 @@ import (
 
 // RootOptions ...
 type RootOptions struct {
-	Output           string `validate:"file" name:"output"`
+	Output           string `validate:"filepath" name:"output"`
 	Architecture     string `default:"x86_64" validate:"oneof=x86_64" name:"architecture"`
 	ModuleVersion    string `default:"dev" validate:"ascii" name:"module version"` // todo > semver validator?
 	KernelVersion    uint16 `validate:"number" name:"kernel version"`              // todo > semver validator?
