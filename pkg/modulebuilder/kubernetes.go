@@ -26,7 +26,7 @@ import (
 const KubernetesBuildProcessorName = "kubernetes"
 
 var builderBaseImage = "falcosecurity/driverkit-builder-base:latest" // This is overwritten when using the Makefile to build
-const falcoBuilderUIDLabel = "org.falcosecurity/falco-builder-uid"
+const falcoBuilderUIDLabel = "org.falcosecurity/driverkit-uid"
 
 type KubernetesBuildProcessor struct {
 	coreV1Client v1.CoreV1Interface
@@ -64,7 +64,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build *buildmeta.Build) error {
 
 	namespace := bp.namespace
 	uid := uuid.NewUUID()
-	name := fmt.Sprintf("falco-builder-%s", string(uid))
+	name := fmt.Sprintf("driverkit-%s", string(uid))
 
 	podClient := bp.coreV1Client.Pods(namespace)
 	configClient := bp.coreV1Client.ConfigMaps(namespace)
