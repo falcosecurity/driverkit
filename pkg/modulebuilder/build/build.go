@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
 )
 
@@ -11,7 +12,7 @@ type Build struct {
 	BuildType        buildtype.BuildType
 	KernelConfigData string
 	KernelRelease    string // TODO(fntlnz): make specific validator for this?
-	KernelVersion    string
+	KernelVersion    uint16
 	ModuleVersion    string // TODO(fntlnz):make specific validator for this?
 	Architecture     string
 	OutputFilePath   string

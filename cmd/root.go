@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -17,7 +18,14 @@ func persistentValidateFunc(rootCommand *cobra.Command, rootOpts *RootOptions) f
 		rootCommand.PersistentFlags().VisitAll(func(f *pflag.Flag) {
 			if f.Name != "config" {
 				if val := viper.Get(f.Name); val != "" {
-					rootCommand.PersistentFlags().Set(f.Name, val.(string))
+					switch f.Value.Type() {
+					case "uint16":
+						rootCommand.PersistentFlags().Set(f.Name, strconv.Itoa(val.(int)))
+						break
+					default:
+						rootCommand.PersistentFlags().Set(f.Name, val.(string))
+						break
+					}
 				}
 			}
 		})
@@ -51,7 +59,7 @@ func NewRootCmd() *cobra.Command {
 
 	flags.StringVarP(&rootOpts.Output, "output", "o", rootOpts.Output, "filepath where to save the resulting kernel module")
 	flags.StringVar(&rootOpts.ModuleVersion, "moduleversion", rootOpts.ModuleVersion, "kernel module version as a git reference")
-	flags.StringVar(&rootOpts.KernelVersion, "kernelversion", rootOpts.KernelVersion, "kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v'")
+	flags.Uint16Var(&rootOpts.KernelVersion, "kernelversion", rootOpts.KernelVersion, "kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v'")
 	flags.StringVar(&rootOpts.KernelRelease, "kernelrelease", rootOpts.KernelRelease, "kernel release to build the module for, it can be found by executing 'uname -v'")
 	flags.StringVarP(&rootOpts.Target, "target", "t", rootOpts.Target, "the system to target the build for")
 	flags.StringVar(&rootOpts.KernelConfigData, "kernelconfigdata", rootOpts.KernelConfigData, "kernel config data, base64 encoded. In some systems this can be found under the /boot directory, in oder is gzip compressed under /proc")
