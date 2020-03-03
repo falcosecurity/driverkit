@@ -1,7 +1,6 @@
 package validate
 
 import (
-	logger "github.com/sirupsen/logrus"
 	"reflect"
 	"strings"
 
@@ -31,15 +30,9 @@ func init() {
 		return name
 	})
 
-	V.RegisterValidation("logrus", func(fl validator.FieldLevel) bool {
-		level := fl.Field().String()
-		lvl, err := logger.ParseLevel(level)
-		if err != nil {
-			return false
-		}
-		logger.SetLevel(lvl)
-		return true
-	})
+	V.RegisterValidation("logrus", isLogrusLevel)
+
+	V.RegisterValidation("filepath", isFilePath)
 
 	eng := en.New()
 	uni := ut.New(eng, eng)
@@ -47,13 +40,13 @@ func init() {
 	en_translations.RegisterDefaultTranslations(V, T)
 
 	V.RegisterTranslation(
-		"file",
+		"filepath",
 		T,
 		func(ut ut.Translator) error {
-			return ut.Add("file", "{0} must be a valid and existing file", true)
+			return ut.Add("filepath", "{0} must be a valid file path", true)
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
-			t, _ := ut.T("file", fe.Field())
+			t, _ := ut.T("filepath", fe.Field())
 
 			return t
 		},
@@ -84,5 +77,4 @@ func init() {
 			return t
 		},
 	)
-
 }
