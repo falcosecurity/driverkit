@@ -2,17 +2,18 @@ package cmd
 
 import (
 	"fmt"
-	"log"
-	"strings"
-
 	"github.com/creasty/defaults"
+	"github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
+	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
 	"github.com/falcosecurity/driverkit/validate"
 	"github.com/go-playground/validator/v10"
+	"log"
 )
 
 // RootOptions ...
 type RootOptions struct {
 	Output           string `validate:"file" name:"output"`
+	Architecture     string `default:"x86_64" validate:"oneof=x86_64" name:"architecture"`
 	ModuleVersion    string `default:"dev" validate:"ascii" name:"module version"` // todo > semver validator?
 	KernelVersion    string `validate:"number" name:"kernel version"`              // todo > semver validator?
 	KernelRelease    string `validate:"required,ascii" name:"kernel release"`
@@ -30,23 +31,39 @@ func NewRootOptions() *RootOptions {
 	if err := defaults.Set(rootOpts); err != nil {
 		log.Fatal(err)
 	}
-	// V.RegisterStructValidation(RootOptionsLevelValidation, RootOptions{})
 	return rootOpts
 }
 
 // Validate validates the RootOptions fields.
-func (ro *RootOptions) Validate() error {
+func (ro *RootOptions) Validate() []error {
 	if err := validate.V.Struct(ro); err != nil {
 		errors := err.(validator.ValidationErrors)
-		errstr := ""
+		errArr := []error{}
 		for _, e := range errors {
 			// Translate each error one at a time
-			errstr += fmt.Sprintf("%s\n", e.Translate(validate.T))
+			errArr = append(errArr, fmt.Errorf(e.Translate(validate.T)))
 		}
-		strings.TrimSuffix(errstr, "\n")
-		return fmt.Errorf(errstr)
+		return errArr
 	}
 	return nil
+}
+
+
+func (ro *RootOptions) toBuild() *build.Build {
+	kernelConfigData := ro.KernelConfigData
+	if len(kernelConfigData) == 0 {
+		kernelConfigData = "bm8tZGF0YQ==" // no-data
+	}
+
+	return &build.Build{
+		ModuleVersion:    ro.ModuleVersion,
+		KernelVersion:    ro.KernelVersion,
+		KernelRelease:    ro.KernelRelease,
+		Architecture:     ro.Architecture,
+		BuildType:        buildtype.BuildType(ro.Target),
+		KernelConfigData: kernelConfigData,
+		OutputFilePath:   ro.Output,
+	}
 }
 
 // RootOptionsLevelValidation validates KernelConfigData and Target at the same time.
