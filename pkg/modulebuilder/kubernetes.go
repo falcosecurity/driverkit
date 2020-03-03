@@ -6,13 +6,13 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	logger "github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"time"
 
 	buildmeta "github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder/builder"
-	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +29,6 @@ var builderBaseImage = "falcosecurity/driverkit-builder-base:latest" // This is 
 const falcoBuilderUIDLabel = "org.falcosecurity/falco-builder-uid"
 
 type KubernetesBuildProcessor struct {
-	logger       *zap.Logger
 	coreV1Client v1.CoreV1Interface
 	clientConfig *restclient.Config
 	namespace    string
@@ -41,7 +40,6 @@ type KubernetesBuildProcessor struct {
 // for processing, however setting this to a big value will have impacts
 func NewKubernetesBuildProcessor(corev1Client v1.CoreV1Interface, clientConfig *restclient.Config, namespace string) *KubernetesBuildProcessor {
 	return &KubernetesBuildProcessor{
-		logger:       zap.NewNop(),
 		coreV1Client: corev1Client,
 		clientConfig: clientConfig,
 		namespace:    namespace,
@@ -52,31 +50,14 @@ func (bp *KubernetesBuildProcessor) String() string {
 	return KubernetesBuildProcessorName
 }
 
-func (bp *KubernetesBuildProcessor) WithLogger(logger *zap.Logger) {
-	bp.logger = logger
-	bp.logger.With(zap.String("processor", bp.String()))
-}
-
-func (bp *KubernetesBuildProcessor) Start(b buildmeta.Build) error {
-	buildlogger := bp.logger.With(
-		zap.String("Architecture", b.Architecture),
-		zap.String("BuildType", string(b.BuildType)),
-		zap.String("KernelRelease", b.KernelVersion),
-		zap.String("ModuleVersion", b.ModuleVersion),
-	)
-	sha, err := b.SHA256()
-	if err != nil {
-		buildlogger.Error("build sha256 error", zap.Error(err))
-		return err
-	}
-	buildlogger = buildlogger.With(zap.String("SHA256", sha))
-	buildlogger.Info("doing a new build")
+func (bp *KubernetesBuildProcessor) Start(b *buildmeta.Build) error {
+	logger.Debug("doing a new kubernetes build")
 	return bp.buildModule(b)
 }
 
 func int64Ptr(i int64) *int64 { return &i }
 
-func (bp *KubernetesBuildProcessor) buildModule(build buildmeta.Build) error {
+func (bp *KubernetesBuildProcessor) buildModule(build *buildmeta.Build) error {
 	// TODO(fntlnz): make these configurable
 	deadline := int64(1000)
 	deadlineGracePeriod := int64(20)
@@ -236,25 +217,24 @@ func (bp *KubernetesBuildProcessor) copyModuleFromPodWithUID(out io.Writer, name
 	for {
 		select {
 		case <-ctx.Done():
-			return errors.New("moduly copy from pod interrupted before the copy was complete")
+			return errors.New("module copy from pod interrupted before the copy was complete")
 		default:
 			event := <-watch.ResultChan()
 			p, ok := event.Object.(*corev1.Pod)
 			if !ok {
-				bp.logger.Error("unexpected type when watching pods")
+				logger.Error("unexpected type when watching pods")
 				continue
 			}
 			if p.Status.Phase == corev1.PodPending {
 				continue
 			}
 			if p.Status.Phase == corev1.PodRunning {
-				bp.logger.Info("start downloading module from pod", zap.String(falcoBuilderUIDLabel, falcoBuilderUID))
-				// TODO(fntlnz): make the output directory configurable
+				logger.WithField(falcoBuilderUIDLabel, falcoBuilderUID).Info("start downloading module from pod")
 				err = copySingleFileFromPod(out, bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name)
 				if err != nil {
 					return err
 				}
-				bp.logger.Info("completed downloading module from pod", zap.String(falcoBuilderUIDLabel, falcoBuilderUID))
+				logger.WithField(falcoBuilderUIDLabel, falcoBuilderUID).Info("completed downloading module from pod")
 			}
 			return nil
 		}

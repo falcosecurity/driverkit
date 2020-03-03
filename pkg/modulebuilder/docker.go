@@ -13,7 +13,7 @@ import (
 	buildmeta "github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder/builder"
 	"github.com/falcosecurity/driverkit/pkg/signals"
-	"go.uber.org/zap"
+	logger "github.com/sirupsen/logrus"
 	"io"
 	"os"
 )
@@ -21,13 +21,11 @@ import (
 const DockerBuildProcessorName = "docker"
 
 type DockerBuildProcessor struct {
-	logger *zap.Logger
 }
 
 // NewDockerBuildProcessor ...
 func NewDockerBuildProcessor() *DockerBuildProcessor {
 	return &DockerBuildProcessor{
-		logger: zap.NewNop(),
 	}
 }
 
@@ -35,25 +33,8 @@ func (bp *DockerBuildProcessor) String() string {
 	return DockerBuildProcessorName
 }
 
-func (bp *DockerBuildProcessor) WithLogger(logger *zap.Logger) {
-	bp.logger = logger
-	bp.logger.With(zap.String("processor", bp.String()))
-}
-
-func (bp *DockerBuildProcessor) Start(b buildmeta.Build) error {
-	buildlogger := bp.logger.With(
-		zap.String("Architecture", b.Architecture),
-		zap.String("BuildType", string(b.BuildType)),
-		zap.String("KernelRelease", b.KernelVersion),
-		zap.String("ModuleVersion", b.ModuleVersion),
-	)
-	sha, err := b.SHA256()
-	if err != nil {
-		buildlogger.Error("build sha256 error", zap.Error(err))
-		return err
-	}
-	buildlogger = buildlogger.With(zap.String("SHA256", sha))
-	buildlogger.Info("doing a new build")
+func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
+	logger.Debug("doing a new docker build")
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
