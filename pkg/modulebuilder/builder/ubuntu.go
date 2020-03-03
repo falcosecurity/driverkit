@@ -73,11 +73,11 @@ func (v UbuntuAWS) Script(bc BuilderConfig) (string, error) {
 	return buf.String(), nil
 }
 
-func fetchUbuntuGenericKernelURL(kr kernelrelease.KernelRelease, kernelVersion string) []string {
+func fetchUbuntuGenericKernelURL(kr kernelrelease.KernelRelease, kernelVersion uint16) []string {
 	firstExtra := extractExtraNumber(kr.Extraversion)
 	return []string{
 		fmt.Sprintf(
-			"https://mirrors.kernel.org/ubuntu/pool/main/l/linux/linux-headers-%s-%s_%s-%s.%s_all.deb",
+			"https://mirrors.kernel.org/ubuntu/pool/main/l/linux/linux-headers-%s-%s_%s-%s.%d_all.deb",
 			kr.Fullversion,
 			firstExtra,
 			kr.Fullversion,
@@ -85,7 +85,7 @@ func fetchUbuntuGenericKernelURL(kr kernelrelease.KernelRelease, kernelVersion s
 			kernelVersion,
 		),
 		fmt.Sprintf(
-			"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-%s%s_%s-%s.%s_amd64.deb",
+			"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-%s%s_%s-%s.%d_amd64.deb",
 			kr.Fullversion,
 			kr.FullExtraversion,
 			kr.Fullversion,
@@ -95,11 +95,11 @@ func fetchUbuntuGenericKernelURL(kr kernelrelease.KernelRelease, kernelVersion s
 	}
 }
 
-func fetchUbuntuAWSKernelURLS(kr kernelrelease.KernelRelease, kernelVersion string) []string {
+func fetchUbuntuAWSKernelURLS(kr kernelrelease.KernelRelease, kernelVersion uint16) []string {
 	firstExtra := extractExtraNumber(kr.Extraversion)
 	return []string{
 		fmt.Sprintf(
-			"https://mirrors.kernel.org/ubuntu/pool/main/l/linux-aws/linux-aws-headers-%s-%s_%s-%s.%s_all.deb",
+			"https://mirrors.kernel.org/ubuntu/pool/main/l/linux-aws/linux-aws-headers-%s-%s_%s-%s.%d_all.deb",
 			kr.Fullversion,
 			firstExtra,
 			kr.Fullversion,
@@ -107,7 +107,7 @@ func fetchUbuntuAWSKernelURLS(kr kernelrelease.KernelRelease, kernelVersion stri
 			kernelVersion,
 		),
 		fmt.Sprintf(
-			"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws/linux-headers-%s%s_%s-%s.%s_amd64.deb",
+			"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws/linux-headers-%s%s_%s-%s.%d_amd64.deb",
 			kr.Fullversion,
 			kr.FullExtraversion,
 			kr.Fullversion,
