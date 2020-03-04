@@ -9,7 +9,7 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
-var configOptions ConfigOptions
+var configOptions *ConfigOptions
 
 // ConfigOptions represent the persistent configuration flags of driverkit.
 type ConfigOptions struct {
@@ -19,12 +19,12 @@ type ConfigOptions struct {
 }
 
 // NewConfigOptions creates an instance of ConfigOptions.
-func NewConfigOptions() ConfigOptions {
+func NewConfigOptions() *ConfigOptions {
 	o := &ConfigOptions{}
 	if err := defaults.Set(o); err != nil {
 		logger.WithError(err).WithField("options", "ConfigOptions").Fatal("error setting driverkit options defaults")
 	}
-	return *o
+	return o
 }
 
 // Validate validates the ConfigOptions fields.
