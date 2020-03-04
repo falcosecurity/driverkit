@@ -2,12 +2,13 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/creasty/defaults"
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
 	"github.com/falcosecurity/driverkit/validate"
 	"github.com/go-playground/validator/v10"
-	"log"
+	logger "github.com/sirupsen/logrus"
 )
 
 // RootOptions ...
@@ -29,7 +30,7 @@ func init() {
 func NewRootOptions() *RootOptions {
 	rootOpts := &RootOptions{}
 	if err := defaults.Set(rootOpts); err != nil {
-		log.Fatal(err)
+		logger.WithError(err).WithField("options", "RootOptions").Fatal("error setting driverkit options defaults")
 	}
 	return rootOpts
 }
@@ -47,7 +48,6 @@ func (ro *RootOptions) Validate() []error {
 	}
 	return nil
 }
-
 
 func (ro *RootOptions) toBuild() *build.Build {
 	kernelConfigData := ro.KernelConfigData
