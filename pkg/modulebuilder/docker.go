@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -92,8 +93,7 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 
 	containerCfg := &container.Config{
 		Tty:         true,
-		Cmd:         []string{"/bin/cat"},
-		StopTimeout: &bp.timeout,
+		Cmd:         []string{"/bin/sleep", strconv.Itoa(bp.timeout)},
 		Image:       builderBaseImage,
 	}
 
