@@ -18,6 +18,7 @@ import (
 	"io"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"os"
+	"time"
 )
 
 const DockerBuildProcessorName = "docker"
@@ -34,6 +35,8 @@ func NewDockerBuildProcessor() *DockerBuildProcessor {
 func (bp *DockerBuildProcessor) String() string {
 	return DockerBuildProcessorName
 }
+
+func intPtr(i int) *int { return &i }
 
 func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 	logger.Debug("doing a new docker build")
@@ -84,12 +87,17 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 	// Create the container
 	ctx := context.Background()
 	ctx = signals.WithStandardSignals(ctx)
+
 	containerCfg := &container.Config{
-		Tty:   true,
-		Cmd:   []string{"/bin/cat"},
-		Image: builderBaseImage,
+		Tty:         true,
+		Cmd:         []string{"/bin/cat"},
+		StopTimeout: intPtr(60),
+		Image:       builderBaseImage,
 	}
-	hostCfg := &container.HostConfig{}
+
+	hostCfg := &container.HostConfig{
+		AutoRemove: true,
+	}
 	networkCfg := &network.NetworkingConfig{}
 	uid := uuid.NewUUID()
 	name := fmt.Sprintf("driverkit-%s", string(uid))
@@ -97,6 +105,25 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 	if err != nil {
 		return err
 	}
+
+	cleanup := func() {
+		logger.Info("context canceled")
+		duration := time.Duration(time.Second)
+		if err := cli.ContainerStop(context.Background(), cdata.ID, &duration); err != nil {
+			logger.WithError(err).WithField("container_id", cdata.ID).Error("error stopping container")
+		}
+	}
+
+	defer cleanup()
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				cleanup()
+				return
+			}
+		}
+	}()
 
 	err = cli.ContainerStart(ctx, cdata.ID, types.ContainerStartOptions{})
 	if err != nil {
@@ -175,10 +202,7 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 				return err
 			}
 		}
-
 	}
-
-	// TODO(fntlnz): cleanup the container on signal and when exiting after copy
 
 	return nil
 }
