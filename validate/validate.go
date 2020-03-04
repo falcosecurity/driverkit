@@ -31,12 +31,12 @@ func init() {
 	})
 
 	V.RegisterValidation("logrus", isLogrusLevel)
-
 	V.RegisterValidation("filepath", isFilePath)
+	V.RegisterValidation("sha1", isSHA1)
 
 	eng := en.New()
 	uni := ut.New(eng, eng)
-	T, _ = uni.GetTranslator("en") // todo > see uni.FindTranslator(...) // todo ? handle the error
+	T, _ = uni.GetTranslator("en")
 	en_translations.RegisterDefaultTranslations(V, T)
 
 	V.RegisterTranslation(
@@ -73,6 +73,19 @@ func init() {
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
 			t, _ := ut.T("logrus", fe.Field())
+
+			return t
+		},
+	)
+
+	V.RegisterTranslation(
+		"eq=dev|sha1",
+		T,
+		func(ut ut.Translator) error {
+			return ut.Add("eq=dev|sha1", "{0} must be a valid SHA1 or dev", true)
+		},
+		func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T("eq=dev|sha1", fe.Field())
 
 			return t
 		},
