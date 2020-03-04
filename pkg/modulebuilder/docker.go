@@ -25,12 +25,15 @@ import (
 const DockerBuildProcessorName = "docker"
 
 type DockerBuildProcessor struct {
-	clean bool
+	clean   bool
+	timeout int
 }
 
 // NewDockerBuildProcessor ...
-func NewDockerBuildProcessor() *DockerBuildProcessor {
-	return &DockerBuildProcessor{}
+func NewDockerBuildProcessor(timeout int) *DockerBuildProcessor {
+	return &DockerBuildProcessor{
+		timeout: timeout,
+	}
 }
 
 func (bp *DockerBuildProcessor) String() string {
@@ -88,9 +91,10 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 	ctx = signals.WithStandardSignals(ctx)
 
 	containerCfg := &container.Config{
-		Tty:   true,
-		Cmd:   []string{"/bin/cat"},
-		Image: builderBaseImage,
+		Tty:         true,
+		Cmd:         []string{"/bin/cat"},
+		StopTimeout: &bp.timeout,
+		Image:       builderBaseImage,
 	}
 
 	hostCfg := &container.HostConfig{
