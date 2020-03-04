@@ -7,6 +7,22 @@ A command line tool that can be used to build the Falco kernel module and eBPF p
 
 ## Usage
 
+When you meet `kernelversion` that refers to the version you get executing `uname -v`:
+
+For example, below, the version is the `59` after the hash
+
+```bash
+uname -v
+#59-Ubuntu SMP Wed Dec 4 10:02:00 UTC 2019
+```
+
+When you meet `kernelrelease`, that refers to the kernel release you get executing `uname -r`:
+
+```
+uname -r
+4.15.0-1057-aws
+```
+
 ### Against a Kubernetes cluster
 
 ```bash
@@ -40,9 +56,49 @@ driverkit docker -c ubuntu-aws.yaml
 
 ## Supported targets
 
-- ubuntu-generic
-- ubuntu-aws
-- vanilla
+### ubuntu-generic
+Example configuration file
+
+```yaml
+kernelrelease: 4.15.0-72-generic
+kernelversion: 81
+target: ubuntu-generic
+output: /tmp/falco-ubuntu-generic.ko
+moduleversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
+```
+
+### ubuntu-aws
+
+```yaml
+kernelrelease: 4.15.0-1057-aws
+kernelversion: 59
+target: ubuntu-aws
+output: /tmp/falco-ubuntu-aws.ko
+moduleversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
+```
+
+### vanilla
+
+In case of vanilla, you also need to pass the kernel config data in base64 format.
+
+In most systems you can get `kernelconfigdata`  by reading `/proc/config.gz`.
+
+```yaml
+kernelrelease: 5.5.2
+kernelversion: 1
+target: vanilla
+output: /tmp/falco-vanilla.ko
+moduleversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
+```
+
+Now you can add the `kernelconfigdata` to the configuration file, to do so:
+
+```bash
+zcat /proc/config.gz| base64 -w0 | awk '{print "kernelconfigdata: " $1;}' >> /tmp/vanilla.yaml
+```
+
+The command above assumes that you saved the configuration file at `/tmp/vanilla.yaml`
+
 
 ## Goals
 
