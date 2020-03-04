@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/falcosecurity/driverkit/pkg/kubernetes/factory"
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder"
+	logger "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -20,38 +21,40 @@ func NewKubernetesCmd(rootOpts *RootOptions) *cobra.Command {
 	configFlags.AddFlags(kubernetesCmd.PersistentFlags())
 	kubefactory := factory.NewFactory(configFlags)
 
-	kubernetesCmd.RunE = kubernetesCmdRunE(rootOpts, kubefactory)
+	kubernetesCmd.Run = func(cmd *cobra.Command, args []string) {
+		if err := kubernetesRun(cmd, args, kubefactory, rootOpts); err != nil {
+			logger.WithError(err).Fatal("exiting")
+		}
+	}
 
 	return kubernetesCmd
 }
 
-func kubernetesCmdRunE(rootOpts *RootOptions, kubefactory factory.Factory) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		f := cmd.Flags()
-		b := rootOpts.toBuild()
+func kubernetesRun(cmd *cobra.Command, args []string, kubefactory factory.Factory, rootOpts *RootOptions) error {
+	f := cmd.Flags()
+	b := rootOpts.toBuild()
 
-		namespaceStr, err := f.GetString("namespace")
-		if err != nil {
-			return err
-		}
-		if len(namespaceStr) == 0 {
-			namespaceStr = "default"
-		}
-
-		kc, err := kubefactory.KubernetesClientSet()
-		if err != nil {
-			return err
-		}
-		clientConfig, err := kubefactory.ToRESTConfig()
-		if err != nil {
-			return err
-		}
-		if err := factory.SetKubernetesDefaults(clientConfig); err != nil {
-			return err
-		}
-
-		buildProcessor := modulebuilder.NewKubernetesBuildProcessor(kc.CoreV1(), clientConfig, namespaceStr, viper.GetInt("timeout"))
-
-		return buildProcessor.Start(b)
+	namespaceStr, err := f.GetString("namespace")
+	if err != nil {
+		return err
 	}
+	if len(namespaceStr) == 0 {
+		namespaceStr = "default"
+	}
+
+	kc, err := kubefactory.KubernetesClientSet()
+	if err != nil {
+		return err
+	}
+	clientConfig, err := kubefactory.ToRESTConfig()
+	if err != nil {
+		return err
+	}
+	if err := factory.SetKubernetesDefaults(clientConfig); err != nil {
+		return err
+	}
+
+	buildProcessor := modulebuilder.NewKubernetesBuildProcessor(kc.CoreV1(), clientConfig, namespaceStr, viper.GetInt("timeout"))
+
+	return buildProcessor.Start(b)
 }
