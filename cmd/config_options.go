@@ -2,12 +2,14 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/falcosecurity/driverkit/validate"
 	"github.com/go-playground/validator/v10"
 )
 
 var configOptions ConfigOptions
 
+// ConfigOptions represent the persistent configuration flags of driverkit.
 type ConfigOptions struct {
 	ConfigFile string
 	LogLevel   string `validate:"logrus" name:"log level"`

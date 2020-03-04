@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -71,6 +72,11 @@ func NewRootCmd() *cobra.Command {
 	// Subcommands
 	rootCmd.AddCommand(NewKubernetesCmd(rootOpts))
 	rootCmd.AddCommand(NewDockerCmd(rootOpts))
+
+	// Override help on all the commands tree
+	walk(rootCmd, func(c *cobra.Command) {
+		c.Flags().BoolP("help", "h", false, fmt.Sprintf("help for the %s command", c.Name()))
+	})
 
 	return rootCmd
 }
