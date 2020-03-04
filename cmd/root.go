@@ -22,7 +22,7 @@ func persistentValidateFunc(rootCommand *cobra.Command, rootOpts *RootOptions) f
 				fallthrough
 			case "moduleversion":
 				fallthrough
-			case "kerenlversion":
+			case "kernelversion":
 				fallthrough
 			case "kernelrelease":
 				fallthrough
@@ -83,7 +83,7 @@ func NewRootCmd() *cobra.Command {
 
 	// Subcommands
 	rootCmd.AddCommand(NewKubernetesCmd(rootOpts))
-	rootCmd.AddCommand(NewDockerCmd(rootOpts))
+	rootCmd.AddCommand(NewDockerCmd(&configOptions, rootOpts))
 
 	// Override help on all the commands tree
 	walk(rootCmd, func(c *cobra.Command) {
