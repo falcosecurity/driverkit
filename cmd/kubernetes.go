@@ -4,6 +4,7 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kubernetes/factory"
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
@@ -49,7 +50,7 @@ func kubernetesCmdRunE(rootOpts *RootOptions, kubefactory factory.Factory) func(
 			return err
 		}
 
-		buildProcessor := modulebuilder.NewKubernetesBuildProcessor(kc.CoreV1(), clientConfig, namespaceStr)
+		buildProcessor := modulebuilder.NewKubernetesBuildProcessor(kc.CoreV1(), clientConfig, namespaceStr, viper.GetInt("timeout"))
 
 		return buildProcessor.Start(b)
 	}
