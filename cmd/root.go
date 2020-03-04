@@ -15,9 +15,20 @@ import (
 
 func persistentValidateFunc(rootCommand *cobra.Command, rootOpts *RootOptions) func(c *cobra.Command, args []string) {
 	return func(c *cobra.Command, args []string) {
-		// Merge environment variables or config file values into the options instance
+		// Merge environment variables or config file values into the RootOptions instance
 		rootCommand.PersistentFlags().VisitAll(func(f *pflag.Flag) {
-			if f.Name != "config" {
+			switch f.Name {
+			case "output":
+				fallthrough
+			case "moduleversion":
+				fallthrough
+			case "kerenlversion":
+				fallthrough
+			case "kernelrelease":
+				fallthrough
+			case "target":
+				fallthrough
+			case "kernelconfigdata":
 				if val := viper.Get(f.Name); val != "" {
 					switch f.Value.Type() {
 					case "uint16":
@@ -44,6 +55,7 @@ func persistentValidateFunc(rootCommand *cobra.Command, rootOpts *RootOptions) f
 
 // NewRootCmd ...
 func NewRootCmd() *cobra.Command {
+	configOptions = NewConfigOptions()
 	rootOpts := NewRootOptions()
 	rootCmd := &cobra.Command{
 		Use:   "driverkit",
@@ -57,8 +69,8 @@ func NewRootCmd() *cobra.Command {
 	flags := rootCmd.PersistentFlags()
 
 	flags.StringVarP(&configOptions.ConfigFile, "config", "c", configOptions.ConfigFile, "config file path (default $HOME/.driverkit.yaml if exists)")
-
-	flags.StringVarP(&configOptions.LogLevel, "loglevel", "l", "info", "log level")
+	flags.StringVarP(&configOptions.LogLevel, "loglevel", "l", configOptions.LogLevel, "log level")
+	flags.IntVar(&configOptions.Timeout, "timeout", configOptions.Timeout, "timeout in seconds")
 
 	flags.StringVarP(&rootOpts.Output, "output", "o", rootOpts.Output, "filepath where to save the resulting kernel module")
 	flags.StringVar(&rootOpts.ModuleVersion, "moduleversion", rootOpts.ModuleVersion, "kernel module version as a git reference")
