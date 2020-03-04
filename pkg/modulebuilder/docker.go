@@ -14,9 +14,9 @@ import (
 	buildmeta "github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder/builder"
 	"github.com/falcosecurity/driverkit/pkg/signals"
-	"k8s.io/apimachinery/pkg/util/uuid"
 	logger "github.com/sirupsen/logrus"
 	"io"
+	"k8s.io/apimachinery/pkg/util/uuid"
 	"os"
 )
 
@@ -62,8 +62,6 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 		return err
 	}
 
-	res = fmt.Sprintf("%s\n%s", res, tarModuleScript)
-
 	// Prepare driver config template
 	bufDriverConfig := bytes.NewBuffer(nil)
 	err = renderDriverConfig(bufDriverConfig, driverConfigData{ModuleVersion: bc.Build.ModuleVersion, ModuleName: bc.ModuleConfig.ModuleName, DeviceName: bc.ModuleConfig.DeviceName})
@@ -87,74 +85,11 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 	ctx := context.Background()
 	ctx = signals.WithStandardSignals(ctx)
 	containerCfg := &container.Config{
-		Hostname:        "",
-		Domainname:      "",
-		User:            "",
-		AttachStdin:     false,
-		AttachStdout:    false,
-		AttachStderr:    false,
-		ExposedPorts:    nil,
-		Tty:             true,
-		OpenStdin:       false,
-		StdinOnce:       false,
-		Env:             nil,
-		Cmd:             []string{"/bin/cat"},
-		Healthcheck:     nil,
-		ArgsEscaped:     false,
-		Image:           builderBaseImage,
-		Volumes:         nil,
-		WorkingDir:      "",
-		Entrypoint:      nil,
-		NetworkDisabled: false,
-		MacAddress:      "",
-		OnBuild:         nil,
-		Labels:          nil,
-		StopSignal:      "",
-		StopTimeout:     nil,
-		Shell:           nil,
+		Tty:   true,
+		Cmd:   []string{"/bin/cat"},
+		Image: builderBaseImage,
 	}
-	hostCfg := &container.HostConfig{
-		Binds:           nil,
-		ContainerIDFile: "",
-		LogConfig:       container.LogConfig{},
-		NetworkMode:     "",
-		PortBindings:    nil,
-		RestartPolicy:   container.RestartPolicy{},
-		AutoRemove:      false,
-		VolumeDriver:    "",
-		VolumesFrom:     nil,
-		CapAdd:          nil,
-		CapDrop:         nil,
-		Capabilities:    nil,
-		DNS:             nil,
-		DNSOptions:      nil,
-		DNSSearch:       nil,
-		ExtraHosts:      nil,
-		GroupAdd:        nil,
-		IpcMode:         "",
-		Cgroup:          "",
-		Links:           nil,
-		OomScoreAdj:     0,
-		PidMode:         "",
-		Privileged:      false,
-		PublishAllPorts: false,
-		ReadonlyRootfs:  false,
-		SecurityOpt:     nil,
-		StorageOpt:      nil,
-		Tmpfs:           nil,
-		UTSMode:         "",
-		UsernsMode:      "",
-		ShmSize:         0,
-		Sysctls:         nil,
-		Runtime:         "",
-		ConsoleSize:     [2]uint{},
-		Isolation:       "",
-		Resources:       container.Resources{},
-		Mounts:          nil,
-		MaskedPaths:     nil,
-		ReadonlyPaths:   nil,
-		Init:            nil,
-	}
+	hostCfg := &container.HostConfig{}
 	networkCfg := &network.NetworkingConfig{}
 	uid := uuid.NewUUID()
 	name := fmt.Sprintf("driverkit-%s", string(uid))
@@ -188,16 +123,12 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 	}
 
 	edata, err := cli.ContainerExecCreate(ctx, cdata.ID, types.ExecConfig{
-		User:         "",
 		Privileged:   false,
 		Tty:          false,
 		AttachStdin:  false,
 		AttachStderr: true,
 		AttachStdout: true,
 		Detach:       false,
-		DetachKeys:   "",
-		Env:          nil,
-		WorkingDir:   "",
 		Cmd: []string{
 			"/bin/bash",
 			"/module-builder/module-builder.sh",
@@ -214,23 +145,40 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 
 	forwardLogs(hr.Reader)
 
-	rc, _, err := cli.CopyFromContainer(ctx, cdata.ID, "/tmp/module.tar")
+	rc, _, err := cli.CopyFromContainer(ctx, cdata.ID, builder.FalcoModuleFullPath)
 	if err != nil {
 		return err
 	}
 	defer rc.Close()
 
-	out, err := os.Create(b.OutputFilePath)
+	tr := tar.NewReader(rc)
 
-	if err != nil {
-		return err
-	}
-	defer out.Close()
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			logger.WithError(err).Error("error expanding module tar")
+		}
 
-	_, err = io.Copy(out, rc)
-	if err != nil {
-		return err
+		if hdr.Name == builder.ModuleFileName {
+			out, err := os.Create(b.OutputFilePath)
+
+			if err != nil {
+				return err
+			}
+			defer out.Close()
+
+			_, err = io.Copy(out, tr)
+			if err != nil {
+				return err
+			}
+		}
+
 	}
+
+	// TODO(fntlnz): cleanup the container on signal and when exiting after copy
 
 	return nil
 }
