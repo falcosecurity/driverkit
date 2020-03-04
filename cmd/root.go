@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -32,7 +31,7 @@ func persistentValidateFunc(rootCommand *cobra.Command, rootOpts *RootOptions) f
 				if val := viper.Get(f.Name); val != "" {
 					switch f.Value.Type() {
 					case "uint16":
-						rootCommand.PersistentFlags().Set(f.Name, strconv.Itoa(val.(int)))
+						rootCommand.PersistentFlags().Set(f.Name, strconv.Itoa(int(viper.GetUint(f.Name))))
 						break
 					case "string":
 						fallthrough
@@ -41,14 +40,18 @@ func persistentValidateFunc(rootCommand *cobra.Command, rootOpts *RootOptions) f
 						break
 					}
 				}
+				break
 			}
 		})
 
-		if errs := rootOpts.Validate(); errs != nil {
-			for _, err := range errs {
-				logger.WithError(err).Error("error validating build options")
+		// Do not block root or help command to exec disregarding the persistent flags validity
+		if c.Root() != c && c.Name() != "help" {
+			if errs := rootOpts.Validate(); errs != nil {
+				for _, err := range errs {
+					logger.WithError(err).Error("error validating build options")
+				}
+				logger.Fatal("exiting for validation errors")
 			}
-			logger.Fatal("exiting for validation errors")
 		}
 	}
 }
@@ -58,10 +61,12 @@ func NewRootCmd() *cobra.Command {
 	configOptions = NewConfigOptions()
 	rootOpts := NewRootOptions()
 	rootCmd := &cobra.Command{
-		Use:   "driverkit",
-		Short: "A command line tool to build Falco kernel modules and eBPF probes.",
+		Use:                   "driverkit",
+		Short:                 "A command line tool to build Falco kernel modules and eBPF probes.",
+		DisableFlagsInUseLine: true,
 		Run: func(c *cobra.Command, args []string) {
-			// This is needed to make `PersistentPreRunE` always run
+			// Fallback to help
+			c.Help()
 		},
 	}
 	rootCmd.PersistentPreRun = persistentValidateFunc(rootCmd, rootOpts)
@@ -84,11 +89,6 @@ func NewRootCmd() *cobra.Command {
 	// Subcommands
 	rootCmd.AddCommand(NewKubernetesCmd(rootOpts))
 	rootCmd.AddCommand(NewDockerCmd(rootOpts))
-
-	// Override help on all the commands tree
-	walk(rootCmd, func(c *cobra.Command) {
-		c.Flags().BoolP("help", "h", false, fmt.Sprintf("help for the %s command", c.Name()))
-	})
 
 	return rootCmd
 }
@@ -132,14 +132,14 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		logger.WithField("file", viper.ConfigFileUsed()).Info("Using config file")
+		logger.WithField("file", viper.ConfigFileUsed()).Info("using config file")
 	} else {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// Config file not found, ignore ...
-			logger.Debug("Running without a configuration file")
+			logger.Debug("running without a configuration file")
 		} else {
 			// Config file was found but another error was produced
-			logger.WithField("file", viper.ConfigFileUsed()).WithError(err).Fatal("Error running with config file")
+			logger.WithField("file", viper.ConfigFileUsed()).WithError(err).Fatal("error running with config file")
 		}
 	}
 }
