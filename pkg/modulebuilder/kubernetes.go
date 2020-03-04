@@ -6,10 +6,11 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	logger "github.com/sirupsen/logrus"
 	"io"
 	"os"
 	"time"
+
+	logger "github.com/sirupsen/logrus"
 
 	buildmeta "github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder/builder"
@@ -21,6 +22,7 @@ import (
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/kubectl/pkg/cmd/exec"
+	"k8s.io/utils/pointer"
 )
 
 const KubernetesBuildProcessorName = "kubernetes"
@@ -54,8 +56,6 @@ func (bp *KubernetesBuildProcessor) Start(b *buildmeta.Build) error {
 	logger.Debug("doing a new kubernetes build")
 	return bp.buildModule(b)
 }
-
-func int64Ptr(i int64) *int64 { return &i }
 
 func (bp *KubernetesBuildProcessor) buildModule(build *buildmeta.Build) error {
 	// TODO(fntlnz): make these configurable
@@ -140,7 +140,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build *buildmeta.Build) error {
 	pod := &corev1.Pod{
 		ObjectMeta: commonMeta,
 		Spec: corev1.PodSpec{
-			ActiveDeadlineSeconds: int64Ptr(deadline + deadlineGracePeriod),
+			ActiveDeadlineSeconds: pointer.Int64Ptr(deadline + deadlineGracePeriod),
 			RestartPolicy:         corev1.RestartPolicyNever,
 			Containers: []corev1.Container{
 				{

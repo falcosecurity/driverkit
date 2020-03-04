@@ -7,6 +7,10 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"io"
+	"os"
+	"time"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
@@ -15,10 +19,7 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder/builder"
 	"github.com/falcosecurity/driverkit/pkg/signals"
 	logger "github.com/sirupsen/logrus"
-	"io"
 	"k8s.io/apimachinery/pkg/util/uuid"
-	"os"
-	"time"
 )
 
 const DockerBuildProcessorName = "docker"
@@ -28,15 +29,12 @@ type DockerBuildProcessor struct {
 
 // NewDockerBuildProcessor ...
 func NewDockerBuildProcessor() *DockerBuildProcessor {
-	return &DockerBuildProcessor{
-	}
+	return &DockerBuildProcessor{}
 }
 
 func (bp *DockerBuildProcessor) String() string {
 	return DockerBuildProcessorName
 }
-
-func intPtr(i int) *int { return &i }
 
 func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 	logger.Debug("doing a new docker build")
@@ -89,10 +87,9 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 	ctx = signals.WithStandardSignals(ctx)
 
 	containerCfg := &container.Config{
-		Tty:         true,
-		Cmd:         []string{"/bin/cat"},
-		StopTimeout: intPtr(60),
-		Image:       builderBaseImage,
+		Tty:   true,
+		Cmd:   []string{"/bin/cat"},
+		Image: builderBaseImage,
 	}
 
 	hostCfg := &container.HostConfig{
@@ -106,20 +103,12 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 		return err
 	}
 
-	cleanup := func() {
-		logger.Info("context canceled")
-		duration := time.Duration(time.Second)
-		if err := cli.ContainerStop(context.Background(), cdata.ID, &duration); err != nil {
-			logger.WithError(err).WithField("container_id", cdata.ID).Error("error stopping container")
-		}
-	}
-
-	defer cleanup()
+	defer cleanup(ctx, cli, cdata.ID)
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
-				cleanup()
+				cleanup(ctx, cli, cdata.ID)
 				return
 			}
 		}
@@ -205,6 +194,14 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 	}
 
 	return nil
+}
+
+func cleanup(ctx context.Context, cli *client.Client, ID string) {
+	logger.Info("context canceled")
+	duration := time.Duration(time.Second)
+	if err := cli.ContainerStop(context.Background(), ID, &duration); err != nil {
+		logger.WithError(err).WithField("container_id", ID).Error("error stopping container")
+	}
 }
 
 type dockerCopyFile struct {
