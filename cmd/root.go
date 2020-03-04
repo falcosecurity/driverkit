@@ -83,7 +83,7 @@ func NewRootCmd() *cobra.Command {
 
 	// Subcommands
 	rootCmd.AddCommand(NewKubernetesCmd(rootOpts))
-	rootCmd.AddCommand(NewDockerCmd(&configOptions, rootOpts))
+	rootCmd.AddCommand(NewDockerCmd(rootOpts))
 
 	// Override help on all the commands tree
 	walk(rootCmd, func(c *cobra.Command) {
