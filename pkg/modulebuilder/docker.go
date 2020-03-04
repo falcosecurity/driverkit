@@ -25,6 +25,7 @@ import (
 const DockerBuildProcessorName = "docker"
 
 type DockerBuildProcessor struct {
+	clean bool
 }
 
 // NewDockerBuildProcessor ...
@@ -103,12 +104,12 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 		return err
 	}
 
-	defer cleanup(ctx, cli, cdata.ID)
+	defer bp.cleanup(ctx, cli, cdata.ID)
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
-				cleanup(ctx, cli, cdata.ID)
+				bp.cleanup(ctx, cli, cdata.ID)
 				return
 			}
 		}
@@ -196,11 +197,14 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 	return nil
 }
 
-func cleanup(ctx context.Context, cli *client.Client, ID string) {
-	logger.Info("context canceled")
-	duration := time.Duration(time.Second)
-	if err := cli.ContainerStop(context.Background(), ID, &duration); err != nil {
-		logger.WithError(err).WithField("container_id", ID).Error("error stopping container")
+func (bp *DockerBuildProcessor) cleanup(ctx context.Context, cli *client.Client, ID string) {
+	if !bp.clean {
+		bp.clean = true
+		logger.Debug("context canceled")
+		duration := time.Duration(time.Second)
+		if err := cli.ContainerStop(context.Background(), ID, &duration); err != nil {
+			logger.WithError(err).WithField("container_id", ID).Error("error stopping container")
+		}
 	}
 }
 
