@@ -55,9 +55,9 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 	}
 	bc := builder.BuilderConfig{
 		ModuleConfig: builder.ModuleConfig{
-			ModuleName:      "falco",                                    // TODO: make this configurable
-			DeviceName:      "falco",                                    // TODO: make this configurable
-			DownloadBaseURL: "https://github.com/draios/sysdig/archive", // TODO: make this configurable
+			ModuleName:      "falco",
+			DeviceName:      "falco",
+			DownloadBaseURL: "https://github.com/draios/sysdig/archive",
 		},
 		Build: b,
 	}
@@ -92,9 +92,9 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 	ctx = signals.WithStandardSignals(ctx)
 
 	containerCfg := &container.Config{
-		Tty:         true,
-		Cmd:         []string{"/bin/sleep", strconv.Itoa(bp.timeout)},
-		Image:       builderBaseImage,
+		Tty:   true,
+		Cmd:   []string{"/bin/sleep", strconv.Itoa(bp.timeout)},
+		Image: builderBaseImage,
 	}
 
 	hostCfg := &container.HostConfig{
