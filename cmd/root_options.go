@@ -17,7 +17,7 @@ type RootOptions struct {
 	Output           string `validate:"required,filepath" name:"output"`
 	Architecture     string `default:"x86_64" validate:"required,oneof=x86_64" name:"architecture"`
 	ModuleVersion    string `default:"dev" validate:"required,eq=dev|sha1" name:"module version"` // todo > semver validator?
-	KernelVersion    uint16 `validate:"required,number" name:"kernel version"`                    // todo > semver validator?
+	KernelVersion    uint16 `validate:"omitempty,number" name:"kernel version"`                   // todo > semver validator?
 	KernelRelease    string `validate:"required,ascii" name:"kernel release"`
 	Target           string `validate:"required,oneof=vanilla ubuntu-generic ubuntu-aws centos" name:"target"`
 	KernelConfigData string `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level
@@ -76,6 +76,8 @@ func RootOptionsLevelValidation(level validator.StructLevel) {
 	if len(opts.KernelConfigData) == 0 && opts.Target == builder.BuildTypeVanilla.String() {
 		level.ReportError(opts.KernelConfigData, "kernelConfigData", "KernelConfigData", "required_kernelconfigdata_with_target_vanilla", "")
 	}
-}
 
-// todo > kernelversion is mandatory only for ubuntu
+	if opts.KernelVersion == 0 && (opts.Target == builder.BuildTypeUbuntuAWS.String() || opts.Target == builder.BuildTypeUbuntuGeneric.String()) {
+		level.ReportError(opts.KernelVersion, "kernelVersion", "KernelVersion", "required_kernelversion_with_target_ubuntu", "")
+	}
+}
