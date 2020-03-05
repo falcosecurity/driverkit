@@ -83,7 +83,7 @@ func fetchUbuntuGenericKernelURL(kr kernelrelease.KernelRelease, kernelVersion u
 	firstExtra := extractExtraNumber(kr.Extraversion)
 	return []string{
 		fmt.Sprintf(
-			"https://mirrors.kernel.org/ubuntu/pool/main/l/linux/linux-headers-%s-%s_%s-%s.%d_all.deb",
+			"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-%s-%s_%s-%s.%d_all.deb",
 			kr.Fullversion,
 			firstExtra,
 			kr.Fullversion,
@@ -105,7 +105,7 @@ func fetchUbuntuAWSKernelURLS(kr kernelrelease.KernelRelease, kernelVersion uint
 	firstExtra := extractExtraNumber(kr.Extraversion)
 	return []string{
 		fmt.Sprintf(
-			"https://mirrors.kernel.org/ubuntu/pool/main/l/linux-aws/linux-aws-headers-%s-%s_%s-%s.%d_all.deb",
+			"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws/linux-aws-headers-%s-%s_%s-%s.%d_all.deb",
 			kr.Fullversion,
 			firstExtra,
 			kr.Fullversion,

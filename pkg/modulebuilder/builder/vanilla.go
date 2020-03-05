@@ -42,7 +42,6 @@ mkdir -p /tmp/kernel
 mv /tmp/kernel-download/*/* /tmp/kernel
 
 # Prepare the kernel
-
 cd /tmp/kernel
 cp /module-builder/kernel.config /tmp/kernel.config
 
@@ -57,7 +56,7 @@ make KCONFIG_CONFIG=/tmp/kernel.config modules_prepare
 # Build the module
 cd {{ .ModuleBuildDir }}
 make KERNELDIR=/tmp/kernel
-# print results
+# Print results
 ls -la
 
 modinfo falco.ko
