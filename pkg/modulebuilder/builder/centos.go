@@ -3,7 +3,6 @@ package builder
 import (
 	"bytes"
 	"fmt"
-	"net/http"
 	"text/template"
 
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
@@ -11,20 +10,6 @@ import (
 )
 
 const BuildTypeCentos = "centos"
-
-func getResolvingURLs(urls []string) []string {
-	results := []string{}
-	for _, u := range urls {
-		res, err := http.Head(u)
-		if err != nil {
-			continue
-		}
-		if res.StatusCode == http.StatusOK {
-			results = append(results, u)
-		}
-	}
-	return results
-}
 
 func init() {
 	buildtype.EnabledBuildTypes[BuildTypeCentos] = true
@@ -43,10 +28,9 @@ func (c Centos) Script(bc BuilderConfig) (string, error) {
 	kr := kernelrelease.FromString(bc.Build.KernelRelease)
 
 	// Check (and filter) existing kernels before continuing
-	urls := fetchCentosKernelURLS(kr, bc.Build.KernelVersion)
-	urls = getResolvingURLs(urls)
-	if len(urls) == 0 {
-		return "", fmt.Errorf("kernel %s not found for centos", bc.Build.KernelRelease)
+	urls, err := getResolvingURLs(fetchCentosKernelURLS(kr))
+	if err != nil {
+		return "", err
 	}
 
 	td := centosTemplateData{
@@ -64,7 +48,7 @@ func (c Centos) Script(bc BuilderConfig) (string, error) {
 	return buf.String(), nil
 }
 
-func fetchCentosKernelURLS(kr kernelrelease.KernelRelease, kernelVersion uint16) []string {
+func fetchCentosKernelURLS(kr kernelrelease.KernelRelease) []string {
 	vaultReleases := []string{
 		"6.0/os",
 		"6.0/updates",

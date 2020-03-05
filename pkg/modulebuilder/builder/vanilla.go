@@ -3,8 +3,9 @@ package builder
 import (
 	"bytes"
 	"fmt"
-	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
 	"text/template"
+
+	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
 
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
@@ -78,10 +79,16 @@ func (v Vanilla) Script(bc BuilderConfig) (string, error) {
 
 	kv := kernelrelease.FromString(bc.Build.KernelRelease)
 
+	// Check (and filter) existing kernels before continuing
+	urls, err := getResolvingURLs([]string{fetchVanillaKernelURLFromKernelVersion(kv)})
+	if err != nil {
+		return "", err
+	}
+
 	td := vanillaTemplateData{
 		ModuleBuildDir:     ModuleDirectory,
 		ModuleDownloadURL:  moduleDownloadURL(bc),
-		KernelDownloadURL:  fetchVanillaKernelURLFromKernelVersion(kv),
+		KernelDownloadURL:  urls[0],
 		KernelLocalVersion: kv.FullExtraversion,
 	}
 
