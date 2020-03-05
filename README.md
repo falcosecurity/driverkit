@@ -1,5 +1,7 @@
 # driverkit
 
+[![asciicast](https://asciinema.org/a/F0jNLyGt1eX86l1rZAXzF6fXW.svg)](https://asciinema.org/a/F0jNLyGt1eX86l1rZAXzF6fXW)
+
 Status: **Under development**
 
 A command line tool that can be used to build the Falco kernel module and eBPF probe.
