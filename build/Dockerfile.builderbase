@@ -71,27 +71,22 @@ RUN curl -L -o cpp-5_5.5.0-12_amd64.deb https://dl.bintray.com/falcosecurity/dep
 # version 4 compiler. So grab copies we've saved from debian
 # snapshots with the prefix http://ftp.debian.org/debian/pool/main/g/gcc-4.8/.
 
-RUN curl -L -o cpp-4.8_4.8.4-1_amd64.deb http://ftp.debian.org/debian/pool/main/g/gcc-4.8/cpp-4.8_4.8.4-1_amd64.deb \
-	&& curl -L -o gcc-4.8-base_4.8.4-1_amd64.deb http://ftp.debian.org/debian/pool/main/g/gcc-4.8/gcc-4.8-base_4.8.4-1_amd64.deb \
-	&& curl -L -o gcc-4.8_4.8.4-1_amd64.deb http://ftp.debian.org/debian/pool/main/g/gcc-4.8/gcc-4.8_4.8.4-1_amd64.deb \
-	&& curl -L -o libasan0_4.8.4-1_amd64.deb http://ftp.debian.org/debian/pool/main/g/gcc-4.8/libasan0_4.8.4-1_amd64.deb \
-	&& curl -L -o libgcc-4.8-dev_4.8.4-1_amd64.deb http://ftp.debian.org/debian/pool/main/g/gcc-4.8/libgcc-4.8-dev_4.8.4-1_amd64.deb \
-	&& curl -L -o libisl10_0.12.2-2_amd64.deb http://ftp.debian.org/debian/pool/main/i/isl/libisl10_0.12.2-2_amd64.deb \
-	&& curl -L -o multiarch-support_2.19-18+deb8u10_amd64.deb http://ftp.debian.org/debian/pool/main/g/glibc/multiarch-support_2.19-18+deb8u10_amd64.deb \
-	&& curl -L -o libcloog-isl4_0.18.4-1+b1_amd64.deb http://ftp.debian.org/debian/pool/main/c/cloog/libcloog-isl4_0.18.4-1+b1_amd64.deb \
-    && dpkg -i multiarch-support_2.19-18+deb8u10_amd64.deb \
-    && dpkg -i libisl10_0.12.2-2_amd64.deb gcc-4.8-base_4.8.4-1_amd64.deb libasan0_4.8.4-1_amd64.deb libgcc-4.8-dev_4.8.4-1_amd64.deb libcloog-isl4_0.18.4-1+b1_amd64.deb cpp-4.8_4.8.4-1_amd64.deb gcc-4.8_4.8.4-1_amd64.deb \
+RUN curl -L -o cpp-4.8_4.8.4-1_amd64.deb https://dl.bintray.com/falcosecurity/dependencies/cpp-4.8_4.8.4-1_amd64.deb \
+	&& curl -L -o gcc-4.8-base_4.8.4-1_amd64.deb https://dl.bintray.com/falcosecurity/dependencies/gcc-4.8-base_4.8.4-1_amd64.deb \
+	&& curl -L -o gcc-4.8_4.8.4-1_amd64.deb https://dl.bintray.com/falcosecurity/dependencies/gcc-4.8_4.8.4-1_amd64.deb \
+	&& curl -L -o libasan0_4.8.4-1_amd64.deb https://dl.bintray.com/falcosecurity/dependencies/libasan0_4.8.4-1_amd64.deb \
+	&& curl -L -o libgcc-4.8-dev_4.8.4-1_amd64.deb https://dl.bintray.com/falcosecurity/dependencies/libgcc-4.8-dev_4.8.4-1_amd64.deb \
+	&& curl -L -o libisl10_0.12.2-2_amd64.deb https://dl.bintray.com/falcosecurity/dependencies/libisl10_0.12.2-2_amd64.deb \
+	&& curl -L -o multiarch-support_2.19-18+deb8u10_amd64.deb https://dl.bintray.com/falcosecurity/dependencies/multiarch-support_2.19-18+deb8u10_amd64.deb \
+	&& curl -L -o libcloog-isl4_0.18.4-1+b1_amd64.deb https://dl.bintray.com/falcosecurity/dependencies/libcloog-isl4_0.18.4-1+b1_amd64.deb \
+	&& dpkg -i multiarch-support_2.19-18+deb8u10_amd64.deb \
+	&& dpkg -i libisl10_0.12.2-2_amd64.deb gcc-4.8-base_4.8.4-1_amd64.deb libasan0_4.8.4-1_amd64.deb libgcc-4.8-dev_4.8.4-1_amd64.deb libcloog-isl4_0.18.4-1+b1_amd64.deb cpp-4.8_4.8.4-1_amd64.deb gcc-4.8_4.8.4-1_amd64.deb \
 	&& rm -f multiarch-support_2.19-18+deb8u10_amd64.deb libisl10_0.12.2-2_amd64.deb gcc-4.8-base_4.8.4-1_amd64.deb libasan0_4.8.4-1_amd64.deb libgcc-4.8-dev_4.8.4-1_amd64.deb libcloog-isl4_0.18.4-1+b1_amd64.deb cpp-4.8_4.8.4-1_amd64.deb gcc-4.8_4.8.4-1_amd64.deb
-
-# # Since our base Debian image ships with GCC 7 which breaks older kernels, revert the
-# # default to gcc-5.
-# RUN rm -rf /usr/bin/gcc && ln -s /usr/bin/gcc-5 /usr/bin/gcc
 
 # RUN rm -rf /usr/bin/clang \
 # 	&& rm -rf /usr/bin/llc \
 # 	&& ln -s /usr/bin/clang-7 /usr/bin/clang \
 # 	&& ln -s /usr/bin/llc-7 /usr/bin/llc
-
 
 # debian:stable head contains binutils 2.31, which generates
 # binaries that are incompatible with kernels < 4.16. So manually
