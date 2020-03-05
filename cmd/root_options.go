@@ -5,6 +5,7 @@ import (
 
 	"github.com/creasty/defaults"
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
+	"github.com/falcosecurity/driverkit/pkg/modulebuilder/builder"
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
 	"github.com/falcosecurity/driverkit/validate"
 	"github.com/go-playground/validator/v10"
@@ -18,7 +19,7 @@ type RootOptions struct {
 	ModuleVersion    string `default:"dev" validate:"required,eq=dev|sha1" name:"module version"` // todo > semver validator?
 	KernelVersion    uint16 `validate:"required,number" name:"kernel version"`                    // todo > semver validator?
 	KernelRelease    string `validate:"required,ascii" name:"kernel release"`
-	Target           string `validate:"required,oneof=vanilla ubuntu-generic ubuntu-aws" name:"target"`
+	Target           string `validate:"required,oneof=vanilla ubuntu-generic ubuntu-aws centos" name:"target"`
 	KernelConfigData string `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level
 }
 
@@ -72,7 +73,9 @@ func (ro *RootOptions) toBuild() *build.Build {
 func RootOptionsLevelValidation(level validator.StructLevel) {
 	opts := level.Current().Interface().(RootOptions)
 
-	if len(opts.KernelConfigData) == 0 && opts.Target == "vanilla" {
+	if len(opts.KernelConfigData) == 0 && opts.Target == builder.BuildTypeVanilla.String() {
 		level.ReportError(opts.KernelConfigData, "kernelConfigData", "KernelConfigData", "required_kernelconfigdata_with_target_vanilla", "")
 	}
 }
+
+// todo > kernelversion is mandatory only for ubuntu

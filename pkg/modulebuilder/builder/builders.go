@@ -2,9 +2,10 @@ package builder
 
 import (
 	"fmt"
+	"path"
+
 	buildmeta "github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
-	"path"
 )
 
 const ModuleDirectory = "/tmp/module"
@@ -37,6 +38,8 @@ func Factory(buildType buildtype.BuildType) (Builder, error) {
 		return &UbuntuGeneric{}, nil
 	case BuildTypeUbuntuAWS:
 		return &UbuntuAWS{}, nil
+	case BuildTypeCentos:
+		return &Centos{}, nil
 	}
 	return nil, fmt.Errorf("build type not found: %s", buildType)
 }
