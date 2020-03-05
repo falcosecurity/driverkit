@@ -4,3 +4,4 @@ RUN apt update -y
 RUN apt install build-essential git curl -y
 RUN apt install libncurses-dev flex bison openssl libssl-dev dkms libelf-dev libudev-dev libpci-dev libiberty-dev autoconf -y
 RUN apt install bc -y
+RUN apt install rpm2cpio cpio -y
