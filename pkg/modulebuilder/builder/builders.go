@@ -2,6 +2,7 @@ package builder
 
 import (
 	"fmt"
+	"net/http"
 	"path"
 
 	buildmeta "github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
@@ -46,4 +47,21 @@ func Factory(buildType buildtype.BuildType) (Builder, error) {
 
 func moduleDownloadURL(bc BuilderConfig) string {
 	return fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.Build.ModuleVersion)
+}
+
+func getResolvingURLs(urls []string) ([]string, error) {
+	results := []string{}
+	for _, u := range urls {
+		res, err := http.Head(u)
+		if err != nil {
+			continue
+		}
+		if res.StatusCode == http.StatusOK {
+			results = append(results, u)
+		}
+	}
+	if len(results) == 0 {
+		return nil, fmt.Errorf("kernel not found")
+	}
+	return results, nil
 }

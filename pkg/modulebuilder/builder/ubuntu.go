@@ -33,10 +33,18 @@ func (v UbuntuGeneric) Script(bc BuilderConfig) (string, error) {
 
 	kr := kernelrelease.FromString(bc.Build.KernelRelease)
 
+	urls, err := getResolvingURLs(fetchUbuntuGenericKernelURL(kr, bc.Build.KernelVersion))
+	if err != nil {
+		return "", err
+	}
+	if len(urls) != 2 {
+		return "", fmt.Errorf("specific kernel headers not found")
+	}
+
 	td := ubuntuTemplateData{
 		ModuleBuildDir:       ModuleDirectory,
 		ModuleDownloadURL:    fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.Build.ModuleVersion),
-		KernelDownloadURLS:   fetchUbuntuGenericKernelURL(kr, bc.Build.KernelVersion),
+		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
 		KernelHeadersPattern: "*generic",
 	}
@@ -63,10 +71,18 @@ func (v UbuntuAWS) Script(bc BuilderConfig) (string, error) {
 
 	kr := kernelrelease.FromString(bc.Build.KernelRelease)
 
+	urls, err := getResolvingURLs(fetchUbuntuAWSKernelURLS(kr, bc.Build.KernelVersion))
+	if err != nil {
+		return "", err
+	}
+	if len(urls) != 2 {
+		return "", fmt.Errorf("specific kernel headers not found")
+	}
+
 	td := ubuntuTemplateData{
 		ModuleBuildDir:       ModuleDirectory,
 		ModuleDownloadURL:    moduleDownloadURL(bc),
-		KernelDownloadURLS:   fetchUbuntuAWSKernelURLS(kr, bc.Build.KernelVersion),
+		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
 		KernelHeadersPattern: "*",
 	}
