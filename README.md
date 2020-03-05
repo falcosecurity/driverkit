@@ -77,6 +77,36 @@ output: /tmp/falco-ubuntu-aws.ko
 moduleversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
 ```
 
+### centos 6
+
+```yaml
+kernelrelease: 2.6.32-754.14.2.el6.x86_64
+kernelversion: 1
+target: centos
+output: /tmp/falco-centos6.ko
+moduleversion: dev
+```
+
+### centos 7
+
+```yaml
+kernelrelease: 3.10.0-957.12.2.el7.x86_64
+kernelversion: 1
+target: centos
+output: /tmp/falco-centos7.ko
+moduleversion: dev
+```
+
+### centos 8
+
+```yaml
+kernelrelease: 4.18.0-147.5.1.el8_1.x86_64
+kernelversion: 1
+target: centos
+output: /tmp/falco-centos8.ko
+moduleversion: dev
+```
+
 ### vanilla
 
 In case of vanilla, you also need to pass the kernel config data in base64 format.
@@ -99,6 +129,15 @@ zcat /proc/config.gz| base64 -w0 | awk '{print "kernelconfigdata: " $1;}' >> /tm
 
 The command above assumes that you saved the configuration file at `/tmp/vanilla.yaml`
 
+#### Note
+
+Usually, building for a `vanilla` target requires more time.
+
+So, we suggest to increase the `driverkit` timeout (defaults to `60` seconds):
+
+```bash
+driverkit docker -c /tmp/vanilla.yaml --timeout=300
+```
 
 ## Goals
 
@@ -106,10 +145,11 @@ The command above assumes that you saved the configuration file at `/tmp/vanilla
 - [x] Have a package that can build the Falco kernel module in docker
 - [ ] Have a package that can build the Falco eBPF probe in k8s
 - [ ] Have a package that can build the Falco eBPF probe in docker
-- [ ] Support the top 4 distributions in our [Survey](http://bit.ly/driverkit-survey-vote) and the Vanilla Kernel
+- [ ] Support the top distributions in our [Survey](http://bit.ly/driverkit-survey-vote) and the Vanilla Kernel
   - [x] Ubuntu (`ubuntu-aws`, `ubuntu-generic`)
-  - [ ] CentOS 8
-  - [ ] CentOS 7
+  - [x] CentOS 8
+  - [x] CentOS 7
+  - [x] CentOS 6
   - [ ] Debian stable
   - [x] Vanilla kernel (`vanilla`)
 
