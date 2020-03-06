@@ -74,12 +74,6 @@ func fetchDebianKernelURLs(kr kernelrelease.KernelRelease, kernelVersion uint16)
 	}
 	urls = append(urls, kbuildURL)
 
-	// urls := []string{
-	// 	"https://mirrors.kernel.org/debian/pool/main/l/linux/linux-headers-4.19.0-8-amd64_4.19.98-1_amd64.deb",
-	// 	"https://mirrors.kernel.org/debian/pool/main/l/linux/linux-headers-4.19.0-8-common_4.19.98-1_all.deb",
-	// 	"http://mirrors.kernel.org/debian/pool/main/l/linux/linux-kbuild-4.19_4.19.98-1_amd64.deb",
-	// }
-
 	return urls, nil
 }
 
