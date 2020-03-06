@@ -184,17 +184,9 @@ cd /tmp/kernel-download/usr/src/
 sourcedir=$(find . -type d -name "linux-headers{{ .KernelHeadersPattern }}" | head -n 1 | xargs readlink -f)
 
 ls -la $sourcedir
-# Prepare the kernel
-
-cd $sourcedir
-cp /module-builder/kernel.config /tmp/kernel.config
-
-{{ if .KernelLocalVersion}}
-sed -i 's/^CONFIG_LOCALVERSION=.*$/CONFIG_LOCALVERSION="{{ .KernelLocalVersion }}"/' /tmp/kernel.config
-{{ end }}
-
 
 # Build the module
+cd $sourcedir
 cd {{ .ModuleBuildDir }}
 make KERNELDIR=$sourcedir
 # Print results
