@@ -107,6 +107,16 @@ output: /tmp/falco-centos8.ko
 moduleversion: dev
 ```
 
+#### debian
+
+```yaml
+kernelrelease: 4.19.0-6-amd64
+kernelversion: 1
+output: /tmp/falco-debian.ko
+target: debian
+moduleversion: dev
+```
+
 ### vanilla
 
 In case of vanilla, you also need to pass the kernel config data in base64 format.
@@ -150,7 +160,7 @@ driverkit docker -c /tmp/vanilla.yaml --timeout=300
   - [x] CentOS 8
   - [x] CentOS 7
   - [x] CentOS 6
-  - [ ] Debian stable
+  - [x] Debian
   - [x] Vanilla kernel (`vanilla`)
 
 ## Survey
