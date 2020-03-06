@@ -7,6 +7,7 @@ import (
 
 	buildmeta "github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
 	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
+	"github.com/sirupsen/logrus"
 )
 
 const ModuleDirectory = "/tmp/module"
@@ -41,6 +42,8 @@ func Factory(buildType buildtype.BuildType) (Builder, error) {
 		return &UbuntuAWS{}, nil
 	case BuildTypeCentos:
 		return &Centos{}, nil
+	case BuildTypeDebian:
+		return &Debian{}, nil
 	}
 	return nil, fmt.Errorf("build type not found: %s", buildType)
 }
@@ -58,6 +61,7 @@ func getResolvingURLs(urls []string) ([]string, error) {
 		}
 		if res.StatusCode == http.StatusOK {
 			results = append(results, u)
+			logrus.WithField("url", u).Debug("kernel header url found")
 		}
 	}
 	if len(results) == 0 {
