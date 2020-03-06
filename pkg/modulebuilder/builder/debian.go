@@ -114,10 +114,6 @@ cd /tmp/kernel-download/
 cp -r usr/* /usr
 cp -r lib/* /lib
 
-# temporary symlink gcc
-ln -s /usr/bin/gcc-4.8 /usr/bin/gcc-4.9
-ln -s /usr/bin/gcc-8 /usr/bin/gcc-9
-
 cd /usr/src
 sourcedir=$(find . -type d -name "linux-headers-*amd64" | head -n 1 | xargs readlink -f)
 
@@ -126,7 +122,7 @@ ls -la $sourcedir
 # Build the module
 cd $sourcedir
 cd {{ .ModuleBuildDir }}
-make KERNELDIR=$sourcedir
+make CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
 # Print results
 ls -la
 
