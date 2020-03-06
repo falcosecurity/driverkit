@@ -76,6 +76,28 @@ func TestFromString(t *testing.T) {
 				FullExtraversion: "-754.el6.x86_64",
 			},
 		},
+		"debian jessie version": {
+			kernelVersionStr: "3.16.0-10-amd64",
+			want: KernelRelease{
+				Fullversion:      "3.16.0",
+				Version:          "3",
+				PatchLevel:       "16",
+				Sublevel:         "0",
+				Extraversion:     "10-amd64",
+				FullExtraversion: "-10-amd64",
+			},
+		},
+		"debian buster version": {
+			kernelVersionStr: "4.19.0-6-amd64",
+			want: KernelRelease{
+				Fullversion:      "4.19.0",
+				Version:          "4",
+				PatchLevel:       "19",
+				Sublevel:         "0",
+				Extraversion:     "6-amd64",
+				FullExtraversion: "-6-amd64",
+			},
+		},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
