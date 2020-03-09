@@ -108,14 +108,14 @@ func (bp *KubernetesBuildProcessor) buildModule(build *buildmeta.Build) error {
 
 	// Prepare driver config template
 	bufDriverConfig := bytes.NewBuffer(nil)
-	err = renderDriverConfig(bufDriverConfig, driverConfigData{ModuleVersion: bc.Build.ModuleVersion, ModuleName: bc.ModuleConfig.ModuleName, DeviceName: bc.ModuleConfig.DeviceName})
+	err = renderDriverConfig(bufDriverConfig, driverConfigData{DriverVersion: bc.Build.DriverVersion, DriverName: bc.ModuleConfig.ModuleName, DeviceName: bc.ModuleConfig.DeviceName})
 	if err != nil {
 		return err
 	}
 
 	// Prepare makefile template
 	bufMakefile := bytes.NewBuffer(nil)
-	err = renderMakefile(bufMakefile, makefileData{ModuleName: bc.ModuleConfig.ModuleName, ModuleBuildDir: builder.ModuleDirectory})
+	err = renderMakefile(bufMakefile, makefileData{ModuleName: bc.ModuleConfig.ModuleName, ModuleBuildDir: builder.DriverDirectory})
 	if err != nil {
 		return err
 	}

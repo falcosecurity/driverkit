@@ -42,8 +42,8 @@ func (v UbuntuGeneric) Script(bc BuilderConfig) (string, error) {
 	}
 
 	td := ubuntuTemplateData{
-		ModuleBuildDir:       ModuleDirectory,
-		ModuleDownloadURL:    fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.Build.ModuleVersion),
+		ModuleBuildDir:       DriverDirectory,
+		ModuleDownloadURL:    fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.Build.DriverVersion),
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
 		KernelHeadersPattern: "*generic",
@@ -80,7 +80,7 @@ func (v UbuntuAWS) Script(bc BuilderConfig) (string, error) {
 	}
 
 	td := ubuntuTemplateData{
-		ModuleBuildDir:       ModuleDirectory,
+		ModuleBuildDir:       DriverDirectory,
 		ModuleDownloadURL:    moduleDownloadURL(bc),
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,

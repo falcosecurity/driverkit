@@ -34,7 +34,7 @@ func (c Centos) Script(bc BuilderConfig) (string, error) {
 	}
 
 	td := centosTemplateData{
-		ModuleBuildDir:    ModuleDirectory,
+		ModuleBuildDir:    DriverDirectory,
 		ModuleDownloadURL: moduleDownloadURL(bc),
 		KernelDownloadURL: urls[0],
 		GCCVersion:        centosGccVersionFromKernelRelease(kr),
