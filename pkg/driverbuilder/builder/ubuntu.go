@@ -43,7 +43,7 @@ func (v ubuntuGeneric) Script(c Config) (string, error) {
 	}
 
 	td := ubuntuTemplateData{
-		ModuleBuildDir:       DriverDirectory,
+		DriverBuildDir:       DriverDirectory,
 		ModuleDownloadURL:    fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.Build.DriverVersion),
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
@@ -83,7 +83,7 @@ func (v ubuntuAWS) Script(c Config) (string, error) {
 	}
 
 	td := ubuntuTemplateData{
-		ModuleBuildDir:       DriverDirectory,
+		DriverBuildDir:       DriverDirectory,
 		ModuleDownloadURL:    moduleDownloadURL(c),
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
@@ -153,7 +153,7 @@ func extractExtraNumber(extraversion string) string {
 }
 
 type ubuntuTemplateData struct {
-	ModuleBuildDir       string
+	DriverBuildDir       string
 	ModuleDownloadURL    string
 	KernelDownloadURLS   []string
 	KernelLocalVersion   string
@@ -166,16 +166,16 @@ const ubuntuTemplate = `
 #!/bin/bash
 set -xeuo pipefail
 
-rm -Rf {{ .ModuleBuildDir }}
-mkdir {{ .ModuleBuildDir }}
+rm -Rf {{ .DriverBuildDir }}
+mkdir {{ .DriverBuildDir }}
 rm -Rf /tmp/module-download
 mkdir -p /tmp/module-download
 
 curl --silent -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
-mv /tmp/module-download/*/driver/* {{ .ModuleBuildDir }}
+mv /tmp/module-download/*/driver/* {{ .DriverBuildDir }}
 
-cp /driverkit/module-Makefile {{ .ModuleBuildDir }}/Makefile
-cp /driverkit/module-driver-config.h {{ .ModuleBuildDir }}/driver_config.h
+cp /driverkit/module-Makefile {{ .DriverBuildDir }}/Makefile
+cp /driverkit/module-driver-config.h {{ .DriverBuildDir }}/driver_config.h
 
 # Fetch the kernel
 mkdir /tmp/kernel-download
@@ -194,7 +194,7 @@ ls -la $sourcedir
 
 {{ if .BuildModule }}
 # Build the module
-cd {{ .ModuleBuildDir }}
+cd {{ .DriverBuildDir }}
 make KERNELDIR=$sourcedir
 strip -g falco.ko
 # Print results
