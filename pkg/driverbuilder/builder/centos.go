@@ -5,30 +5,29 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/falcosecurity/driverkit/pkg/driverbuilder/buildtype"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
-// BuildTypeCentos identifies the Centos target.
-const BuildTypeCentos = "centos"
+// TargetTypeCentos identifies the Centos target.
+const TargetTypeCentos Type = "centos"
 
 func init() {
-	buildtype.EnabledBuildTypes[BuildTypeCentos] = true
+	BuilderByTarget[TargetTypeCentos] = &centos{}
 }
 
-// Centos is a driverkit target.
-type Centos struct {
+// centos is a driverkit target.
+type centos struct {
 }
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
-func (c Centos) Script(bc BuilderConfig) (string, error) {
-	t := template.New(string(BuildTypeCentos))
+func (c centos) Script(cfg Config) (string, error) {
+	t := template.New(string(TargetTypeCentos))
 	parsed, err := t.Parse(centosTemplate)
 	if err != nil {
 		return "", err
 	}
 
-	kr := kernelrelease.FromString(bc.Build.KernelRelease)
+	kr := kernelrelease.FromString(cfg.Build.KernelRelease)
 
 	// Check (and filter) existing kernels before continuing
 	urls, err := getResolvingURLs(fetchCentosKernelURLS(kr))
@@ -38,11 +37,11 @@ func (c Centos) Script(bc BuilderConfig) (string, error) {
 
 	td := centosTemplateData{
 		ModuleBuildDir:    DriverDirectory,
-		ModuleDownloadURL: moduleDownloadURL(bc),
+		ModuleDownloadURL: moduleDownloadURL(cfg),
 		KernelDownloadURL: urls[0],
 		GCCVersion:        centosGccVersionFromKernelRelease(kr),
-		BuildModule:       len(bc.Build.ModuleFilePath) > 0,
-		BuildProbe:        len(bc.Build.ProbeFilePath) > 0,
+		BuildModule:       len(cfg.Build.ModuleFilePath) > 0,
+		BuildProbe:        len(cfg.Build.ProbeFilePath) > 0,
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -187,7 +186,7 @@ modinfo falco.ko
 # Build the eBPF probe
 cd {{ .DriverBuildDir }}/bpf
 make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
-file probe.o
+ls -l probe.o
 {{ end }}
 `
 
