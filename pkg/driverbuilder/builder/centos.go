@@ -5,19 +5,22 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/buildtype"
+	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
+// BuildTypeCentos identifies the Centos target.
 const BuildTypeCentos = "centos"
 
 func init() {
 	buildtype.EnabledBuildTypes[BuildTypeCentos] = true
 }
 
+// Centos is a driverkit target.
 type Centos struct {
 }
 
+// Script compiles the script to build the kernel module and/or the eBPF probe.
 func (c Centos) Script(bc BuilderConfig) (string, error) {
 	t := template.New(string(BuildTypeCentos))
 	parsed, err := t.Parse(centosTemplate)
@@ -38,6 +41,8 @@ func (c Centos) Script(bc BuilderConfig) (string, error) {
 		ModuleDownloadURL: moduleDownloadURL(bc),
 		KernelDownloadURL: urls[0],
 		GCCVersion:        centosGccVersionFromKernelRelease(kr),
+		BuildModule:       len(bc.Build.ModuleFilePath) > 0,
+		BuildProbe:        len(bc.Build.ProbeFilePath) > 0,
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -139,6 +144,8 @@ type centosTemplateData struct {
 	ModuleDownloadURL string
 	KernelDownloadURL string
 	GCCVersion        string
+	BuildModule       bool
+	BuildProbe        bool
 }
 
 const centosTemplate = `
@@ -168,13 +175,20 @@ mv usr/src/kernels/*/* /tmp/kernel
 # Change current gcc
 ln -sf /usr/bin/gcc-{{ .GCCVersion }} /usr/bin/gcc
 
-# Build the module
+{{ if .BuildModule }}
+# Build the kernel module
 cd {{ .ModuleBuildDir }}
 make KERNELDIR=/tmp/kernel
 # Print results
-ls -la
-
 modinfo falco.ko
+{{ end }}
+
+{{ if .BuildProbe }}
+# Build the eBPF probe
+cd {{ .DriverBuildDir }}/bpf
+make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
+file probe.o
+{{ end }}
 `
 
 func centosGccVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
