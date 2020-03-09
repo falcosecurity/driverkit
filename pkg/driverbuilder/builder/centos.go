@@ -6,7 +6,7 @@ import (
 	"text/template"
 
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
-	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/buildtype"
 )
 
 const BuildTypeCentos = "centos"
@@ -173,7 +173,6 @@ cd {{ .ModuleBuildDir }}
 make KERNELDIR=/tmp/kernel
 # Print results
 ls -la
-
 
 modinfo falco.ko
 `

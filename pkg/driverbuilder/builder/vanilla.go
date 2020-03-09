@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/buildtype"
 
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )

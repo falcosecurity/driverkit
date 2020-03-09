@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"path"
 
-	buildmeta "github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
-	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
+	buildmeta "github.com/falcosecurity/driverkit/pkg/driverbuilder/build"
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/buildtype"
 	"github.com/sirupsen/logrus"
 )
 

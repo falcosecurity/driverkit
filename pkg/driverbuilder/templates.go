@@ -1,10 +1,10 @@
-package modulebuilder
+package driverbuilder
 
 import (
 	"io"
 	"text/template"
 
-	"github.com/falcosecurity/driverkit/pkg/modulebuilder/builder"
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 )
 
 var waitForModuleScript = `

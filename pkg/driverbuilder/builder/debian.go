@@ -9,7 +9,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/buildtype"
 
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
@@ -127,6 +127,10 @@ make CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
 ls -la
 
 modinfo falco.ko
+
+cd bpf
+make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
+ls -la
 `
 
 func debianHeadersURLFromRelease(kr kernelrelease.KernelRelease) ([]string, error) {
