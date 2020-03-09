@@ -10,13 +10,22 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// DriverDirectory is the directory the processor uses to store the driver.
 const DriverDirectory = "/tmp/module"
+
+// ModuleFileName is the standard file name for the kernel module.
 const ModuleFileName = "falco.ko"
+
+// ProbeFileName is the standard file name for the eBPF probe.
 const ProbeFileName = "probe.o"
 
+// FalcoModuleFullPath is the standard path for the kernel module.
 var FalcoModuleFullPath = path.Join(DriverDirectory, ModuleFileName)
+
+// FalcoProbeFullPath is the standard path for the eBPF probe.
 var FalcoProbeFullPath = path.Join(DriverDirectory, "bpf", ProbeFileName)
 
+// BuilderConfig contains all the configurations needed to build the kernel module or the eBPF probe.
 type BuilderConfig struct {
 	ModuleConfig ModuleConfig
 	Build        *buildmeta.Build

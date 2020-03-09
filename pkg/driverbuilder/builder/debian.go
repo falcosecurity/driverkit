@@ -14,17 +14,18 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
+// BuildTypeDebian identifies the Debian target.
 const BuildTypeDebian buildtype.BuildType = "debian"
 
 func init() {
 	buildtype.EnabledBuildTypes[BuildTypeDebian] = true
 }
 
-// Debian ...
+// Debian is a driverkit target.
 type Debian struct {
 }
 
-// Script ...
+// Script compiles the script to build the kernel module and/or the eBPF probe.
 func (v Debian) Script(bc BuilderConfig) (string, error) {
 	t := template.New(string(BuildTypeDebian))
 	parsed, err := t.Parse(debianTemplate)
@@ -122,10 +123,10 @@ cd /usr/src
 sourcedir=$(find . -type d -name "linux-headers-*amd64" | head -n 1 | xargs readlink -f)
 
 ls -la $sourcedir
-cd {{ .DriverBuildDir }}
 
-# Build the module
 {{ if .BuildModule }}
+# Build the module
+cd {{ .DriverBuildDir }}
 make CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
 strip -g falco.ko
 # Print results
@@ -133,6 +134,7 @@ modinfo falco.ko
 {{ end }}
 
 {{ if .BuildProbe }}
+# Build the eBPF probe
 cd {{ .DriverBuildDir }}/bpf
 make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
 file probe.o
@@ -187,12 +189,12 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 func debianKbuildURLFromRelease(kr kernelrelease.KernelRelease) (string, error) {
 	rmatch := `href="(linux-kbuild-%s\.%s.*amd64\.deb)"`
 	kbuildPattern := regexp.MustCompile(fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel))
-	baseUrl := "http://mirrors.kernel.org/debian/pool/main/l/linux/"
+	baseURL := "http://mirrors.kernel.org/debian/pool/main/l/linux/"
 	if kr.Version == "3" {
-		baseUrl = "http://mirrors.kernel.org/debian/pool/main/l/linux-tools/"
+		baseURL = "http://mirrors.kernel.org/debian/pool/main/l/linux-tools/"
 	}
 
-	resp, err := http.Get(baseUrl)
+	resp, err := http.Get(baseURL)
 	if err != nil {
 		return "", err
 	}
@@ -207,5 +209,5 @@ func debianKbuildURLFromRelease(kr kernelrelease.KernelRelease) (string, error) 
 		return "", fmt.Errorf("kbuild not found")
 	}
 
-	return fmt.Sprintf("%s%s", baseUrl, match[1]), nil
+	return fmt.Sprintf("%s%s", baseURL, match[1]), nil
 }
