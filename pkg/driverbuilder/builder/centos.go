@@ -36,7 +36,7 @@ func (c centos) Script(cfg Config) (string, error) {
 	}
 
 	td := centosTemplateData{
-		ModuleBuildDir:    DriverDirectory,
+		DriverBuildDir:    DriverDirectory,
 		ModuleDownloadURL: moduleDownloadURL(cfg),
 		KernelDownloadURL: urls[0],
 		GCCVersion:        centosGccVersionFromKernelRelease(kr),
@@ -139,7 +139,7 @@ func fetchCentosKernelURLS(kr kernelrelease.KernelRelease) []string {
 }
 
 type centosTemplateData struct {
-	ModuleBuildDir    string
+	DriverBuildDir    string
 	ModuleDownloadURL string
 	KernelDownloadURL string
 	GCCVersion        string
@@ -151,16 +151,16 @@ const centosTemplate = `
 #!/bin/bash
 set -xeuo pipefail
 
-rm -Rf {{ .ModuleBuildDir }}
-mkdir {{ .ModuleBuildDir }}
+rm -Rf {{ .DriverBuildDir }}
+mkdir {{ .DriverBuildDir }}
 rm -Rf /tmp/module-download
 mkdir -p /tmp/module-download
 
 curl --silent -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
-mv /tmp/module-download/*/driver/* {{ .ModuleBuildDir }}
+mv /tmp/module-download/*/driver/* {{ .DriverBuildDir }}
 
-cp /driverkit/module-Makefile {{ .ModuleBuildDir }}/Makefile
-cp /driverkit/module-driver-config.h {{ .ModuleBuildDir }}/driver_config.h
+cp /driverkit/module-Makefile {{ .DriverBuildDir }}/Makefile
+cp /driverkit/module-driver-config.h {{ .DriverBuildDir }}/driver_config.h
 
 # Fetch the kernel
 mkdir /tmp/kernel-download
@@ -176,7 +176,7 @@ ln -sf /usr/bin/gcc-{{ .GCCVersion }} /usr/bin/gcc
 
 {{ if .BuildModule }}
 # Build the kernel module
-cd {{ .ModuleBuildDir }}
+cd {{ .DriverBuildDir }}
 make KERNELDIR=/tmp/kernel
 # Print results
 modinfo falco.ko
@@ -185,7 +185,7 @@ modinfo falco.ko
 {{ if .BuildProbe }}
 # Build the eBPF probe
 cd {{ .DriverBuildDir }}/bpf
-make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
+make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc KERNELDIR=/tmp/kernel
 ls -l probe.o
 {{ end }}
 `
