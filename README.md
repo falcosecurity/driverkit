@@ -47,7 +47,7 @@ target: ubuntu-aws
 output:
   module: /tmp/falco-ubuntu-aws.ko
   probe: /tmp/falco-ubuntu-aws.o
-driverversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
+driverversion: dev
 ```
 
 Now run driverkit using the configuration file:
@@ -59,7 +59,7 @@ driverkit docker -c ubuntu-aws.yaml
 ## Supported targets
 
 ### ubuntu-generic
-Example configuration file
+Example configuration file to build both the Kernel module and eBPF probe for Ubuntu generic.
 
 ```yaml
 kernelrelease: 4.15.0-72-generic
@@ -68,10 +68,12 @@ target: ubuntu-generic
 output:
   module: /tmp/falco-ubuntu-generic.ko
   probe: /tmp/falco-ubuntu-generic.o
-driverversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
+driverversion: dev
 ```
 
 ### ubuntu-aws
+
+Example configuration file to build both the Kernel module and eBPF probe for Ubuntu AWS.
 
 ```yaml
 kernelrelease: 4.15.0-1057-aws
@@ -80,7 +82,7 @@ target: ubuntu-aws
 output:
   module: /tmp/falco-ubuntu-aws.ko
   probe: /tmp/falco-ubuntu-aws.o
-driverversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
+driverversion: dev
 ```
 
 ### centos 6
@@ -91,7 +93,6 @@ kernelversion: 1
 target: centos
 output:
   module: /tmp/falco-centos6.ko
-  probe: /tmp/falco-centos6.o
 driverversion: dev
 ```
 
@@ -103,7 +104,6 @@ kernelversion: 1
 target: centos
 output:
   module: /tmp/falco-centos7.ko
-  probe: /tmp/falco-centos7.o
 driverversion: dev
 ```
 
@@ -115,11 +115,12 @@ kernelversion: 1
 target: centos
 output:
   module: /tmp/falco-centos8.ko
-  probe: /tmp/falco-centos8.o
 driverversion: dev
 ```
 
 #### debian
+
+Example configuration file to build both the Kernel module and eBPF probe for Debian.
 
 ```yaml
 kernelrelease: 4.19.0-6-amd64
