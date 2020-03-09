@@ -4,9 +4,7 @@ import (
 	"fmt"
 
 	"github.com/creasty/defaults"
-	"github.com/falcosecurity/driverkit/pkg/driverbuilder/build"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
-	"github.com/falcosecurity/driverkit/pkg/driverbuilder/buildtype"
 	"github.com/falcosecurity/driverkit/validate"
 	"github.com/go-playground/validator/v10"
 	logger "github.com/sirupsen/logrus"
@@ -24,7 +22,7 @@ type RootOptions struct {
 	DriverVersion    string `default:"dev" validate:"required,eq=dev|sha1" name:"driver version"`
 	KernelVersion    uint16 `validate:"omitempty,number" name:"kernel version"` // todo > semver validator?
 	KernelRelease    string `validate:"required,ascii" name:"kernel release"`
-	Target           string `validate:"required,oneof=vanilla ubuntu-generic ubuntu-aws centos debian" name:"target"`
+	Target           string `validate:"required,target" name:"target"`
 	KernelConfigData string `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level
 	Output           OutputOptions
 }
@@ -56,18 +54,18 @@ func (ro *RootOptions) Validate() []error {
 	return nil
 }
 
-func (ro *RootOptions) toBuild() *build.Build {
+func (ro *RootOptions) toBuild() *builder.Build {
 	kernelConfigData := ro.KernelConfigData
 	if len(kernelConfigData) == 0 {
 		kernelConfigData = "bm8tZGF0YQ==" // no-data
 	}
 
-	return &build.Build{
+	return &builder.Build{
+		TargetType:       builder.Type(ro.Target),
 		DriverVersion:    ro.DriverVersion,
 		KernelVersion:    ro.KernelVersion,
 		KernelRelease:    ro.KernelRelease,
 		Architecture:     ro.Architecture,
-		BuildType:        buildtype.BuildType(ro.Target),
 		KernelConfigData: kernelConfigData,
 		ModuleFilePath:   ro.Output.Module,
 		ProbeFilePath:    ro.Output.Probe,
@@ -80,11 +78,11 @@ func (ro *RootOptions) toBuild() *build.Build {
 func RootOptionsLevelValidation(level validator.StructLevel) {
 	opts := level.Current().Interface().(RootOptions)
 
-	if len(opts.KernelConfigData) == 0 && opts.Target == builder.BuildTypeVanilla.String() {
+	if len(opts.KernelConfigData) == 0 && opts.Target == builder.TargetTypeVanilla.String() {
 		level.ReportError(opts.KernelConfigData, "kernelConfigData", "KernelConfigData", "required_kernelconfigdata_with_target_vanilla", "")
 	}
 
-	if opts.KernelVersion == 0 && (opts.Target == builder.BuildTypeUbuntuAWS.String() || opts.Target == builder.BuildTypeUbuntuGeneric.String()) {
+	if opts.KernelVersion == 0 && (opts.Target == builder.TargetTypeUbuntuAWS.String() || opts.Target == builder.TargetTypeUbuntuGeneric.String()) {
 		level.ReportError(opts.KernelVersion, "kernelVersion", "KernelVersion", "required_kernelversion_with_target_ubuntu", "")
 	}
 }
