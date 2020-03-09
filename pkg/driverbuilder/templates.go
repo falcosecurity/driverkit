@@ -67,8 +67,8 @@ func renderMakefile(w io.Writer, md makefileData) error {
 }
 
 type driverConfigData struct {
-	ModuleVersion string
-	ModuleName    string
+	DriverVersion string
+	DriverName    string
 	DeviceName    string
 }
 
@@ -77,9 +77,9 @@ type driverConfigData struct {
 const driverConfigTemplate = `
 #pragma once
 
-#define PROBE_VERSION "{{ .ModuleVersion }}"
+#define PROBE_VERSION "{{ .DriverVersion }}"
 
-#define PROBE_NAME "{{ .ModuleName }}"
+#define PROBE_NAME "{{ .DriverName }}"
 
 #define PROBE_DEVICE_NAME "{{ .DeviceName }}"
 `

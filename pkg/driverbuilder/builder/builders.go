@@ -10,10 +10,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const ModuleDirectory = "/tmp/module"
+const DriverDirectory = "/tmp/module"
 const ModuleFileName = "falco.ko"
+const ProbeFileName = "probe.o"
 
-var FalcoModuleFullPath = path.Join(ModuleDirectory, ModuleFileName)
+var FalcoModuleFullPath = path.Join(DriverDirectory, ModuleFileName)
+var FalcoProbeFullPath = path.Join(DriverDirectory, "bpf", ProbeFileName)
 
 type BuilderConfig struct {
 	ModuleConfig ModuleConfig
@@ -49,7 +51,7 @@ func Factory(buildType buildtype.BuildType) (Builder, error) {
 }
 
 func moduleDownloadURL(bc BuilderConfig) string {
-	return fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.Build.ModuleVersion)
+	return fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.Build.DriverVersion)
 }
 
 func getResolvingURLs(urls []string) ([]string, error) {

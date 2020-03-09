@@ -86,7 +86,7 @@ func (v Vanilla) Script(bc BuilderConfig) (string, error) {
 	}
 
 	td := vanillaTemplateData{
-		ModuleBuildDir:     ModuleDirectory,
+		ModuleBuildDir:     DriverDirectory,
 		ModuleDownloadURL:  moduleDownloadURL(bc),
 		KernelDownloadURL:  urls[0],
 		KernelLocalVersion: kv.FullExtraversion,
