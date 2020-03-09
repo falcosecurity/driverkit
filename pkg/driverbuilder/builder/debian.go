@@ -127,6 +127,7 @@ cd {{ .DriverBuildDir }}
 # Build the module
 {{ if .BuildModule }}
 make CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
+strip -g falco.ko
 # Print results
 modinfo falco.ko
 {{ end }}
