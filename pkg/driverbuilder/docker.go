@@ -19,6 +19,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"github.com/falcosecurity/driverkit/pkg/signals"
+	"github.com/sirupsen/logrus"
 	logger "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/uuid"
 )
@@ -123,10 +124,10 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	}
 
 	files := []dockerCopyFile{
-		{"/module-builder/module-builder.sh", res},
-		{"/module-builder/kernel.config", string(configDecoded)},
-		{"/module-builder/module-Makefile", bufMakefile.String()},
-		{"/module-builder/module-driver-config.h", bufDriverConfig.String()},
+		{"/driverkit/driverkit.sh", res},
+		{"/driverkit/kernel.config", string(configDecoded)},
+		{"/driverkit/module-Makefile", bufMakefile.String()},
+		{"/driverkit/module-driver-config.h", bufDriverConfig.String()},
 	}
 
 	var buf bytes.Buffer
@@ -150,7 +151,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		Detach:       false,
 		Cmd: []string{
 			"/bin/bash",
-			"/module-builder/module-builder.sh",
+			"/driverkit/driverkit.sh",
 		},
 	})
 	if err != nil {
@@ -168,12 +169,14 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		if err := copyFromContainer(ctx, cli, cdata.ID, builder.FalcoModuleFullPath, b.ModuleFilePath); err != nil {
 			return err
 		}
+		logrus.WithField("path", b.ModuleFilePath).Info("kernel module available")
 	}
 
 	if len(b.ProbeFilePath) > 0 {
 		if err := copyFromContainer(ctx, cli, cdata.ID, builder.FalcoProbeFullPath, b.ProbeFilePath); err != nil {
 			return err
 		}
+		logrus.WithField("path", b.ProbeFilePath).Info("eBPF probe available")
 	}
 
 	return nil

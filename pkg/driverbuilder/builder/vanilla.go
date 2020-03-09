@@ -31,8 +31,8 @@ mkdir -p /tmp/module-download
 curl --silent -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
 mv /tmp/module-download/*/driver/* {{ .DriverBuildDir }}
 
-cp /module-builder/module-Makefile {{ .DriverBuildDir }}/Makefile
-cp /module-builder/module-driver-config.h {{ .DriverBuildDir }}/driver_config.h
+cp /driverkit/module-Makefile {{ .DriverBuildDir }}/Makefile
+cp /driverkit/module-driver-config.h {{ .DriverBuildDir }}/driver_config.h
 
 # Fetch the kernel
 cd /tmp
@@ -44,7 +44,7 @@ mv /tmp/kernel-download/*/* /tmp/kernel
 
 # Prepare the kernel
 cd /tmp/kernel
-cp /module-builder/kernel.config /tmp/kernel.config
+cp /driverkit/kernel.config /tmp/kernel.config
 
 {{ if .KernelLocalVersion}}
 sed -i 's/^CONFIG_LOCALVERSION=.*$/CONFIG_LOCALVERSION="{{ .KernelLocalVersion }}"/' /tmp/kernel.config
