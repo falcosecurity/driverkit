@@ -44,7 +44,9 @@ Create a file named `ubuntu-aws.yaml` containing the following content:
 kernelrelease: 4.15.0-1057-aws
 kernelversion: 59
 target: ubuntu-aws
-output: /tmp/falco-ubuntu-aws.ko
+output:
+  module: /tmp/falco-ubuntu-aws.ko
+  probe: /tmp/falco-ubuntu-aws.o
 driverversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
 ```
 
@@ -63,7 +65,9 @@ Example configuration file
 kernelrelease: 4.15.0-72-generic
 kernelversion: 81
 target: ubuntu-generic
-output: /tmp/falco-ubuntu-generic.ko
+output:
+  module: /tmp/falco-ubuntu-generic.ko
+  probe: /tmp/falco-ubuntu-generic.o
 driverversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
 ```
 
@@ -73,7 +77,9 @@ driverversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
 kernelrelease: 4.15.0-1057-aws
 kernelversion: 59
 target: ubuntu-aws
-output: /tmp/falco-ubuntu-aws.ko
+output:
+  module: /tmp/falco-ubuntu-aws.ko
+  probe: /tmp/falco-ubuntu-aws.o
 driverversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
 ```
 
@@ -83,7 +89,9 @@ driverversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
 kernelrelease: 2.6.32-754.14.2.el6.x86_64
 kernelversion: 1
 target: centos
-output: /tmp/falco-centos6.ko
+output:
+  module: /tmp/falco-centos6.ko
+  probe: /tmp/falco-centos6.o
 driverversion: dev
 ```
 
@@ -93,7 +101,9 @@ driverversion: dev
 kernelrelease: 3.10.0-957.12.2.el7.x86_64
 kernelversion: 1
 target: centos
-output: /tmp/falco-centos7.ko
+output:
+  module: /tmp/falco-centos7.ko
+  probe: /tmp/falco-centos7.o
 driverversion: dev
 ```
 
@@ -103,7 +113,9 @@ driverversion: dev
 kernelrelease: 4.18.0-147.5.1.el8_1.x86_64
 kernelversion: 1
 target: centos
-output: /tmp/falco-centos8.ko
+output:
+  module: /tmp/falco-centos8.ko
+  probe: /tmp/falco-centos8.o
 driverversion: dev
 ```
 
@@ -112,7 +124,9 @@ driverversion: dev
 ```yaml
 kernelrelease: 4.19.0-6-amd64
 kernelversion: 1
-output: /tmp/falco-debian.ko
+output:
+  module: /tmp/falco-debian.ko
+  probe: /tmp/falco-debian.o
 target: debian
 driverversion: dev
 ```
@@ -127,7 +141,9 @@ In most systems you can get `kernelconfigdata`  by reading `/proc/config.gz`.
 kernelrelease: 5.5.2
 kernelversion: 1
 target: vanilla
-output: /tmp/falco-vanilla.ko
+output:
+  module: /tmp/falco-vanilla.ko
+  probe: /tmp/falco-vanilla.o
 driverversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
 ```
 
@@ -153,9 +169,9 @@ driverkit docker -c /tmp/vanilla.yaml --timeout=300
 
 - [x] Have a package that can build the Falco kernel module in k8s
 - [x] Have a package that can build the Falco kernel module in docker
-- [ ] Have a package that can build the Falco eBPF probe in k8s
-- [ ] Have a package that can build the Falco eBPF probe in docker
-- [ ] Support the top distributions in our [Survey](http://bit.ly/driverkit-survey-vote) and the Vanilla Kernel
+- [x] Have a package that can build the Falco eBPF probe in k8s
+- [x] Have a package that can build the Falco eBPF probe in docker
+- [x] Support the top distributions in our [Survey](http://bit.ly/driverkit-survey-vote) and the Vanilla Kernel
   - [x] Ubuntu (`ubuntu-aws`, `ubuntu-generic`)
   - [x] CentOS 8
   - [x] CentOS 7
