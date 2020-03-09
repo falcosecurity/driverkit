@@ -1,4 +1,4 @@
-package modulebuilder
+package driverbuilder
 
 import (
 	"archive/tar"
@@ -16,8 +16,8 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
-	buildmeta "github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
-	"github.com/falcosecurity/driverkit/pkg/modulebuilder/builder"
+	buildmeta "github.com/falcosecurity/driverkit/pkg/driverbuilder/build"
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"github.com/falcosecurity/driverkit/pkg/signals"
 	logger "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/uuid"
@@ -184,7 +184,7 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 		}
 
 		if hdr.Name == builder.ModuleFileName {
-			out, err := os.Create(b.OutputFilePath)
+			out, err := os.Create(b.ModuleFilePath)
 
 			if err != nil {
 				return err

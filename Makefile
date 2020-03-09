@@ -14,7 +14,7 @@ IMAGE_NAME_BUILDER_BASE_BRANCH := $(IMAGE_NAME_BUILDER_BASE):$(GIT_BRANCH_CLEAN)
 IMAGE_NAME_BUILDER_BASE_COMMIT := $(IMAGE_NAME_BUILDER_BASE):$(GIT_COMMIT)
 IMAGE_NAME_BUILDER_BASE_LATEST := $(IMAGE_NAME_BUILDER_BASE):latest
 
-LDFLAGS := -ldflags '-X github.com/falcosecurity/driverkit/pkg/version.buildTime=$(shell date +%s) -X github.com/falcosecurity/driverkit/pkg/version.gitCommit=${GIT_COMMIT} -X github.com/falcosecurity/driverkit/pkg/modulebuilder.builderBaseImage=${IMAGE_NAME_BUILDER_BASE_COMMIT}'
+LDFLAGS := -ldflags '-X github.com/falcosecurity/driverkit/pkg/version.buildTime=$(shell date +%s) -X github.com/falcosecurity/driverkit/pkg/version.gitCommit=${GIT_COMMIT} -X github.com/falcosecurity/driverkit/pkg/driverbuilder.builderBaseImage=${IMAGE_NAME_BUILDER_BASE_COMMIT}'
 
 TESTPACKAGES := $(shell go list ./...)
 

@@ -1,4 +1,4 @@
-package modulebuilder
+package driverbuilder
 
 import (
 	"bytes"
@@ -12,8 +12,8 @@ import (
 
 	logger "github.com/sirupsen/logrus"
 
-	buildmeta "github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
-	"github.com/falcosecurity/driverkit/pkg/modulebuilder/builder"
+	buildmeta "github.com/falcosecurity/driverkit/pkg/driverbuilder/build"
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -191,7 +191,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build *buildmeta.Build) error {
 		return err
 	}
 
-	out, err := os.Create(build.OutputFilePath)
+	out, err := os.Create(build.ModuleFilePath)
 
 	if err != nil {
 		return err

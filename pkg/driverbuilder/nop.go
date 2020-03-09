@@ -1,7 +1,7 @@
-package modulebuilder
+package driverbuilder
 
 import (
-	"github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/build"
 )
 
 type NopBuildProcessor struct {
