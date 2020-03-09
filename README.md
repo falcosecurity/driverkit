@@ -26,13 +26,13 @@ uname -r
 ### Against a Kubernetes cluster
 
 ```bash
-driverkit kubernetes -o /tmp/falco.ko --kernelversion=81 --kernelrelease=4.15.0-72-generic --moduleversion=dev --target=ubuntu-generic
+driverkit kubernetes -o /tmp/falco.ko --kernelversion=81 --kernelrelease=4.15.0-72-generic --driverversion=dev --target=ubuntu-generic
 ```
 
 ### Against a Docker daemon
 
 ```bash
-driverkit docker -o /tmp/falco.ko --kernelversion=81 --kernelrelease=4.15.0-72-generic --moduleversion=dev --target=ubuntu-generic
+driverkit docker -o /tmp/falco.ko --kernelversion=81 --kernelrelease=4.15.0-72-generic --driverversion=dev --target=ubuntu-generic
 ```
 
 
@@ -45,7 +45,7 @@ kernelrelease: 4.15.0-1057-aws
 kernelversion: 59
 target: ubuntu-aws
 output: /tmp/falco-ubuntu-aws.ko
-moduleversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
+driverversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
 ```
 
 Now run driverkit using the configuration file:
@@ -64,7 +64,7 @@ kernelrelease: 4.15.0-72-generic
 kernelversion: 81
 target: ubuntu-generic
 output: /tmp/falco-ubuntu-generic.ko
-moduleversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
+driverversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
 ```
 
 ### ubuntu-aws
@@ -74,7 +74,7 @@ kernelrelease: 4.15.0-1057-aws
 kernelversion: 59
 target: ubuntu-aws
 output: /tmp/falco-ubuntu-aws.ko
-moduleversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
+driverversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
 ```
 
 ### centos 6
@@ -84,7 +84,7 @@ kernelrelease: 2.6.32-754.14.2.el6.x86_64
 kernelversion: 1
 target: centos
 output: /tmp/falco-centos6.ko
-moduleversion: dev
+driverversion: dev
 ```
 
 ### centos 7
@@ -94,7 +94,7 @@ kernelrelease: 3.10.0-957.12.2.el7.x86_64
 kernelversion: 1
 target: centos
 output: /tmp/falco-centos7.ko
-moduleversion: dev
+driverversion: dev
 ```
 
 ### centos 8
@@ -104,7 +104,7 @@ kernelrelease: 4.18.0-147.5.1.el8_1.x86_64
 kernelversion: 1
 target: centos
 output: /tmp/falco-centos8.ko
-moduleversion: dev
+driverversion: dev
 ```
 
 #### debian
@@ -114,7 +114,7 @@ kernelrelease: 4.19.0-6-amd64
 kernelversion: 1
 output: /tmp/falco-debian.ko
 target: debian
-moduleversion: dev
+driverversion: dev
 ```
 
 ### vanilla
@@ -128,7 +128,7 @@ kernelrelease: 5.5.2
 kernelversion: 1
 target: vanilla
 output: /tmp/falco-vanilla.ko
-moduleversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
+driverversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
 ```
 
 Now you can add the `kernelconfigdata` to the configuration file, to do so:

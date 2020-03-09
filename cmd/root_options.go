@@ -21,7 +21,7 @@ type OutputOptions struct {
 // RootOptions ...
 type RootOptions struct {
 	Architecture     string `default:"x86_64" validate:"required,oneof=x86_64" name:"architecture"`
-	ModuleVersion    string `default:"dev" validate:"required,eq=dev|sha1" name:"module version"`
+	DriverVersion    string `default:"dev" validate:"required,eq=dev|sha1" name:"driver version"`
 	KernelVersion    uint16 `validate:"omitempty,number" name:"kernel version"` // todo > semver validator?
 	KernelRelease    string `validate:"required,ascii" name:"kernel release"`
 	Target           string `validate:"required,oneof=vanilla ubuntu-generic ubuntu-aws centos debian" name:"target"`
@@ -63,7 +63,7 @@ func (ro *RootOptions) toBuild() *build.Build {
 	}
 
 	return &build.Build{
-		ModuleVersion:    ro.ModuleVersion,
+		DriverVersion:    ro.DriverVersion,
 		KernelVersion:    ro.KernelVersion,
 		KernelRelease:    ro.KernelRelease,
 		Architecture:     ro.Architecture,
