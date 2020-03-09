@@ -174,8 +174,8 @@ mkdir -p /tmp/module-download
 curl --silent -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
 mv /tmp/module-download/*/driver/* {{ .ModuleBuildDir }}
 
-cp /module-builder/module-Makefile {{ .ModuleBuildDir }}/Makefile
-cp /module-builder/module-driver-config.h {{ .ModuleBuildDir }}/driver_config.h
+cp /driverkit/module-Makefile {{ .ModuleBuildDir }}/Makefile
+cp /driverkit/module-driver-config.h {{ .ModuleBuildDir }}/driver_config.h
 
 # Fetch the kernel
 mkdir /tmp/kernel-download

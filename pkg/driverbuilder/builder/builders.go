@@ -9,7 +9,7 @@ import (
 )
 
 // DriverDirectory is the directory the processor uses to store the driver.
-const DriverDirectory = "/tmp/module"
+const DriverDirectory = "/tmp/driver"
 
 // ModuleFileName is the standard file name for the kernel module.
 const ModuleFileName = "falco.ko"

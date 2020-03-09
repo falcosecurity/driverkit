@@ -92,7 +92,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 
 	buildCmd := []string{
 		"/bin/bash",
-		"/module-builder/module-builder.sh",
+		"/driverkit/driverkit.sh",
 	}
 
 	commonMeta := metav1.ObjectMeta{
@@ -125,7 +125,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 	cm := &corev1.ConfigMap{
 		ObjectMeta: commonMeta,
 		Data: map[string]string{
-			"module-builder.sh":      res,
+			"driverkit.sh":           res,
 			"kernel.config":          string(configDecoded),
 			"module-Makefile":        bufMakefile.String(),
 			"module-driver-config.h": bufDriverConfig.String(),
@@ -157,8 +157,8 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 					},
 					VolumeMounts: []corev1.VolumeMount{
 						{
-							Name:      "module-builder",
-							MountPath: "/module-builder",
+							Name:      "driverkit",
+							MountPath: "/driverkit",
 							ReadOnly:  true,
 						},
 					},
@@ -166,7 +166,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 			},
 			Volumes: []corev1.Volume{
 				{
-					Name: "module-builder",
+					Name: "driverkit",
 					VolumeSource: corev1.VolumeSource{
 						ConfigMap: &corev1.ConfigMapVolumeSource{
 							LocalObjectReference: corev1.LocalObjectReference{
@@ -263,7 +263,7 @@ func copySingleFileFromPod(out io.Writer, podClient v1.PodsGetter, clientConfig 
 
 		Command: []string{
 			"/bin/bash",
-			"/module-builder/module-downloader.sh",
+			"/driverkit/module-downloader.sh",
 		},
 		Executor: &exec.DefaultRemoteExecutor{},
 	}
