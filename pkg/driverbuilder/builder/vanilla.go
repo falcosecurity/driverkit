@@ -10,9 +10,11 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
+// Vanilla is a driverkit target.
 type Vanilla struct {
 }
 
+// BuildTypeVanilla identifies the Vanilla target.
 const BuildTypeVanilla buildtype.BuildType = "vanilla"
 
 func init() {
@@ -23,16 +25,16 @@ const vanillaTemplate = `
 #!/bin/bash
 set -xeuo pipefail
 
-rm -Rf {{ .ModuleBuildDir }}
-mkdir {{ .ModuleBuildDir }}
+rm -Rf {{ .DriverBuildDir }}
+mkdir {{ .DriverBuildDir }}
 rm -Rf /tmp/module-download
 mkdir -p /tmp/module-download
 
 curl --silent -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
-mv /tmp/module-download/*/driver/* {{ .ModuleBuildDir }}
+mv /tmp/module-download/*/driver/* {{ .DriverBuildDir }}
 
-cp /module-builder/module-Makefile {{ .ModuleBuildDir }}/Makefile
-cp /module-builder/module-driver-config.h {{ .ModuleBuildDir }}/driver_config.h
+cp /module-builder/module-Makefile {{ .DriverBuildDir }}/Makefile
+cp /module-builder/module-driver-config.h {{ .DriverBuildDir }}/driver_config.h
 
 # Fetch the kernel
 cd /tmp
@@ -54,22 +56,32 @@ make KCONFIG_CONFIG=/tmp/kernel.config oldconfig
 make KCONFIG_CONFIG=/tmp/kernel.config prepare
 make KCONFIG_CONFIG=/tmp/kernel.config modules_prepare
 
-# Build the module
-cd {{ .ModuleBuildDir }}
+{{ if .BuildModule }}
+# Build the kernel module
+cd {{ .DriverBuildDir }}
 make KERNELDIR=/tmp/kernel
 # Print results
-ls -la
-
 modinfo falco.ko
+{{ end }}
+
+{{ if .BuildProbe }}
+# Build the eBPF probe
+cd {{ .DriverBuildDir }}/bpf
+make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
+file probe.o
+{{ end }}
 `
 
 type vanillaTemplateData struct {
-	ModuleBuildDir     string
+	DriverBuildDir     string
 	ModuleDownloadURL  string
 	KernelDownloadURL  string
 	KernelLocalVersion string
+	BuildModule        bool
+	BuildProbe         bool
 }
 
+// Script compiles the script to build the kernel module and/or the eBPF probe.
 func (v Vanilla) Script(bc BuilderConfig) (string, error) {
 	t := template.New(string(BuildTypeVanilla))
 	parsed, err := t.Parse(vanillaTemplate)
@@ -86,10 +98,12 @@ func (v Vanilla) Script(bc BuilderConfig) (string, error) {
 	}
 
 	td := vanillaTemplateData{
-		ModuleBuildDir:     DriverDirectory,
+		DriverBuildDir:     DriverDirectory,
 		ModuleDownloadURL:  moduleDownloadURL(bc),
 		KernelDownloadURL:  urls[0],
 		KernelLocalVersion: kv.FullExtraversion,
+		BuildModule:        len(bc.Build.ModuleFilePath) > 0,
+		BuildProbe:         len(bc.Build.ProbeFilePath) > 0,
 	}
 
 	buf := bytes.NewBuffer(nil)
