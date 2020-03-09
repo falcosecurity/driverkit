@@ -17,7 +17,6 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
-	buildmeta "github.com/falcosecurity/driverkit/pkg/driverbuilder/build"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"github.com/falcosecurity/driverkit/pkg/signals"
 	logger "github.com/sirupsen/logrus"
@@ -42,7 +41,7 @@ func (bp *DockerBuildProcessor) String() string {
 	return DockerBuildProcessorName
 }
 
-func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
+func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	logger.Debug("doing a new docker build")
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
@@ -50,35 +49,33 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 	}
 
 	// create a builder based on the choosen build type
-	v, err := builder.Factory(b.BuildType)
+	v, err := builder.Factory(b.TargetType)
 	if err != nil {
 		return err
 	}
-	bc := builder.BuilderConfig{
-		ModuleConfig: builder.ModuleConfig{
-			ModuleName:      "falco",
-			DeviceName:      "falco",
-			DownloadBaseURL: "https://github.com/draios/sysdig/archive",
-		},
-		Build: b,
+	c := builder.Config{
+		DriverName:      "falco",
+		DeviceName:      "falco",
+		DownloadBaseURL: "https://github.com/draios/sysdig/archive",
+		Build:           b,
 	}
 
-	// generate the build script from the builder
-	res, err := v.Script(bc)
+	// Generate the build script from the builder
+	res, err := v.Script(c)
 	if err != nil {
 		return err
 	}
 
 	// Prepare driver config template
 	bufDriverConfig := bytes.NewBuffer(nil)
-	err = renderDriverConfig(bufDriverConfig, driverConfigData{DriverVersion: bc.Build.DriverVersion, DriverName: bc.ModuleConfig.ModuleName, DeviceName: bc.ModuleConfig.DeviceName})
+	err = renderDriverConfig(bufDriverConfig, driverConfigData{DriverVersion: c.DriverVersion, DriverName: c.DriverName, DeviceName: c.DeviceName})
 	if err != nil {
 		return err
 	}
 
 	// Prepare makefile template
 	bufMakefile := bytes.NewBuffer(nil)
-	err = renderMakefile(bufMakefile, makefileData{ModuleName: bc.ModuleConfig.ModuleName, ModuleBuildDir: builder.DriverDirectory})
+	err = renderMakefile(bufMakefile, makefileData{ModuleName: c.DriverName, ModuleBuildDir: builder.DriverDirectory})
 	if err != nil {
 		return err
 	}

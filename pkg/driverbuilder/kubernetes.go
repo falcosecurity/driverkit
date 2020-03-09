@@ -12,7 +12,6 @@ import (
 
 	logger "github.com/sirupsen/logrus"
 
-	buildmeta "github.com/falcosecurity/driverkit/pkg/driverbuilder/build"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -54,12 +53,12 @@ func (bp *KubernetesBuildProcessor) String() string {
 	return KubernetesBuildProcessorName
 }
 
-func (bp *KubernetesBuildProcessor) Start(b *buildmeta.Build) error {
+func (bp *KubernetesBuildProcessor) Start(b *builder.Build) error {
 	logger.Debug("doing a new kubernetes build")
 	return bp.buildModule(b)
 }
 
-func (bp *KubernetesBuildProcessor) buildModule(build *buildmeta.Build) error {
+func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 	deadline := int64(bp.timeout)
 	namespace := bp.namespace
 	uid := uuid.NewUUID()
@@ -69,22 +68,20 @@ func (bp *KubernetesBuildProcessor) buildModule(build *buildmeta.Build) error {
 	configClient := bp.coreV1Client.ConfigMaps(namespace)
 
 	// create a builder based on the choosen build type
-	v, err := builder.Factory(build.BuildType)
+	v, err := builder.Factory(build.TargetType)
 	if err != nil {
 		return err
 	}
 
-	bc := builder.BuilderConfig{
-		ModuleConfig: builder.ModuleConfig{
-			ModuleName:      "falco",                                    // TODO: make this configurable
-			DeviceName:      "falco",                                    // TODO: make this configurable
-			DownloadBaseURL: "https://github.com/draios/sysdig/archive", // TODO: make this configurable
-		},
-		Build: build,
+	c := builder.Config{
+		DriverName:      "falco",                                    // TODO: make this configurable
+		DeviceName:      "falco",                                    // TODO: make this configurable
+		DownloadBaseURL: "https://github.com/draios/sysdig/archive", // TODO: make this configurable
+		Build:           build,
 	}
 
 	// generate the build script from the builder
-	res, err := v.Script(bc)
+	res, err := v.Script(c)
 	if err != nil {
 		return err
 	}
@@ -108,14 +105,14 @@ func (bp *KubernetesBuildProcessor) buildModule(build *buildmeta.Build) error {
 
 	// Prepare driver config template
 	bufDriverConfig := bytes.NewBuffer(nil)
-	err = renderDriverConfig(bufDriverConfig, driverConfigData{DriverVersion: bc.Build.DriverVersion, DriverName: bc.ModuleConfig.ModuleName, DeviceName: bc.ModuleConfig.DeviceName})
+	err = renderDriverConfig(bufDriverConfig, driverConfigData{DriverVersion: c.Build.DriverVersion, DriverName: c.DriverName, DeviceName: c.DeviceName})
 	if err != nil {
 		return err
 	}
 
 	// Prepare makefile template
 	bufMakefile := bytes.NewBuffer(nil)
-	err = renderMakefile(bufMakefile, makefileData{ModuleName: bc.ModuleConfig.ModuleName, ModuleBuildDir: builder.DriverDirectory})
+	err = renderMakefile(bufMakefile, makefileData{ModuleName: c.DriverName, ModuleBuildDir: builder.DriverDirectory})
 	if err != nil {
 		return err
 	}

@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"path"
 
-	buildmeta "github.com/falcosecurity/driverkit/pkg/driverbuilder/build"
-	"github.com/falcosecurity/driverkit/pkg/driverbuilder/buildtype"
 	"github.com/sirupsen/logrus"
 )
 
@@ -25,42 +23,30 @@ var FalcoModuleFullPath = path.Join(DriverDirectory, ModuleFileName)
 // FalcoProbeFullPath is the standard path for the eBPF probe.
 var FalcoProbeFullPath = path.Join(DriverDirectory, "bpf", ProbeFileName)
 
-// BuilderConfig contains all the configurations needed to build the kernel module or the eBPF probe.
-type BuilderConfig struct {
-	ModuleConfig ModuleConfig
-	Build        *buildmeta.Build
-}
-
-type ModuleConfig struct {
-	ModuleName      string
+// Config contains all the configurations needed to build the kernel module or the eBPF probe.
+type Config struct {
+	DriverName      string
 	DeviceName      string
 	DownloadBaseURL string
+	*Build
 }
 
+// Builder represents a builder capable of generating a script for a driverkit target.
 type Builder interface {
-	Script(bc BuilderConfig) (string, error)
+	Script(c Config) (string, error)
 }
 
-func Factory(buildType buildtype.BuildType) (Builder, error) {
-	// TODO(fntlnz): avoid duplicating this information, we already know which ones are enabled
-	// look at buildtype.EnabledBuildTypes
-	switch buildType {
-	case BuildTypeVanilla:
-		return &Vanilla{}, nil
-	case BuildTypeUbuntuGeneric:
-		return &UbuntuGeneric{}, nil
-	case BuildTypeUbuntuAWS:
-		return &UbuntuAWS{}, nil
-	case BuildTypeCentos:
-		return &Centos{}, nil
-	case BuildTypeDebian:
-		return &Debian{}, nil
+// Factory returns a builder for the given target.
+func Factory(target Type) (Builder, error) {
+	b, ok := BuilderByTarget[target]
+	if !ok {
+		return nil, fmt.Errorf("no builder found for target: %s", target)
 	}
-	return nil, fmt.Errorf("build type not found: %s", buildType)
+	return b, nil
 }
 
-func moduleDownloadURL(bc BuilderConfig) string {
-	return fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.Build.DriverVersion)
+func moduleDownloadURL(c Config) string {
+	return fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.DriverVersion)
 }
 
 func getResolvingURLs(urls []string) ([]string, error) {
