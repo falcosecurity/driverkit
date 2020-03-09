@@ -16,31 +16,32 @@ func persistentValidateFunc(rootCommand *cobra.Command, rootOpts *RootOptions) f
 	return func(c *cobra.Command, args []string) {
 		// Merge environment variables or config file values into the RootOptions instance
 		rootCommand.PersistentFlags().VisitAll(func(f *pflag.Flag) {
+			ignore := false
+			value := viper.Get(f.Name)
 			switch f.Name {
-			case "output":
+			case "timeout":
 				fallthrough
-			case "moduleversion":
-				fallthrough
-			case "kernelversion":
-				fallthrough
-			case "kernelrelease":
-				fallthrough
-			case "target":
-				fallthrough
-			case "kernelconfigdata":
-				if val := viper.Get(f.Name); val != "" {
-					switch f.Value.Type() {
-					case "uint16":
-						rootCommand.PersistentFlags().Set(f.Name, strconv.Itoa(int(viper.GetUint(f.Name))))
-						break
-					case "string":
-						fallthrough
-					default:
-						rootCommand.PersistentFlags().Set(f.Name, val.(string))
-						break
-					}
-				}
+			case "loglevel":
+				ignore = true
 				break
+			// Handling options coming from config file and/or environment variables
+			case "output-module":
+				value = viper.GetString("output.module")
+			case "output-probe":
+				value = viper.GetString("output.probe")
+			}
+
+			if value != "" && !ignore {
+				switch f.Value.Type() {
+				case "uint16":
+					rootCommand.PersistentFlags().Set(f.Name, strconv.Itoa(int(viper.GetUint(f.Name))))
+					break
+				case "string":
+					fallthrough
+				default:
+					rootCommand.PersistentFlags().Set(f.Name, value.(string))
+					break
+				}
 			}
 		})
 
@@ -77,7 +78,9 @@ func NewRootCmd() *cobra.Command {
 	flags.StringVarP(&configOptions.LogLevel, "loglevel", "l", configOptions.LogLevel, "log level")
 	flags.IntVar(&configOptions.Timeout, "timeout", configOptions.Timeout, "timeout in seconds")
 
-	flags.StringVarP(&rootOpts.Output, "output", "o", rootOpts.Output, "filepath where to save the resulting kernel module")
+	flags.StringVar(&rootOpts.Output.Module, "output-module", rootOpts.Output.Module, "filepath where to save the resulting kernel module")
+	flags.StringVar(&rootOpts.Output.Probe, "output-probe", rootOpts.Output.Probe, "filepath where to save the resulting eBPF probe")
+
 	flags.StringVar(&rootOpts.ModuleVersion, "moduleversion", rootOpts.ModuleVersion, "kernel module version as a git reference")
 	flags.Uint16Var(&rootOpts.KernelVersion, "kernelversion", rootOpts.KernelVersion, "kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v'")
 	flags.StringVar(&rootOpts.KernelRelease, "kernelrelease", rootOpts.KernelRelease, "kernel release to build the module for, it can be found by executing 'uname -v'")
@@ -129,6 +132,7 @@ func initConfig() {
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("driverkit")
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
