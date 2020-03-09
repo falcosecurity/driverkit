@@ -1,8 +1,6 @@
 package driverbuilder
 
-import (
-	"github.com/falcosecurity/driverkit/pkg/driverbuilder/build"
-)
+import "github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 
 type NopBuildProcessor struct {
 }
@@ -15,6 +13,6 @@ func (bp *NopBuildProcessor) String() string {
 	return "no-op"
 }
 
-func (bp *NopBuildProcessor) Start(b *build.Build) error {
+func (bp *NopBuildProcessor) Start(b *builder.Build) error {
 	return nil
 }

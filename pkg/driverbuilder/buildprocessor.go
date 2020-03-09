@@ -1,7 +1,7 @@
 package driverbuilder
 
 import (
-	"github.com/falcosecurity/driverkit/pkg/driverbuilder/build"
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 )
 
 type BuildArchitecture string
@@ -19,6 +19,6 @@ func init() {
 }
 
 type BuildProcessor interface {
-	Start(b *build.Build) error
+	Start(b *builder.Build) error
 	String() string
 }

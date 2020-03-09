@@ -1,12 +1,8 @@
-package build
-
-import (
-	"github.com/falcosecurity/driverkit/pkg/driverbuilder/buildtype"
-)
+package builder
 
 // Build contains the info about the on-going build.
 type Build struct {
-	BuildType        buildtype.BuildType
+	TargetType       Type
 	KernelConfigData string
 	KernelRelease    string
 	KernelVersion    uint16
