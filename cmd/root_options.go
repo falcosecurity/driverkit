@@ -4,23 +4,29 @@ import (
 	"fmt"
 
 	"github.com/creasty/defaults"
-	"github.com/falcosecurity/driverkit/pkg/modulebuilder/build"
-	"github.com/falcosecurity/driverkit/pkg/modulebuilder/builder"
-	"github.com/falcosecurity/driverkit/pkg/modulebuilder/buildtype"
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/build"
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/buildtype"
 	"github.com/falcosecurity/driverkit/validate"
 	"github.com/go-playground/validator/v10"
 	logger "github.com/sirupsen/logrus"
 )
 
+// OutputOptions wraps the two drivers that driverkit builds.
+type OutputOptions struct {
+	Module string `validate:"required_without=Probe,filepath" name:"output module path"`
+	Probe  string `validate:"required_without=Module,filepath" name:"output probe path"`
+}
+
 // RootOptions ...
 type RootOptions struct {
-	Output           string `validate:"required,filepath" name:"output"`
 	Architecture     string `default:"x86_64" validate:"required,oneof=x86_64" name:"architecture"`
-	ModuleVersion    string `default:"dev" validate:"required,eq=dev|sha1" name:"module version"` // todo > semver validator?
-	KernelVersion    uint16 `validate:"omitempty,number" name:"kernel version"`                   // todo > semver validator?
+	ModuleVersion    string `default:"dev" validate:"required,eq=dev|sha1" name:"module version"`
+	KernelVersion    uint16 `validate:"omitempty,number" name:"kernel version"` // todo > semver validator?
 	KernelRelease    string `validate:"required,ascii" name:"kernel release"`
 	Target           string `validate:"required,oneof=vanilla ubuntu-generic ubuntu-aws centos debian" name:"target"`
 	KernelConfigData string `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level
+	Output           OutputOptions
 }
 
 func init() {
@@ -63,7 +69,8 @@ func (ro *RootOptions) toBuild() *build.Build {
 		Architecture:     ro.Architecture,
 		BuildType:        buildtype.BuildType(ro.Target),
 		KernelConfigData: kernelConfigData,
-		OutputFilePath:   ro.Output,
+		ModuleFilePath:   ro.Output.Module,
+		ProbeFilePath:    ro.Output.Probe,
 	}
 }
 
