@@ -14,8 +14,8 @@ import (
 
 // OutputOptions wraps the two drivers that driverkit builds.
 type OutputOptions struct {
-	Module string `validate:"required_without=Probe,filepath" name:"output module path"`
-	Probe  string `validate:"required_without=Module,filepath" name:"output probe path"`
+	Module string `validate:"omitempty,required_without=Probe,filepath,endswith=.ko" name:"output module path"`
+	Probe  string `validate:"omitempty,required_without=Module,filepath,endswith=.o" name:"output probe path"`
 }
 
 // RootOptions ...
