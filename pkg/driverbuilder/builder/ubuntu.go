@@ -6,37 +6,35 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/falcosecurity/driverkit/pkg/driverbuilder/buildtype"
-
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
-// BuildTypeUbuntuGeneric identifies the UbuntuGeneric target.
-const BuildTypeUbuntuGeneric buildtype.BuildType = "ubuntu-generic"
+// TargetTypeUbuntuGeneric identifies the UbuntuGeneric target.
+const TargetTypeUbuntuGeneric Type = "ubuntu-generic"
 
-// BuildTypeUbuntuAWS identifies the UbuntuAWS target.
-const BuildTypeUbuntuAWS buildtype.BuildType = "ubuntu-aws"
+// TargetTypeUbuntuAWS identifies the UbuntuAWS target.
+const TargetTypeUbuntuAWS Type = "ubuntu-aws"
 
 func init() {
-	buildtype.EnabledBuildTypes[BuildTypeUbuntuGeneric] = true
-	buildtype.EnabledBuildTypes[BuildTypeUbuntuAWS] = true
+	BuilderByTarget[TargetTypeUbuntuGeneric] = &ubuntuGeneric{}
+	BuilderByTarget[TargetTypeUbuntuAWS] = &ubuntuAWS{}
 }
 
-// UbuntuGeneric is a driverkit target.
-type UbuntuGeneric struct {
+// ubuntuGeneric is a driverkit target.
+type ubuntuGeneric struct {
 }
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
-func (v UbuntuGeneric) Script(bc BuilderConfig) (string, error) {
-	t := template.New(string(BuildTypeUbuntuGeneric))
+func (v ubuntuGeneric) Script(c Config) (string, error) {
+	t := template.New(string(TargetTypeUbuntuGeneric))
 	parsed, err := t.Parse(ubuntuTemplate)
 	if err != nil {
 		return "", err
 	}
 
-	kr := kernelrelease.FromString(bc.Build.KernelRelease)
+	kr := kernelrelease.FromString(c.Build.KernelRelease)
 
-	urls, err := getResolvingURLs(fetchUbuntuGenericKernelURL(kr, bc.Build.KernelVersion))
+	urls, err := getResolvingURLs(fetchUbuntuGenericKernelURL(kr, c.Build.KernelVersion))
 	if err != nil {
 		return "", err
 	}
@@ -46,12 +44,12 @@ func (v UbuntuGeneric) Script(bc BuilderConfig) (string, error) {
 
 	td := ubuntuTemplateData{
 		ModuleBuildDir:       DriverDirectory,
-		ModuleDownloadURL:    fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.Build.DriverVersion),
+		ModuleDownloadURL:    fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.Build.DriverVersion),
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
 		KernelHeadersPattern: "*generic",
-		BuildModule:          len(bc.Build.ModuleFilePath) > 0,
-		BuildProbe:           len(bc.Build.ProbeFilePath) > 0,
+		BuildModule:          len(c.Build.ModuleFilePath) > 0,
+		BuildProbe:           len(c.Build.ProbeFilePath) > 0,
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -62,21 +60,21 @@ func (v UbuntuGeneric) Script(bc BuilderConfig) (string, error) {
 	return buf.String(), nil
 }
 
-// UbuntuAWS is a driverkit target.
-type UbuntuAWS struct {
+// ubuntuAWS is a driverkit target.
+type ubuntuAWS struct {
 }
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
-func (v UbuntuAWS) Script(bc BuilderConfig) (string, error) {
-	t := template.New(string(BuildTypeUbuntuGeneric))
+func (v ubuntuAWS) Script(c Config) (string, error) {
+	t := template.New(string(TargetTypeUbuntuGeneric))
 	parsed, err := t.Parse(ubuntuTemplate)
 	if err != nil {
 		return "", err
 	}
 
-	kr := kernelrelease.FromString(bc.Build.KernelRelease)
+	kr := kernelrelease.FromString(c.Build.KernelRelease)
 
-	urls, err := getResolvingURLs(fetchUbuntuAWSKernelURLS(kr, bc.Build.KernelVersion))
+	urls, err := getResolvingURLs(fetchUbuntuAWSKernelURLS(kr, c.Build.KernelVersion))
 	if err != nil {
 		return "", err
 	}
@@ -86,12 +84,12 @@ func (v UbuntuAWS) Script(bc BuilderConfig) (string, error) {
 
 	td := ubuntuTemplateData{
 		ModuleBuildDir:       DriverDirectory,
-		ModuleDownloadURL:    moduleDownloadURL(bc),
+		ModuleDownloadURL:    moduleDownloadURL(c),
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
 		KernelHeadersPattern: "*",
-		BuildModule:          len(bc.Build.ModuleFilePath) > 0,
-		BuildProbe:           len(bc.Build.ProbeFilePath) > 0,
+		BuildModule:          len(c.Build.ModuleFilePath) > 0,
+		BuildProbe:           len(c.Build.ProbeFilePath) > 0,
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -207,6 +205,6 @@ modinfo falco.ko
 # Build the eBPF probe
 cd {{ .DriverBuildDir }}/bpf
 make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
-file probe.o
+ls -l probe.o
 {{ end }}
 `

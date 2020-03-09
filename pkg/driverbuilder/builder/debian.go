@@ -9,33 +9,31 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/falcosecurity/driverkit/pkg/driverbuilder/buildtype"
-
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
-// BuildTypeDebian identifies the Debian target.
-const BuildTypeDebian buildtype.BuildType = "debian"
+// TargetTypeDebian identifies the Debian target.
+const TargetTypeDebian Type = "debian"
 
 func init() {
-	buildtype.EnabledBuildTypes[BuildTypeDebian] = true
+	BuilderByTarget[TargetTypeDebian] = &debian{}
 }
 
-// Debian is a driverkit target.
-type Debian struct {
+// debian is a driverkit target.
+type debian struct {
 }
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
-func (v Debian) Script(bc BuilderConfig) (string, error) {
-	t := template.New(string(BuildTypeDebian))
+func (v debian) Script(c Config) (string, error) {
+	t := template.New(string(TargetTypeDebian))
 	parsed, err := t.Parse(debianTemplate)
 	if err != nil {
 		return "", err
 	}
 
-	kr := kernelrelease.FromString(bc.Build.KernelRelease)
+	kr := kernelrelease.FromString(c.Build.KernelRelease)
 
-	kurls, err := fetchDebianKernelURLs(kr, bc.Build.KernelVersion)
+	kurls, err := fetchDebianKernelURLs(kr, c.Build.KernelVersion)
 	if err != nil {
 		return "", err
 	}
@@ -50,11 +48,11 @@ func (v Debian) Script(bc BuilderConfig) (string, error) {
 
 	td := debianTemplateData{
 		DriverBuildDir:     DriverDirectory,
-		ModuleDownloadURL:  fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.Build.DriverVersion),
+		ModuleDownloadURL:  fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.Build.DriverVersion),
 		KernelDownloadURLS: urls,
 		KernelLocalVersion: kr.FullExtraversion,
-		BuildModule:        len(bc.Build.ModuleFilePath) > 0,
-		BuildProbe:         len(bc.Build.ProbeFilePath) > 0,
+		BuildModule:        len(c.Build.ModuleFilePath) > 0,
+		BuildProbe:         len(c.Build.ProbeFilePath) > 0,
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -137,7 +135,7 @@ modinfo falco.ko
 # Build the eBPF probe
 cd {{ .DriverBuildDir }}/bpf
 make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
-file probe.o
+ls -l probe.o
 {{ end }}
 `
 

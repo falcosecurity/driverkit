@@ -5,20 +5,18 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/falcosecurity/driverkit/pkg/driverbuilder/buildtype"
-
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
-// Vanilla is a driverkit target.
-type Vanilla struct {
+// vanilla is a driverkit target.
+type vanilla struct {
 }
 
-// BuildTypeVanilla identifies the Vanilla target.
-const BuildTypeVanilla buildtype.BuildType = "vanilla"
+// TargetTypeVanilla identifies the Vanilla target.
+const TargetTypeVanilla Type = "vanilla"
 
 func init() {
-	buildtype.EnabledBuildTypes[BuildTypeVanilla] = true
+	BuilderByTarget[TargetTypeVanilla] = &vanilla{}
 }
 
 const vanillaTemplate = `
@@ -68,7 +66,7 @@ modinfo falco.ko
 # Build the eBPF probe
 cd {{ .DriverBuildDir }}/bpf
 make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
-file probe.o
+ls -l probe.o
 {{ end }}
 `
 
@@ -82,14 +80,14 @@ type vanillaTemplateData struct {
 }
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
-func (v Vanilla) Script(bc BuilderConfig) (string, error) {
-	t := template.New(string(BuildTypeVanilla))
+func (v vanilla) Script(c Config) (string, error) {
+	t := template.New(string(TargetTypeVanilla))
 	parsed, err := t.Parse(vanillaTemplate)
 	if err != nil {
 		return "", err
 	}
 
-	kv := kernelrelease.FromString(bc.Build.KernelRelease)
+	kv := kernelrelease.FromString(c.Build.KernelRelease)
 
 	// Check (and filter) existing kernels before continuing
 	urls, err := getResolvingURLs([]string{fetchVanillaKernelURLFromKernelVersion(kv)})
@@ -99,11 +97,11 @@ func (v Vanilla) Script(bc BuilderConfig) (string, error) {
 
 	td := vanillaTemplateData{
 		DriverBuildDir:     DriverDirectory,
-		ModuleDownloadURL:  moduleDownloadURL(bc),
+		ModuleDownloadURL:  moduleDownloadURL(c),
 		KernelDownloadURL:  urls[0],
 		KernelLocalVersion: kv.FullExtraversion,
-		BuildModule:        len(bc.Build.ModuleFilePath) > 0,
-		BuildProbe:         len(bc.Build.ProbeFilePath) > 0,
+		BuildModule:        len(c.Build.ModuleFilePath) > 0,
+		BuildProbe:         len(c.Build.ProbeFilePath) > 0,
 	}
 
 	buf := bytes.NewBuffer(nil)
