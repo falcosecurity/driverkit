@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/falcosecurity/driverkit/pkg/kubernetes/factory"
-	"github.com/falcosecurity/driverkit/pkg/modulebuilder"
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder"
 	logger "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -54,7 +54,7 @@ func kubernetesRun(cmd *cobra.Command, args []string, kubefactory factory.Factor
 		return err
 	}
 
-	buildProcessor := modulebuilder.NewKubernetesBuildProcessor(kc.CoreV1(), clientConfig, namespaceStr, viper.GetInt("timeout"))
+	buildProcessor := driverbuilder.NewKubernetesBuildProcessor(kc.CoreV1(), clientConfig, namespaceStr, viper.GetInt("timeout"))
 
 	return buildProcessor.Start(b)
 }
