@@ -48,10 +48,12 @@ func (v Debian) Script(bc BuilderConfig) (string, error) {
 	}
 
 	td := debianTemplateData{
-		ModuleBuildDir:     ModuleDirectory,
-		ModuleDownloadURL:  fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.Build.ModuleVersion),
+		DriverBuildDir:     DriverDirectory,
+		ModuleDownloadURL:  fmt.Sprintf("%s/%s.tar.gz", bc.ModuleConfig.DownloadBaseURL, bc.Build.DriverVersion),
 		KernelDownloadURLS: urls,
 		KernelLocalVersion: kr.FullExtraversion,
+		BuildModule:        len(bc.Build.ModuleFilePath) > 0,
+		BuildProbe:         len(bc.Build.ProbeFilePath) > 0,
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -78,35 +80,37 @@ func fetchDebianKernelURLs(kr kernelrelease.KernelRelease, kernelVersion uint16)
 }
 
 type debianTemplateData struct {
-	ModuleBuildDir     string
+	DriverBuildDir     string
 	ModuleDownloadURL  string
 	KernelDownloadURLS []string
 	KernelLocalVersion string
+	BuildModule        bool
+	BuildProbe         bool
 }
 
 const debianTemplate = `
 #!/bin/bash
 set -xeuo pipefail
 
-rm -Rf {{ .ModuleBuildDir }}
-mkdir {{ .ModuleBuildDir }}
+rm -Rf {{ .DriverBuildDir }}
+mkdir {{ .DriverBuildDir }}
 rm -Rf /tmp/module-download
 mkdir -p /tmp/module-download
 
 curl --silent -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
-mv /tmp/module-download/*/driver/* {{ .ModuleBuildDir }}
+mv /tmp/module-download/*/driver/* {{ .DriverBuildDir }}
 
-cp /module-builder/module-Makefile {{ .ModuleBuildDir }}/Makefile
-cp /module-builder/module-driver-config.h {{ .ModuleBuildDir }}/driver_config.h
+cp /module-builder/module-Makefile {{ .DriverBuildDir }}/Makefile
+cp /module-builder/module-driver-config.h {{ .DriverBuildDir }}/driver_config.h
 
 # Fetch the kernel
 mkdir /tmp/kernel-download
 cd /tmp/kernel-download
-{{range $url := .KernelDownloadURLS}}
+{{ range $url := .KernelDownloadURLS }}
 curl --silent -o kernel.deb -SL {{ $url }}
 ar x kernel.deb
 tar -xvf data.tar.xz
-{{end}}
+{{ end }}
 ls -la /tmp/kernel-download
 
 cd /tmp/kernel-download/
@@ -118,19 +122,20 @@ cd /usr/src
 sourcedir=$(find . -type d -name "linux-headers-*amd64" | head -n 1 | xargs readlink -f)
 
 ls -la $sourcedir
+cd {{ .DriverBuildDir }}
 
 # Build the module
-cd $sourcedir
-cd {{ .ModuleBuildDir }}
+{{ if .BuildModule }}
 make CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
 # Print results
-ls -la
-
 modinfo falco.ko
+{{ end }}
 
-cd bpf
+{{ if .BuildProbe }}
+cd {{ .DriverBuildDir }}/bpf
 make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
-ls -la
+file probe.o
+{{ end }}
 `
 
 func debianHeadersURLFromRelease(kr kernelrelease.KernelRelease) ([]string, error) {

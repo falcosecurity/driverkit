@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -70,14 +71,14 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 
 	// Prepare driver config template
 	bufDriverConfig := bytes.NewBuffer(nil)
-	err = renderDriverConfig(bufDriverConfig, driverConfigData{ModuleVersion: bc.Build.ModuleVersion, ModuleName: bc.ModuleConfig.ModuleName, DeviceName: bc.ModuleConfig.DeviceName})
+	err = renderDriverConfig(bufDriverConfig, driverConfigData{DriverVersion: bc.Build.DriverVersion, DriverName: bc.ModuleConfig.ModuleName, DeviceName: bc.ModuleConfig.DeviceName})
 	if err != nil {
 		return err
 	}
 
 	// Prepare makefile template
 	bufMakefile := bytes.NewBuffer(nil)
-	err = renderMakefile(bufMakefile, makefileData{ModuleName: bc.ModuleConfig.ModuleName, ModuleBuildDir: builder.ModuleDirectory})
+	err = renderMakefile(bufMakefile, makefileData{ModuleName: bc.ModuleConfig.ModuleName, ModuleBuildDir: builder.DriverDirectory})
 	if err != nil {
 		return err
 	}
@@ -166,7 +167,23 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 
 	forwardLogs(hr.Reader)
 
-	rc, _, err := cli.CopyFromContainer(ctx, cdata.ID, builder.FalcoModuleFullPath)
+	if len(b.ModuleFilePath) > 0 {
+		if err := copyFromContainer(ctx, cli, cdata.ID, builder.FalcoModuleFullPath, b.ModuleFilePath); err != nil {
+			return err
+		}
+	}
+
+	if len(b.ProbeFilePath) > 0 {
+		if err := copyFromContainer(ctx, cli, cdata.ID, builder.FalcoProbeFullPath, b.ProbeFilePath); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func copyFromContainer(ctx context.Context, cli *client.Client, ID, from, to string) error {
+	rc, _, err := cli.CopyFromContainer(ctx, ID, from)
 	if err != nil {
 		return err
 	}
@@ -180,11 +197,11 @@ func (bp *DockerBuildProcessor) Start(b *buildmeta.Build) error {
 			break
 		}
 		if err != nil {
-			logger.WithError(err).Error("error expanding module tar")
+			logger.WithError(err).Error("error expanding tar")
 		}
 
-		if hdr.Name == builder.ModuleFileName {
-			out, err := os.Create(b.ModuleFilePath)
+		if hdr.Name == filepath.Base(from) {
+			out, err := os.Create(to)
 
 			if err != nil {
 				return err

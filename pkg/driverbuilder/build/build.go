@@ -10,8 +10,8 @@ type Build struct {
 	KernelConfigData string
 	KernelRelease    string
 	KernelVersion    uint16
-	ModuleVersion    string
+	DriverVersion    string
 	Architecture     string
 	ModuleFilePath   string
-	ProbeFilePath string
+	ProbeFilePath    string
 }
