@@ -11,7 +11,10 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
+// BuildTypeUbuntuGeneric identifies the UbuntuGeneric target.
 const BuildTypeUbuntuGeneric buildtype.BuildType = "ubuntu-generic"
+
+// BuildTypeUbuntuAWS identifies the UbuntuAWS target.
 const BuildTypeUbuntuAWS buildtype.BuildType = "ubuntu-aws"
 
 func init() {
@@ -19,11 +22,11 @@ func init() {
 	buildtype.EnabledBuildTypes[BuildTypeUbuntuAWS] = true
 }
 
-// UbuntuGeneric ...
+// UbuntuGeneric is a driverkit target.
 type UbuntuGeneric struct {
 }
 
-// Script ...
+// Script compiles the script to build the kernel module and/or the eBPF probe.
 func (v UbuntuGeneric) Script(bc BuilderConfig) (string, error) {
 	t := template.New(string(BuildTypeUbuntuGeneric))
 	parsed, err := t.Parse(ubuntuTemplate)
@@ -47,6 +50,8 @@ func (v UbuntuGeneric) Script(bc BuilderConfig) (string, error) {
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
 		KernelHeadersPattern: "*generic",
+		BuildModule:          len(bc.Build.ModuleFilePath) > 0,
+		BuildProbe:           len(bc.Build.ProbeFilePath) > 0,
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -57,11 +62,11 @@ func (v UbuntuGeneric) Script(bc BuilderConfig) (string, error) {
 	return buf.String(), nil
 }
 
-// UbuntuAWS ...
+// UbuntuAWS is a driverkit target.
 type UbuntuAWS struct {
 }
 
-// Script ...
+// Script compiles the script to build the kernel module and/or the eBPF probe.
 func (v UbuntuAWS) Script(bc BuilderConfig) (string, error) {
 	t := template.New(string(BuildTypeUbuntuGeneric))
 	parsed, err := t.Parse(ubuntuTemplate)
@@ -85,6 +90,8 @@ func (v UbuntuAWS) Script(bc BuilderConfig) (string, error) {
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
 		KernelHeadersPattern: "*",
+		BuildModule:          len(bc.Build.ModuleFilePath) > 0,
+		BuildProbe:           len(bc.Build.ProbeFilePath) > 0,
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -153,6 +160,8 @@ type ubuntuTemplateData struct {
 	KernelDownloadURLS   []string
 	KernelLocalVersion   string
 	KernelHeadersPattern string
+	BuildProbe           bool
+	BuildModule          bool
 }
 
 const ubuntuTemplate = `
@@ -185,12 +194,19 @@ sourcedir=$(find . -type d -name "linux-headers{{ .KernelHeadersPattern }}" | he
 
 ls -la $sourcedir
 
+{{ if .BuildModule }}
 # Build the module
-cd $sourcedir
 cd {{ .ModuleBuildDir }}
 make KERNELDIR=$sourcedir
+strip -g falco.ko
 # Print results
-ls -la
-
 modinfo falco.ko
+{{ end }}
+
+{{ if .BuildProbe }}
+# Build the eBPF probe
+cd {{ .DriverBuildDir }}/bpf
+make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
+file probe.o
+{{ end }}
 `
