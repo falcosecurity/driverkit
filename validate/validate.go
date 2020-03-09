@@ -1,9 +1,11 @@
 package validate
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
@@ -33,6 +35,7 @@ func init() {
 	V.RegisterValidation("logrus", isLogrusLevel)
 	V.RegisterValidation("filepath", isFilePath)
 	V.RegisterValidation("sha1", isSHA1)
+	V.RegisterValidation("target", isTargetSupported)
 
 	eng := en.New()
 	uni := ut.New(eng, eng)
@@ -47,6 +50,19 @@ func init() {
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
 			t, _ := ut.T("filepath", fe.Field())
+
+			return t
+		},
+	)
+
+	V.RegisterTranslation(
+		"target",
+		T,
+		func(ut ut.Translator) error {
+			return ut.Add("target", fmt.Sprintf("{0} must be a valid target (%s)", builder.BuilderByTarget.Targets()), true)
+		},
+		func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T(fe.Tag(), fe.Field())
 
 			return t
 		},
