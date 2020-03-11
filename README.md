@@ -26,13 +26,13 @@ uname -r
 ### Against a Kubernetes cluster
 
 ```bash
-driverkit kubernetes -o /tmp/falco.ko --kernelversion=81 --kernelrelease=4.15.0-72-generic --driverversion=dev --target=ubuntu-generic
+driverkit kubernetes --output-module /tmp/falco.ko --kernelversion=81 --kernelrelease=4.15.0-72-generic --driverversion=dev --target=ubuntu-generic
 ```
 
 ### Against a Docker daemon
 
 ```bash
-driverkit docker -o /tmp/falco.ko --kernelversion=81 --kernelrelease=4.15.0-72-generic --driverversion=dev --target=ubuntu-generic
+driverkit docker --output-module /tmp/falco.ko --kernelversion=81 --kernelrelease=4.15.0-72-generic --driverversion=dev --target=ubuntu-generic
 ```
 
 
