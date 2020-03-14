@@ -98,6 +98,17 @@ func TestFromString(t *testing.T) {
 				FullExtraversion: "-6-amd64",
 			},
 		},
+		"linuxkit version": {
+			kernelVersionStr: "4.14.171-linuxkit",
+			want: KernelRelease{
+				Fullversion:      "4.14.171",
+				Version:          "4",
+				PatchLevel:       "14",
+				Sublevel:         "171",
+				Extraversion:     "linuxkit",
+				FullExtraversion: "-linuxkit",
+			},
+		},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
