@@ -13,7 +13,7 @@ func (t Type) String() string {
 // Targets is a type representing the list of the supported targets.
 type Targets map[Type]Builder
 
-// Supported returns the list of all the supported targets.
+// Targets returns the list of all the supported targets.
 func (t Targets) Targets() []string {
 	res := []string{}
 	for k := range t {
