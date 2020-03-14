@@ -18,6 +18,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
+	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"github.com/falcosecurity/driverkit/pkg/signals"
 	"github.com/sirupsen/logrus"
 	logger "github.com/sirupsen/logrus"
@@ -42,6 +43,7 @@ func (bp *DockerBuildProcessor) String() string {
 	return DockerBuildProcessorName
 }
 
+// Start ...
 func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	logger.Debug("doing a new docker build")
 	cli, err := client.NewClientWithOpts(client.FromEnv)
@@ -54,6 +56,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	if err != nil {
 		return err
 	}
+
 	c := builder.Config{
 		DriverName:      "falco",
 		DeviceName:      "falco",
@@ -86,25 +89,66 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		return err
 	}
 
-	// Create the container
 	ctx := context.Background()
 	ctx = signals.WithStandardSignals(ctx)
 
 	_, err = cli.ImagePull(ctx, builderBaseImage, types.ImagePullOptions{All: true})
-
 	if err != nil {
 		return err
 	}
 
+	// Build the builder image
+	if b.TargetType == builder.TargetTypeLinuxKit {
+		kr := kernelrelease.FromString(c.KernelRelease)
+		opts := types.ImageBuildOptions{
+			SuppressOutput: false,
+			// Remove:         true,
+			// ForceRemove:    true,
+			PullParent: true,
+			// todo > update the URL
+			RemoteContext: "https://gist.githubusercontent.com/leodido/e78666ba8a7ad5ec1b97acf4ade098d6/raw/328dc2452163762e6824995da2f8a29888680381/lktest.Dockerfile",
+			BuildArgs: map[string]*string{
+				"KERNEL_VERSION": &kr.Fullversion,
+			},
+			Tags: []string{
+				fmt.Sprintf("driverkit-builder:%s", c.KernelRelease),
+			},
+		}
+		buildRes, err := cli.ImageBuild(ctx, nil, opts)
+		if err != nil {
+			return err
+		}
+		defer buildRes.Body.Close()
+		forwardLogs(buildRes.Body)
+		// todo > use docker logging API with our logrus logger?
+		// termFd, isTerm := term.GetFdInfo(os.Stdout)
+		// jsonmessage.DisplayJSONMessagesStream(buildRes.Body, nil, termFd, isTerm)
+	}
+
+	// Create the container
 	containerCfg := &container.Config{
 		Tty:   true,
 		Cmd:   []string{"/bin/sleep", strconv.Itoa(bp.timeout)},
 		Image: builderBaseImage,
 	}
 
+	if b.TargetType == builder.TargetTypeLinuxKit {
+		containerCfg.Image = fmt.Sprintf("driverkit-builder:%s", c.KernelRelease)
+	}
+
 	hostCfg := &container.HostConfig{
 		AutoRemove: true,
 	}
+	// if b.TargetType == builder.TargetTypeLinuxKit {
+	// 	hostCfg.Mounts = []mount.Mount{
+	// 		{
+	// 			Type:   mount.TypeBind,
+	// 			Source: "/var/run/docker.sock",
+	// 			Target: "/var/run/docker.sock",
+	// 		},
+	// 	}
+	// }
+
 	networkCfg := &network.NetworkingConfig{}
 	uid := uuid.NewUUID()
 	name := fmt.Sprintf("driverkit-%s", string(uid))

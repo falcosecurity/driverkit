@@ -151,7 +151,7 @@ driverversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
 Now you can add the `kernelconfigdata` to the configuration file, to do so:
 
 ```bash
-zcat /proc/config.gz| base64 -w0 | awk '{print "kernelconfigdata: " $1;}' >> /tmp/vanilla.yaml
+zcat /proc/config.gz | base64 -w0 | awk '{print "kernelconfigdata: " $1;}' >> /tmp/vanilla.yaml
 ```
 
 The command above assumes that you saved the configuration file at `/tmp/vanilla.yaml`
