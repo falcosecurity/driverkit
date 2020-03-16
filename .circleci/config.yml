@@ -24,12 +24,12 @@ jobs:
             apk add make bash git
       - run:
           name: Build all the docker images
-          command: make image/all
+          command: make GIT_BRANCH=master image/all
       - run:
           name: Push images
           command: |
-            make push/builder
-            make push/driverkit
+            make GIT_BRANCH=master push/builder
+            make GIT_BRANCH=master push/driverkit
       - run:
           name: Push latest images
           command: make push/latest
