@@ -1,6 +1,5 @@
 SHELL=/bin/bash -o pipefail
 
-GO ?= go
 DOCKER ?= docker
 
 COMMIT_NO := $(shell git rev-parse HEAD 2> /dev/null || true)
@@ -30,7 +29,7 @@ driverkit ?= _output/bin/driverkit
 build: clean ${driverkit}
 
 ${driverkit}:
-	CGO_ENABLED=0 $(GO) build ${LDFLAGS} -o $@ .
+	CGO_ENABLED=0 go build ${LDFLAGS} -o $@ .
 
 .PHONY: clean
 clean:
@@ -74,4 +73,4 @@ push/latest:
 
 .PHONY: test
 test:
-	$(GO) test -v -race $(TESTPACKAGES)
+	go test -v -race $(TESTPACKAGES)
