@@ -17,8 +17,11 @@ jobs:
       - checkout
       - setup_remote_docker
       - run:
-          name: Prepare docker env
-          command: echo ${DOCKERHUB_SECRET} | docker login -u ${DOCKERHUB_USER} --password-stdin
+          name: Prepare env
+          command: |
+            echo ${DOCKERHUB_SECRET} | docker login -u ${DOCKERHUB_USER} --password-stdin
+            apk update
+            apk add make bash
       - run:
           name: Build all the docker images
           command: make image/all
