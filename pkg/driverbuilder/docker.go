@@ -90,6 +90,12 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	ctx := context.Background()
 	ctx = signals.WithStandardSignals(ctx)
 
+	_, err = cli.ImagePull(ctx, builderBaseImage, types.ImagePullOptions{})
+
+	if err != nil {
+		return err
+	}
+
 	containerCfg := &container.Config{
 		Tty:   true,
 		Cmd:   []string{"/bin/sleep", strconv.Itoa(bp.timeout)},
