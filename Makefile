@@ -21,8 +21,6 @@ IMAGE_NAME_DRIVERKIT_LATEST := $(IMAGE_NAME_DRIVERKIT):latest
 
 LDFLAGS := -ldflags '-X github.com/falcosecurity/driverkit/pkg/version.buildTime=$(shell date +%s) -X github.com/falcosecurity/driverkit/pkg/version.gitCommit=${GIT_COMMIT} -X github.com/falcosecurity/driverkit/pkg/driverbuilder.builderBaseImage=${IMAGE_NAME_BUILDER_COMMIT}'
 
-TESTPACKAGES := $(shell go list ./...)
-
 driverkit ?= _output/bin/driverkit
 
 .PHONY: build
@@ -73,4 +71,4 @@ push/latest:
 
 .PHONY: test
 test:
-	go test -v -race $(TESTPACKAGES)
+	go test -v -race ./...
