@@ -2,14 +2,9 @@ version: 2
 jobs:
   "test":
     docker:
-      - image: docker.io/golang:alpine3.11
+      - image: docker.io/golang:1.14.0
     steps:
       - checkout
-      - run:
-          name: Install dependencies
-          command: |
-            apk add --no-cache --update
-            apk add make bash git
       - run:
           name: Test
           command: make test

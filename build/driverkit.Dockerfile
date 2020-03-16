@@ -1,4 +1,4 @@
-FROM docker.io/golang:alpine3.11 as builder
+FROM docker.io/golang:1.14-alpine3.11 as builder
 
 LABEL maintainer="cncf-falco-dev@lists.cncf.io"
 
