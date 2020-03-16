@@ -1,0 +1,46 @@
+version: 2
+jobs:
+  "test":
+    docker:
+      - image: docker.io/golang:3.11
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --no-cache --update
+            apk add make bash git
+      - run:
+          name: Test
+          command: make test
+  "images":
+    docker:
+      - image: docker:stable
+    steps:
+      - attach_workspace:
+          at: /
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build all the docker images
+          command: make image/all
+      - run:
+          name: Push images
+          command: |
+            make push/builder
+            make push/driverkit
+      - run:
+          name: Push latest images
+          command: make push/latest
+workflows:
+  version: 2
+  build:
+    jobs:
+      - "test"
+      - "images":
+          filters:
+            branches:
+              only:
+                - master
+          requires:
+            - "test"
