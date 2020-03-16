@@ -2,7 +2,7 @@ version: 2
 jobs:
   "test":
     docker:
-      - image: docker.io/golang:3.11
+      - image: docker.io/golang:alpine3.11
     steps:
       - checkout
       - run:
