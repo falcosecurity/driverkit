@@ -11,8 +11,6 @@ WORKDIR /driverkit
 RUN make build
 
 FROM docker.io/alpine:3.11
-# make and bash are often used to invoke driverkit itself, do not remove!
-RUN apk add --no-cache --update && apk add make bash
 COPY --from=builder /driverkit/_output/bin/driverkit /bin/driverkit
 CMD ["/bin/driverkit"]
 
