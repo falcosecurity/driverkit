@@ -26,7 +26,6 @@ import (
 
 const KubernetesBuildProcessorName = "kubernetes"
 
-var builderBaseImage = "falcosecurity/driverkit-builder-base:latest" // This is overwritten when using the Makefile to build
 const falcoBuilderUIDLabel = "org.falcosecurity/driverkit-uid"
 
 type KubernetesBuildProcessor struct {
