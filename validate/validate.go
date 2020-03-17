@@ -122,6 +122,19 @@ func init() {
 	)
 
 	V.RegisterTranslation(
+		"semver",
+		T,
+		func(ut ut.Translator) error {
+			return ut.Add("semver", "{0} must be a semver-ish string", true)
+		},
+		func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T(fe.Tag(), fe.Field())
+
+			return t
+		},
+	)
+
+	V.RegisterTranslation(
 		"required_without",
 		T,
 		func(ut ut.Translator) error {
