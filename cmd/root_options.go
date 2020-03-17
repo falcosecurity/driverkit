@@ -20,8 +20,8 @@ type OutputOptions struct {
 type RootOptions struct {
 	Architecture     string `default:"x86_64" validate:"required,oneof=x86_64" name:"architecture"`
 	DriverVersion    string `default:"dev" validate:"required,eq=dev|sha1|semver" name:"driver version"`
-	KernelVersion    uint16 `validate:"omitempty,number" name:"kernel version"` // todo > default 1?
-	KernelRelease    string `validate:"required,ascii" name:"kernel release"`   // todo > semver validator?
+	KernelVersion    uint16 `default:"1" validate:"omitempty,number" name:"kernel version"`
+	KernelRelease    string `validate:"required,ascii" name:"kernel release"`               // todo > semver validator?
 	Target           string `validate:"required,target" name:"target"`
 	KernelConfigData string `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level
 	Output           OutputOptions
