@@ -90,7 +90,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	ctx := context.Background()
 	ctx = signals.WithStandardSignals(ctx)
 
-	_, err = cli.ImagePull(ctx, builderBaseImage, types.ImagePullOptions{})
+	_, err = cli.ImagePull(ctx, builderBaseImage, types.ImagePullOptions{All: true})
 
 	if err != nil {
 		return err
