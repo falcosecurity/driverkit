@@ -54,6 +54,26 @@ func (ro *RootOptions) Validate() []error {
 	return nil
 }
 
+// Log emits a log line containing the receiving RootOptions for debugging purposes.
+//
+// Call it only after validation.
+func (ro *RootOptions) Log() {
+	fields := logger.Fields{}
+	if ro.Output.Module != "" {
+		fields["output-module"] = ro.Output.Module
+	}
+	if ro.Output.Probe != "" {
+		fields["output-probe"] = ro.Output.Probe
+
+	}
+	fields["driverversion"] = ro.DriverVersion
+	fields["kernelrelease"] = ro.KernelRelease
+	fields["kernelversion"] = ro.KernelVersion
+	fields["target"] = ro.Target
+
+	logger.WithFields(fields).Debug("running with options")
+}
+
 func (ro *RootOptions) toBuild() *builder.Build {
 	kernelConfigData := ro.KernelConfigData
 	if len(kernelConfigData) == 0 {
