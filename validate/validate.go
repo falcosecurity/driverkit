@@ -36,6 +36,7 @@ func init() {
 	V.RegisterValidation("filepath", isFilePath)
 	V.RegisterValidation("sha1", isSHA1)
 	V.RegisterValidation("target", isTargetSupported)
+	V.RegisterValidation("semver", isSemVer)
 
 	eng := en.New()
 	uni := ut.New(eng, eng)
@@ -108,13 +109,13 @@ func init() {
 	)
 
 	V.RegisterTranslation(
-		"eq=dev|sha1",
+		"eq=dev|sha1|semver",
 		T,
 		func(ut ut.Translator) error {
-			return ut.Add("eq=dev|sha1", "{0} must be a valid SHA1 or dev", true)
+			return ut.Add("eq=dev|sha1|semver", `{0} must be a valid SHA1, semver-ish, or the "dev" string`, true)
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
-			t, _ := ut.T("eq=dev|sha1", fe.Field())
+			t, _ := ut.T(fe.Tag(), fe.Field())
 
 			return t
 		},
