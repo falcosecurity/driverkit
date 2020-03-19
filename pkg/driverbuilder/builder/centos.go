@@ -106,8 +106,10 @@ func fetchCentosKernelURLS(kr kernelrelease.KernelRelease) []string {
 	}
 
 	streamReleases := []string{
+		"8/BaseOS",
 		"8-stream/BaseOS",
 		"8.0.1905/BaseOS",
+		"8.1.1911/BaseOS",
 	}
 
 	urls := []string{}
