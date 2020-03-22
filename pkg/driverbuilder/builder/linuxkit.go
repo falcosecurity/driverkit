@@ -49,9 +49,14 @@ tar --strip-components 3 -xf /kernel-dev.tar --directory /tmp/kernel
 # Build the kernel module
 # cd {{ .DriverBuildDir }}
 # make KERNELDIR=/tmp/kernel
-#{{ end }}
+# {{ end }}
 
-sleep 1212317823178712
+{{ if .BuildProbe }}
+# Build the eBPF probe
+cd {{ .DriverBuildDir }}/bpf
+make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc-8 KERNELDIR=/tmp/kernel
+ls -l probe.o
+{{ end }}
 `
 
 type linuxkitTemplateData struct {
@@ -101,16 +106,3 @@ func (v linuxkit) Script(c Config) (string, error) {
 func getLinuxKitKernelDockerImageURL(kr kernelrelease.KernelRelease) string {
 	return fmt.Sprintf("https://hub.docker.com/v2/repositories/linuxkit/kernel/tags/%s-amd64", kr.Fullversion)
 }
-
-
-// make -C /tmp/kernel/usr/src/linux-headers-4.14.171-linuxkit M=/tmp/driver modules
-// make[1]: Entering directory '/tmp/kernel/usr/src/linux-headers-4.14.171-linuxkit'
-//   CC [M]  /tmp/driver/main.o
-// cc1: error: cannot load plugin ./scripts/gcc-plugins/structleak_plugin.so
-//    libc.musl-x86_64.so.1: cannot open shared object file: No such file or directory
-// cc1: error: cannot load plugin ./scripts/gcc-plugins/randomize_layout_plugin.so
-//    libc.musl-x86_64.so.1: cannot open shared object file: No such file or directory
-// make[2]: *** [scripts/Makefile.build:327: /tmp/driver/main.o] Error 1
-// make[1]: *** [Makefile:1544: _module_/tmp/driver] Error 2
-// make[1]: Leaving directory '/tmp/kernel/usr/src/linux-headers-4.14.171-linuxkit'
-// make: *** [Makefile:7: all] Error 2
