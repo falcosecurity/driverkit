@@ -106,7 +106,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 			// ForceRemove:    true,
 			PullParent: true,
 			// todo > update the URL
-			RemoteContext: "https://gist.githubusercontent.com/leodido/e78666ba8a7ad5ec1b97acf4ade098d6/raw/328dc2452163762e6824995da2f8a29888680381/lktest.Dockerfile",
+			RemoteContext: "https://gist.githubusercontent.com/leodido/e78666ba8a7ad5ec1b97acf4ade098d6/raw/471baeeb343a1091145ead394db88694041c9bb9/lktest.Dockerfile",
 			BuildArgs: map[string]*string{
 				"KERNEL_VERSION": &kr.Fullversion,
 			},

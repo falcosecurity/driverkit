@@ -34,28 +34,22 @@ mv /tmp/module-download/*/driver/* {{ .DriverBuildDir }}
 cp /driverkit/module-Makefile {{ .DriverBuildDir }}/Makefile
 cp /driverkit/module-driver-config.h {{ .DriverBuildDir }}/driver_config.h
 
-# rm -Rf /tmp/kernel-download
-# mkdir /tmp/kernel-download
-# CID=$(docker create linuxkit/kernel:{{ .KernelFullVersion }} top)
-# docker cp "${CID}:/kernel-dev.tar" /tmp/kernel-download/src.tar
-# docker rm -f "${CID}"
-
 # Prepare the kernel
 rm -Rf /tmp/kernel
 mkdir -p /tmp/kernel
-tar --strip-components 3 -xf /kernel-dev.tar --directory /tmp/kernel
+tar --strip-components=3 -xf /kernel-dev.tar --directory /tmp/kernel
 
-# {{ if .BuildModule }}
+{{ if .BuildModule }}
 # Build the kernel module
-# cd {{ .DriverBuildDir }}
-# make KERNELDIR=/tmp/kernel
-# {{ end }}
+cd {{ .DriverBuildDir }}
+make KERNELDIR=/tmp/kernel
+{{ end }}
 
 {{ if .BuildProbe }}
 # Build the eBPF probe
 cd {{ .DriverBuildDir }}/bpf
-make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc-8 KERNELDIR=/tmp/kernel
-ls -l probe.o
+make KERNELDIR=/tmp/kernel
+file probe.o
 {{ end }}
 `
 
