@@ -29,6 +29,8 @@ func persistentValidateFunc(rootCommand *cobra.Command, rootOpts *RootOptions) f
 				value = viper.GetString("output.module")
 			case "output-probe":
 				value = viper.GetString("output.probe")
+			case "output-kernel":
+				value = viper.GetString("output.kernel")
 			}
 
 			if value != "" && !ignore {
@@ -82,6 +84,7 @@ func NewRootCmd() *cobra.Command {
 
 	flags.StringVar(&rootOpts.Output.Module, "output-module", rootOpts.Output.Module, "filepath where to save the resulting kernel module")
 	flags.StringVar(&rootOpts.Output.Probe, "output-probe", rootOpts.Output.Probe, "filepath where to save the resulting eBPF probe")
+	flags.StringVar(&rootOpts.Output.Kernel, "output-kernel", rootOpts.Output.Kernel, "filepath where to save the archive containing the built kernel (vanilla only)")
 
 	flags.StringVar(&rootOpts.DriverVersion, "driverversion", rootOpts.DriverVersion, "driver version as a git commit hash or as a git tag")
 	flags.Uint16Var(&rootOpts.KernelVersion, "kernelversion", rootOpts.KernelVersion, "kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v'")
