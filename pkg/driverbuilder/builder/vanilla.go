@@ -38,21 +38,29 @@ cp /driverkit/module-driver-config.h {{ .DriverBuildDir }}/driver_config.h
 cd /tmp
 mkdir /tmp/kernel-download
 curl --silent -SL {{ .KernelDownloadURL }} | tar -Jxf - -C /tmp/kernel-download
-rm -Rf /tmp/kernel
-mkdir -p /tmp/kernel
-mv /tmp/kernel-download/*/* /tmp/kernel
+rm -Rf /tmp/kernel-src
+mkdir -p /tmp/kernel-src
+mv /tmp/kernel-download/*/* /tmp/kernel-src
 
 # Prepare the kernel
-cd /tmp/kernel
-cp /driverkit/kernel.config /tmp/kernel.config
+mkdir -p /tmp/kernel
+cp /driverkit/kernel.config /tmp/kernel/.config
+cd /tmp/kernel-src
+
 
 {{ if .KernelLocalVersion}}
-sed -i 's/^CONFIG_LOCALVERSION=.*$/CONFIG_LOCALVERSION="{{ .KernelLocalVersion }}"/' /tmp/kernel.config
+sed -i 's/^CONFIG_LOCALVERSION=.*$/CONFIG_LOCALVERSION="{{ .KernelLocalVersion }}"/' /tmp/kernel/.config
 {{ end }}
 
-make KCONFIG_CONFIG=/tmp/kernel.config oldconfig
-make KCONFIG_CONFIG=/tmp/kernel.config prepare
-make KCONFIG_CONFIG=/tmp/kernel.config modules_prepare
+make KCONFIG_CONFIG=/tmp/kernel/.config O=/tmp/kernel oldconfig
+make KCONFIG_CONFIG=/tmp/kernel/.config O=/tmp/kernel prepare
+make KCONFIG_CONFIG=/tmp/kernel/.config O=/tmp/kernel modules_prepare
+
+{{ if .BuildKernel }}
+make KCONFIG_CONFIG=/tmp/kernel/.config O=/tmp/kernel kvmconfig
+make KCONFIG_CONFIG=/tmp/kernel/.config O=/tmp/kernel -j$(nproc)
+ls -l /tmp/kernel/arch/x86_64/boot
+{{ end }}
 
 {{ if .BuildModule }}
 # Build the kernel module
@@ -77,6 +85,7 @@ type vanillaTemplateData struct {
 	KernelLocalVersion string
 	BuildModule        bool
 	BuildProbe         bool
+	BuildKernel        bool
 }
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
@@ -102,6 +111,7 @@ func (v vanilla) Script(c Config) (string, error) {
 		KernelLocalVersion: kv.FullExtraversion,
 		BuildModule:        len(c.Build.ModuleFilePath) > 0,
 		BuildProbe:         len(c.Build.ProbeFilePath) > 0,
+		BuildKernel:        len(c.Build.KernelArchivePath) > 0,
 	}
 
 	buf := bytes.NewBuffer(nil)
