@@ -8,4 +8,4 @@ LABEL maintainer="cncf-falco-dev@lists.cncf.io"
 COPY --from=src /kernel-dev.tar /
 
 RUN apk add --no-cache --update \
-    build-base gcc bash curl tar xz
+    build-base gcc bash curl tar xz clang llvm
