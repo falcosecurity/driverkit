@@ -12,8 +12,9 @@ import (
 
 // OutputOptions wraps the two drivers that driverkit builds.
 type OutputOptions struct {
-	Module string `validate:"required_without=Probe,filepath,omitempty,endswith=.ko" name:"output module path"`
-	Probe  string `validate:"required_without=Module,filepath,omitempty,endswith=.o" name:"output probe path"`
+	Module string `validate:"required_without=Probe|required_without=Kernel,filepath,omitempty,endswith=.ko" name:"output module path"`
+	Probe  string `validate:"required_without=Module|required_without=Kernel,filepath,omitempty,endswith=.o" name:"output probe path"`
+	Kernel string `validate:"omitempty,required_without=Module|required_without=Probe,filepath,endswith=.tar" name:"kernel archive path"`
 }
 
 // RootOptions ...
@@ -56,53 +57,77 @@ func (ro *RootOptions) Validate() []error {
 
 // Log emits a log line containing the receiving RootOptions for debugging purposes.
 //
-// Call it only after validation.
+// Call it only **after** successfull validation.
 func (ro *RootOptions) Log() {
 	fields := logger.Fields{}
-	if ro.Output.Module != "" {
-		fields["output-module"] = ro.Output.Module
+	if _, ok := ignoring["output.module"]; !ok && ro.Output.Module != "" {
+		fields["output.module"] = ro.Output.Module
 	}
-	if ro.Output.Probe != "" {
-		fields["output-probe"] = ro.Output.Probe
-
+	if _, ok := ignoring["output.probe"]; !ok && ro.Output.Probe != "" {
+		fields["output.probe"] = ro.Output.Probe
 	}
-	fields["driverversion"] = ro.DriverVersion
+	if _, ok := ignoring["output.kernel"]; !ok && ro.Output.Kernel != "" {
+		fields["output.kernel"] = ro.Output.Kernel
+	}
+	fields["driverversion"] = fmt.Sprintf("%.7s", ro.DriverVersion)
 	fields["kernelrelease"] = ro.KernelRelease
-	fields["kernelversion"] = ro.KernelVersion
+	if _, ok := ignoring["kernelversion"]; !ok {
+		fields["kernelversion"] = ro.KernelVersion
+	}
 	fields["target"] = ro.Target
+	if _, ok := ignoring["kernelconfigdata"]; !ok {
+		fields["kernelconfigdata"] = fmt.Sprintf("%.7s", ro.KernelConfigData)
+	}
 
 	logger.WithFields(fields).Debug("running with options")
+
+	if len(ignoring) > 0 {
+		logger.WithFields(ignoring).Debug("ignoring options")
+	}
 }
 
 func (ro *RootOptions) toBuild() *builder.Build {
-	kernelConfigData := ro.KernelConfigData
-	if len(kernelConfigData) == 0 {
-		kernelConfigData = "bm8tZGF0YQ==" // no-data
-	}
-
 	return &builder.Build{
-		TargetType:       builder.Type(ro.Target),
-		DriverVersion:    ro.DriverVersion,
-		KernelVersion:    ro.KernelVersion,
-		KernelRelease:    ro.KernelRelease,
-		Architecture:     ro.Architecture,
-		KernelConfigData: kernelConfigData,
-		ModuleFilePath:   ro.Output.Module,
-		ProbeFilePath:    ro.Output.Probe,
+		TargetType:        builder.Type(ro.Target),
+		DriverVersion:     ro.DriverVersion,
+		KernelVersion:     ro.KernelVersion,
+		KernelRelease:     ro.KernelRelease,
+		Architecture:      ro.Architecture,
+		KernelConfigData:  ro.KernelConfigData,
+		ModuleFilePath:    ro.Output.Module,
+		ProbeFilePath:     ro.Output.Probe,
+		KernelArchivePath: ro.Output.Kernel,
 	}
 }
+
+var ignoring logger.Fields
 
 // RootOptionsLevelValidation validates KernelConfigData and Target at the same time.
 //
 // It reports an error when `KernelConfigData` is empty and `Target` is `vanilla`.
 func RootOptionsLevelValidation(level validator.StructLevel) {
-	opts := level.Current().Interface().(RootOptions)
+	o := level.Current().Interface().(RootOptions)
+	ignoring = logger.Fields{}
 
-	if len(opts.KernelConfigData) == 0 && opts.Target == builder.TargetTypeVanilla.String() {
-		level.ReportError(opts.KernelConfigData, "kernelConfigData", "KernelConfigData", "required_kernelconfigdata_with_target_vanilla", "")
+	if len(o.KernelConfigData) == 0 && o.Target == builder.TargetTypeVanilla.String() {
+		level.ReportError(o.KernelConfigData, "kernelconfigdata", "KernelConfigData", "required_kernelconfigdata_with_target_vanilla", "")
 	}
 
-	if opts.KernelVersion == 0 && (opts.Target == builder.TargetTypeUbuntuAWS.String() || opts.Target == builder.TargetTypeUbuntuGeneric.String()) {
-		level.ReportError(opts.KernelVersion, "kernelVersion", "KernelVersion", "required_kernelversion_with_target_ubuntu", "")
+	if o.KernelVersion <= 1 && (o.Target == builder.TargetTypeUbuntuAWS.String() || o.Target == builder.TargetTypeUbuntuGeneric.String()) {
+		level.ReportError(o.KernelVersion, "kernelversion", "KernelVersion", "required_kernelversion_with_target_ubuntu", "")
+	}
+
+	// Ignoring
+	if o.KernelVersion > 0 && o.Target != builder.TargetTypeUbuntuAWS.String() && o.Target != builder.TargetTypeUbuntuGeneric.String() {
+		ignoring["kernelversion"] = o.KernelVersion
+	}
+	if len(o.Output.Kernel) > 0 && o.Target != builder.TargetTypeVanilla.String() {
+		ignoring["output.kernel"] = o.Output.Kernel
+	}
+	if len(o.KernelConfigData) > 0 && o.Target != builder.TargetTypeVanilla.String() {
+		ignoring["kernelconfigdata"] = fmt.Sprintf("%.7s", o.KernelConfigData)
+	}
+	if len(o.KernelConfigData) > 0 && o.Target == builder.TargetTypeVanilla.String() && len(o.Output.Module) == 0 && len(o.Output.Kernel) == 0 {
+		ignoring["kernelconfigdata"] = fmt.Sprintf("%.7s", o.KernelConfigData)
 	}
 }
