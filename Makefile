@@ -21,13 +21,23 @@ IMAGE_NAME_DRIVERKIT_LATEST := $(IMAGE_NAME_DRIVERKIT):latest
 
 LDFLAGS := -ldflags '-X github.com/falcosecurity/driverkit/pkg/version.buildTime=$(shell date +%s) -X github.com/falcosecurity/driverkit/pkg/version.gitCommit=${GIT_COMMIT} -X github.com/falcosecurity/driverkit/pkg/driverbuilder.builderBaseImage=${IMAGE_NAME_BUILDER_COMMIT}'
 
+OS_NAME := $(shell uname -s | tr A-Z a-z)
+SQLITE_TAGS := --tags
+ifeq ($(OS_NAME),darwin)
+	SQLITE_TAGS += "sqlite_omit_load_extension libsqlite3 darwin"
+else ifeq ($(OS_NAME),linux)
+	SQLITE_TAGS += "sqlite_omit_load_extension linux"
+endif
+
+GOTAGS := ${SQLITE_TAGS}
+
 driverkit ?= _output/bin/driverkit
 
 .PHONY: build
 build: clean ${driverkit}
 
 ${driverkit}:
-	CGO_ENABLED=0 go build ${LDFLAGS} -o $@ .
+	CGO_ENABLED=1 go build ${LDFLAGS} ${GOTAGS} -o $@ .
 
 .PHONY: clean
 clean:
