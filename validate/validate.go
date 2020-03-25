@@ -23,6 +23,8 @@ var T ut.Translator
 func init() {
 	V = validator.New()
 
+	V.RegisterAlias("dev_or_sha1_or_semver", "eq=dev|sha1|semver")
+	
 	// Register a function to get the field name from "name" tags.
 	V.RegisterTagNameFunc(func(fld reflect.StructField) string {
 		name := strings.SplitN(fld.Tag.Get("name"), ",", 2)[0]
@@ -50,7 +52,7 @@ func init() {
 			return ut.Add("filepath", "{0} must be a valid file path", true)
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
-			t, _ := ut.T("filepath", fe.Field())
+			t, _ := ut.T(fe.Tag(), fe.Field())
 
 			return t
 		},
@@ -109,10 +111,10 @@ func init() {
 	)
 
 	V.RegisterTranslation(
-		"eq=dev|sha1|semver",
+		"dev_or_sha1_or_semver",
 		T,
 		func(ut ut.Translator) error {
-			return ut.Add("eq=dev|sha1|semver", `{0} must be a valid SHA1, semver-ish, or the "dev" string`, true)
+			return ut.Add("dev_or_sha1_or_semver", `{0} must be a valid SHA1, semver-ish, or the "dev" string`, true)
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
 			t, _ := ut.T(fe.Tag(), fe.Field())
@@ -135,13 +137,26 @@ func init() {
 	)
 
 	V.RegisterTranslation(
-		"required_without",
+		"atleast_an_output_path",
 		T,
 		func(ut ut.Translator) error {
-			return ut.Add("required_without", "{0} is required when {1} is missing", true)
+			return ut.Add("atleast_an_output_path", "{0}at least one output path is required ({1})", true)
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
-			t, _ := ut.T(fe.Tag(), fe.Field(), strings.ToLower(fe.Param()))
+			t, _ := ut.T(fe.Tag(), fe.Field(), fe.Param())
+
+			return t
+		},
+	)
+
+	V.RegisterTranslation(
+		"admitted_only_with_target_vanilla",
+		T,
+		func(ut ut.Translator) error {
+			return ut.Add("admitted_only_with_target_vanilla", "{0} is allowed only when target is vanilla", true)
+		},
+		func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T(fe.Tag(), fe.Field())
 
 			return t
 		},
