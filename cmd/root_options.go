@@ -75,7 +75,7 @@ func (ro *RootOptions) Log() {
 		fields["kernelversion"] = ro.KernelVersion
 	}
 	fields["target"] = ro.Target
-	if _, ok := ignoring["kernelconfigdata"]; !ok {
+	if _, ok := ignoring["kernelconfigdata"]; !ok && ro.KernelConfigData != "" {
 		fields["kernelconfigdata"] = fmt.Sprintf("%.7s", ro.KernelConfigData)
 	}
 
