@@ -12,15 +12,15 @@ import (
 
 // OutputOptions wraps the two drivers that driverkit builds.
 type OutputOptions struct {
-	Module string `validate:"required_without=Probe|required_without=Kernel,filepath,omitempty,endswith=.ko" name:"output module path"`
-	Probe  string `validate:"required_without=Module|required_without=Kernel,filepath,omitempty,endswith=.o" name:"output probe path"`
-	Kernel string `validate:"omitempty,required_without=Module|required_without=Probe,filepath,endswith=.tar" name:"kernel archive path"`
+	Module string `validate:"filepath,omitempty,endswith=.ko" name:"output module path"`
+	Probe  string `validate:"filepath,omitempty,endswith=.o" name:"output probe path"`
+	Kernel string `validate:"filepath,omitempty,endswith=.tar" name:"output kernel archive path"`
 }
 
 // RootOptions ...
 type RootOptions struct {
 	Architecture     string `default:"x86_64" validate:"required,oneof=x86_64" name:"architecture"`
-	DriverVersion    string `default:"dev" validate:"required,eq=dev|sha1|semver" name:"driver version"`
+	DriverVersion    string `default:"dev" validate:"required,dev_or_sha1_or_semver" name:"driver version"`
 	KernelVersion    uint16 `default:"1" validate:"omitempty,number" name:"kernel version"`
 	KernelRelease    string `validate:"required,ascii" name:"kernel release"`
 	Target           string `validate:"required,target" name:"target"`
@@ -112,17 +112,25 @@ func RootOptionsLevelValidation(level validator.StructLevel) {
 	if len(o.KernelConfigData) == 0 && o.Target == builder.TargetTypeVanilla.String() {
 		level.ReportError(o.KernelConfigData, "kernelconfigdata", "KernelConfigData", "required_kernelconfigdata_with_target_vanilla", "")
 	}
-
 	if o.KernelVersion <= 1 && (o.Target == builder.TargetTypeUbuntuAWS.String() || o.Target == builder.TargetTypeUbuntuGeneric.String()) {
 		level.ReportError(o.KernelVersion, "kernelversion", "KernelVersion", "required_kernelversion_with_target_ubuntu", "")
+	}
+	if o.Target != builder.TargetTypeVanilla.String() {
+		if len(o.Output.Kernel) > 0 {
+			level.ReportError(o.Output.Kernel, "output kernel archive path", "", "admitted_only_with_target_vanilla", "")
+		}
+		if len(o.Output.Module) == 0 && len(o.Output.Probe) == 0 {
+			level.ReportError(o.Output.Module, "", "OutputOptions", "atleast_an_output_path", "module or probe")
+		}
+	} else {
+		if len(o.Output.Module) == 0 && len(o.Output.Probe) == 0 && len(o.Output.Kernel) == 0 {
+			level.ReportError(o.Output.Module, "", "OutputOptions", "atleast_an_output_path", "module or probe or kernel")
+		}
 	}
 
 	// Ignoring
 	if o.KernelVersion > 0 && o.Target != builder.TargetTypeUbuntuAWS.String() && o.Target != builder.TargetTypeUbuntuGeneric.String() {
 		ignoring["kernelversion"] = o.KernelVersion
-	}
-	if len(o.Output.Kernel) > 0 && o.Target != builder.TargetTypeVanilla.String() {
-		ignoring["output.kernel"] = o.Output.Kernel
 	}
 	if len(o.KernelConfigData) > 0 && o.Target != builder.TargetTypeVanilla.String() {
 		ignoring["kernelconfigdata"] = fmt.Sprintf("%.7s", o.KernelConfigData)
