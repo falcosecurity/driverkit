@@ -1,7 +1,9 @@
 package builder
 
 import (
+	"bufio"
 	"bytes"
+	"compress/bzip2"
 	"compress/gzip"
 	"fmt"
 	"io"
@@ -22,20 +24,27 @@ import (
 type amazonlinux2 struct {
 }
 
+type amazonlinux struct {
+}
+
 // TargetTypeAmazonLinux2 identifies the AmazonLinux2 target.
 const TargetTypeAmazonLinux2 Type = "amazonlinux2"
 
+// TargetTypeAmazonLinux identifies the AmazonLinux target.
+const TargetTypeAmazonLinux Type = "amazonlinux"
+
 func init() {
 	BuilderByTarget[TargetTypeAmazonLinux2] = &amazonlinux2{}
+	BuilderByTarget[TargetTypeAmazonLinux] = &amazonlinux{}
 }
 
-const amazonlinux2Template = `
+const amazonlinuxTemplate = `
 {{ range $url := .KernelDownloadURLs }}
 echo {{ $url }}
 {{ end }}
 `
 
-type amazonlinux2TemplateData struct {
+type amazonlinuxTemplateData struct {
 	DriverBuildDir     string
 	ModuleDownloadURL  string
 	KernelDownloadURLs []string
@@ -44,9 +53,18 @@ type amazonlinux2TemplateData struct {
 }
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
-func (v amazonlinux2) Script(c Config) (string, error) {
-	t := template.New(string(TargetTypeAmazonLinux2))
-	parsed, err := t.Parse(amazonlinux2Template)
+func (a amazonlinux2) Script(c Config) (string, error) {
+	return script(c, TargetTypeAmazonLinux2)
+}
+
+// Script compiles the script to build the kernel module and/or the eBPF probe.
+func (a amazonlinux) Script(c Config) (string, error) {
+	return script(c, TargetTypeAmazonLinux)
+}
+
+func script(c Config, targetType Type) (string, error) {
+	t := template.New(string(targetType))
+	parsed, err := t.Parse(amazonlinuxTemplate)
 	if err != nil {
 		return "", err
 	}
@@ -54,16 +72,20 @@ func (v amazonlinux2) Script(c Config) (string, error) {
 	kv := kernelrelease.FromString(c.Build.KernelRelease)
 
 	// Check (and filter) existing kernels before continuing
-	packages, err := fetchAmazonLinux2PackagesURLsFromKernelVersion(kv, c.Build.Architecture)
+	packages, err := fetchAmazonLinuxPackagesURLs(kv, c.Build.Architecture, targetType)
 	if err != nil {
 		return "", err
 	}
+	if len(packages) != 2 {
+		return "", fmt.Errorf("target %s needs to find both kernel and kernel-devel packages", targetType)
+	}
+	fmt.Println(packages)
 	urls, err := getResolvingURLs(packages)
 	if err != nil {
 		return "", err
 	}
 
-	td := amazonlinux2TemplateData{
+	td := amazonlinuxTemplateData{
 		DriverBuildDir:     DriverDirectory,
 		ModuleDownloadURL:  moduleDownloadURL(c),
 		KernelDownloadURLs: urls,
@@ -79,13 +101,43 @@ func (v amazonlinux2) Script(c Config) (string, error) {
 	return buf.String(), nil
 }
 
-var amazonlinux2repos = []string{"2.0", "latest"}
+var reposByTarget = map[Type][]string{
+	TargetTypeAmazonLinux2: []string{
+		"2.0",
+		"latest",
+	},
+	TargetTypeAmazonLinux: []string{
+		"latest/updates",
+		"latest/main",
+		"2017.03/updates",
+		"2017.03/main",
+		"2017.09/updates",
+		"2017.09/main",
+		"2018.03/updates",
+		"2018.03/main",
+	},
+}
 
-func fetchAmazonLinux2PackagesURLsFromKernelVersion(kv kernelrelease.KernelRelease, arch string) ([]string, error) {
+var baseByTarget = map[Type]string{
+	TargetTypeAmazonLinux:  "http://repo.us-east-1.amazonaws.com/%s",
+	TargetTypeAmazonLinux2: "http://amazonlinux.us-east-1.amazonaws.com/2/core/%s/%s",
+}
+
+func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, arch string, targetType Type) ([]string, error) {
 	urls := []string{}
 	visited := map[string]bool{}
-	for _, v := range amazonlinux2repos {
-		baseURL := fmt.Sprintf("http://amazonlinux.us-east-1.amazonaws.com/2/core/%s/%s", v, arch)
+
+	for _, v := range reposByTarget[targetType] {
+		var baseURL string
+		switch targetType {
+		case TargetTypeAmazonLinux:
+			baseURL = fmt.Sprintf("http://repo.us-east-1.amazonaws.com/%s", v)
+		case TargetTypeAmazonLinux2:
+			baseURL = fmt.Sprintf("http://amazonlinux.us-east-1.amazonaws.com/2/core/%s/%s", v, arch)
+		default:
+			return nil, fmt.Errorf("unsupported target")
+		}
+
 		mirror := fmt.Sprintf("%s/%s", baseURL, "mirror.list")
 		logger.WithField("url", mirror).WithField("version", v).Debug("looking for repo...")
 		// Obtain the repo URL by getting mirror URL content
@@ -94,11 +146,23 @@ func fetchAmazonLinux2PackagesURLsFromKernelVersion(kv kernelrelease.KernelRelea
 			return nil, err
 		}
 		defer mirrorRes.Body.Close()
-		repo, err := ioutil.ReadAll(mirrorRes.Body)
-		if err != nil {
-			return nil, err
+
+		var repo string
+		scanner := bufio.NewScanner(mirrorRes.Body)
+		if scanner.Scan() {
+			repo = scanner.Text()
 		}
-		repoDatabaseURL := fmt.Sprintf("%s/repodata/primary.sqlite.gz", strings.TrimSuffix(string(repo), "\n"))
+		if repo == "" {
+			return nil, fmt.Errorf("repository not found")
+		}
+
+		ext := "gz"
+		if targetType == TargetTypeAmazonLinux {
+			ext = "bz2"
+		}
+		repoDatabaseURL := fmt.Sprintf("%s/repodata/primary.sqlite.%s", strings.TrimSuffix(string(repo), "\n"), ext)
+		repoDatabaseURL = strings.ReplaceAll(repoDatabaseURL, "$basearch", arch)
+
 		if _, ok := visited[repoDatabaseURL]; ok {
 			continue
 		}
@@ -111,12 +175,18 @@ func fetchAmazonLinux2PackagesURLsFromKernelVersion(kv kernelrelease.KernelRelea
 		defer repoRes.Body.Close()
 		visited[repoDatabaseURL] = true
 		// Decompress the database
-		dbBytes, err := gunzip(repoRes.Body)
+		var unzipFunc func(io.Reader) ([]byte, error)
+		if targetType == TargetTypeAmazonLinux {
+			unzipFunc = bunzip
+		} else {
+			unzipFunc = gunzip
+		}
+		dbBytes, err := unzipFunc(repoRes.Body)
 		if err != nil {
 			return nil, err
 		}
 		// Create the temporary database file
-		dbFile, err := ioutil.TempFile(os.TempDir(), "amazonlinux2-*.sqlite")
+		dbFile, err := ioutil.TempFile(os.TempDir(), fmt.Sprintf("%s-*.sqlite", targetType))
 		if err != nil {
 			return nil, err
 		}
@@ -170,13 +240,28 @@ func gunzip(data io.Reader) (res []byte, err error) {
 		return
 	}
 
-	var resB bytes.Buffer
-	_, err = resB.ReadFrom(r)
+	var b bytes.Buffer
+	_, err = b.ReadFrom(r)
 	if err != nil {
 		return
 	}
 
-	res = resB.Bytes()
+	res = b.Bytes()
+
+	return
+}
+
+func bunzip(data io.Reader) (res []byte, err error) {
+	var r io.Reader
+	r = bzip2.NewReader(data)
+
+	var b bytes.Buffer
+	_, err = b.ReadFrom(r)
+	if err != nil {
+		return
+	}
+
+	res = b.Bytes()
 
 	return
 }

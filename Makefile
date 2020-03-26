@@ -37,7 +37,7 @@ driverkit ?= _output/bin/driverkit
 build: clean ${driverkit}
 
 ${driverkit}:
-	CGO_ENABLED=1 go build ${LDFLAGS} ${GOTAGS} -o $@ .
+	CGO_ENABLED=1 go build -v ${LDFLAGS} ${GOTAGS} -o $@ .
 
 .PHONY: clean
 clean:
