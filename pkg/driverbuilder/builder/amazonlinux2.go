@@ -79,7 +79,8 @@ func script(c Config, targetType Type) (string, error) {
 	if len(packages) != 2 {
 		return "", fmt.Errorf("target %s needs to find both kernel and kernel-devel packages", targetType)
 	}
-	fmt.Println(packages)
+	fmt.Println(packages[0])
+	fmt.Println(packages[1])
 	urls, err := getResolvingURLs(packages)
 	if err != nil {
 		return "", err
@@ -155,20 +156,19 @@ func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, arch string, t
 		if repo == "" {
 			return nil, fmt.Errorf("repository not found")
 		}
+		repo = strings.ReplaceAll(strings.TrimSuffix(string(repo), "\n"), "$basearch", arch)
 
 		ext := "gz"
 		if targetType == TargetTypeAmazonLinux {
 			ext = "bz2"
 		}
-		repoDatabaseURL := fmt.Sprintf("%s/repodata/primary.sqlite.%s", strings.TrimSuffix(string(repo), "\n"), ext)
-		repoDatabaseURL = strings.ReplaceAll(repoDatabaseURL, "$basearch", arch)
-
+		repoDatabaseURL := fmt.Sprintf("%s/repodata/primary.sqlite.%s", repo, ext)
 		if _, ok := visited[repoDatabaseURL]; ok {
 			continue
 		}
 		// Download the repo database
 		repoRes, err := http.Get(repoDatabaseURL)
-		logger.WithField("url", repoDatabaseURL).Debug("downloading ...")
+		logger.WithField("url", repoDatabaseURL).Debug("downloading...")
 		if err != nil {
 			return nil, err
 		}
@@ -202,8 +202,6 @@ func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, arch string, t
 		defer db.Close()
 		logger.WithField("db", dbFile.Name()).Debug("connecting to database...")
 		// Query the database
-		// fixme > it seems they should always be 2 URLs (and the most recent ones?)
-		// https://github.com/draios/sysdig/blob/fb08e7f59cca570383bdafb5de96824b8a2e9e6b/probe-builder/kernel-crawler.py#L414
 		rel := strings.TrimPrefix(strings.TrimSuffix(kv.FullExtraversion, fmt.Sprintf(".%s", arch)), "-")
 		q := fmt.Sprintf("SELECT location_href FROM packages WHERE name LIKE 'kernel%%' AND name NOT LIKE 'kernel-livepatch%%' AND name NOT LIKE '%%doc%%' AND name NOT LIKE '%%tools%%' AND name NOT LIKE '%%headers%%' AND version='%s' AND release='%s'", kv.Fullversion, rel)
 		stmt, err := db.Prepare(q)
@@ -222,11 +220,17 @@ func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, arch string, t
 			if err != nil {
 				log.Fatal(err)
 			}
-			urls = append(urls, fmt.Sprintf("%s/%s", baseURL, href))
+			urls = append(urls, fmt.Sprintf("%s/%s", repo, href))
 		}
 
 		if err := dbFile.Close(); err != nil {
 			return nil, err
+		}
+
+		// Found, do not continue
+		// todo > verify amazonlinux always needs 2 packages (kernel and kernel-devel) too
+		if len(urls) == 2 {
+			break
 		}
 	}
 
