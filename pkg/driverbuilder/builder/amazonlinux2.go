@@ -79,8 +79,6 @@ func script(c Config, targetType Type) (string, error) {
 	if len(packages) != 2 {
 		return "", fmt.Errorf("target %s needs to find both kernel and kernel-devel packages", targetType)
 	}
-	fmt.Println(packages[0])
-	fmt.Println(packages[1])
 	urls, err := getResolvingURLs(packages)
 	if err != nil {
 		return "", err
@@ -127,6 +125,7 @@ var baseByTarget = map[Type]string{
 func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, arch string, targetType Type) ([]string, error) {
 	urls := []string{}
 	visited := map[string]bool{}
+	amazonlinux2baseURL := "http://amazonlinux.us-east-1.amazonaws.com"
 
 	for _, v := range reposByTarget[targetType] {
 		var baseURL string
@@ -134,7 +133,7 @@ func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, arch string, t
 		case TargetTypeAmazonLinux:
 			baseURL = fmt.Sprintf("http://repo.us-east-1.amazonaws.com/%s", v)
 		case TargetTypeAmazonLinux2:
-			baseURL = fmt.Sprintf("http://amazonlinux.us-east-1.amazonaws.com/2/core/%s/%s", v, arch)
+			baseURL = fmt.Sprintf("%s/2/core/%s/%s", amazonlinux2baseURL, v, arch)
 		default:
 			return nil, fmt.Errorf("unsupported target")
 		}
@@ -220,7 +219,12 @@ func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, arch string, t
 			if err != nil {
 				log.Fatal(err)
 			}
-			urls = append(urls, fmt.Sprintf("%s/%s", repo, href))
+			base := repo
+			if targetType == TargetTypeAmazonLinux2 {
+				base = amazonlinux2baseURL
+			}
+			href = strings.ReplaceAll(href, "../", "")
+			urls = append(urls, fmt.Sprintf("%s/%s", base, href))
 		}
 
 		if err := dbFile.Close(); err != nil {
