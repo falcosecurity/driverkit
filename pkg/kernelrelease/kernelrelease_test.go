@@ -105,7 +105,7 @@ func TestFromString(t *testing.T) {
 				Version:          "4",
 				PatchLevel:       "14",
 				Sublevel:         "171",
-				Extraversion:     "136.231.amzn2.x86_64",
+				Extraversion:     "136",
 				FullExtraversion: "-136.231.amzn2.x86_64",
 			},
 		},
