@@ -190,7 +190,7 @@ func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, arch string, t
 		if err != nil {
 			return nil, err
 		}
-		//defer os.Remove(dbFile.Name())
+		defer os.Remove(dbFile.Name())
 		if _, err := dbFile.Write(dbBytes); err != nil {
 			return nil, err
 		}
