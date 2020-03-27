@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -15,32 +14,27 @@ import (
 func persistentValidateFunc(rootCommand *cobra.Command, rootOpts *RootOptions) func(c *cobra.Command, args []string) {
 	return func(c *cobra.Command, args []string) {
 		// Merge environment variables or config file values into the RootOptions instance
+		skip := map[string]bool{ // do not merge these
+			"config":   true,
+			"timeout":  true,
+			"loglevel": true,
+		}
+		nested := map[string]string{ // handle nested options in config file
+			"output-module": "output.module",
+			"output-probe":  "output.probe",
+		}
 		rootCommand.PersistentFlags().VisitAll(func(f *pflag.Flag) {
-			ignore := false
-			value := viper.Get(f.Name)
-			switch f.Name {
-			case "timeout":
-				fallthrough
-			case "loglevel":
-				ignore = true
-				break
-			// Handling options coming from config file and/or environment variables
-			case "output-module":
-				value = viper.GetString("output.module")
-			case "output-probe":
-				value = viper.GetString("output.probe")
-			}
-
-			if value != "" && !ignore {
-				switch f.Value.Type() {
-				case "uint16":
-					rootCommand.PersistentFlags().Set(f.Name, strconv.Itoa(int(viper.GetUint(f.Name))))
-					break
-				case "string":
-					fallthrough
-				default:
-					rootCommand.PersistentFlags().Set(f.Name, value.(string))
-					break
+			if name := f.Name; !skip[name] {
+				value := viper.GetString(name)
+				if value == "" {
+					// fallback to nested options in config file, if any
+					if nestedName, ok := nested[name]; ok {
+						value = viper.GetString(nestedName)
+					}
+				}
+				// set the value, if any, otherwise let the default
+				if value != "" {
+					rootCommand.PersistentFlags().Set(name, value)
 				}
 			}
 		})
@@ -134,7 +128,6 @@ func initConfig() {
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("driverkit")
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
