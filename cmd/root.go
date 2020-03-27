@@ -133,7 +133,6 @@ func initConfig() {
 
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("driverkit")
-	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	// If a config file is found, read it in.
