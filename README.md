@@ -118,7 +118,28 @@ output:
 driverversion: dev
 ```
 
-#### debian
+### amazonlinux
+
+```yaml
+kernelrelease: 4.14.26-46.32.amzn1.x86_64
+target: amazonlinux
+output:
+    module: /tmp/falco_amazonlinux_4.14.26-46.32.amzn1.x86_64.ko
+driverversion: be1ea2d9482d0e6e2cb14a0fd7e08cbecf517f94
+```
+
+### amazonlinux 2
+
+```yaml
+kernelrelease: 4.14.171-136.231.amzn2.x86_64
+target: amazonlinux2
+output:
+    module: /tmp/falco_amazonlinux2_4.14.171-136.231.amzn2.x86_64.ko
+    probe: /tmp/falco_amazonlinux2_4.14.171-136.231.amzn2.x86_64.o
+driverversion: be1ea2d9482d0e6e2cb14a0fd7e08cbecf517f94
+```
+
+### debian
 
 Example configuration file to build both the Kernel module and eBPF probe for Debian.
 
