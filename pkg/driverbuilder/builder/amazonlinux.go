@@ -39,8 +39,45 @@ func init() {
 }
 
 const amazonlinuxTemplate = `
+#!/bin/bash
+set -xeuo pipefail
+
+rm -Rf {{ .DriverBuildDir }}
+mkdir {{ .DriverBuildDir }}
+rm -Rf /tmp/module-download
+mkdir -p /tmp/module-download
+
+curl --silent -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
+mv /tmp/module-download/*/driver/* {{ .DriverBuildDir }}
+
+cp /driverkit/module-Makefile {{ .DriverBuildDir }}/Makefile
+cp /driverkit/module-driver-config.h {{ .DriverBuildDir }}/driver_config.h
+
+# Fetch the kernel
+mkdir /tmp/kernel-download
+cd /tmp/kernel-download
 {{ range $url := .KernelDownloadURLs }}
-echo {{ $url }}
+curl --silent -o kernel.rpm -SL {{ $url }}
+rpm2cpio kernel.rpm | cpio --extract --make-directories
+rm -rf kernel.rpm
+{{ end }}
+rm -Rf /tmp/kernel
+mkdir -p /tmp/kernel
+mv usr/src/kernels/*/* /tmp/kernel
+
+{{ if .BuildModule }}
+# Build the kernel module
+cd {{ .DriverBuildDir }}
+make KERNELDIR=/tmp/kernel
+# Print results
+modinfo falco.ko
+{{ end }}
+
+{{ if .BuildProbe }}
+# Build the eBPF probe
+cd {{ .DriverBuildDir }}/bpf
+make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc KERNELDIR=/tmp/kernel
+ls -l probe.o
 {{ end }}
 `
 
