@@ -9,6 +9,7 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
+var validProcessors = []string{"docker", "kubernetes"}
 var configOptions *ConfigOptions
 
 // ConfigOptions represent the persistent configuration flags of driverkit.

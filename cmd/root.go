@@ -59,10 +59,13 @@ func NewRootCmd() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:                   "driverkit",
 		Short:                 "A command line tool to build Falco kernel modules and eBPF probes.",
-		ValidArgs: []string{"docker", "kubernetes"},
-		Args: cobra.OnlyValidArgs,
+		ValidArgs:             validProcessors,
+		Args:                  cobra.OnlyValidArgs,
 		DisableFlagsInUseLine: true,
 		Run: func(c *cobra.Command, args []string) {
+			if len(args) == 0 {
+				logger.WithField("processors", validProcessors).Info("specify the processor")
+			}
 			// Fallback to help
 			c.Help()
 		},
