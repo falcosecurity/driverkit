@@ -66,10 +66,18 @@ func (ro *RootOptions) Log() {
 		fields["output-probe"] = ro.Output.Probe
 
 	}
-	fields["driverversion"] = ro.DriverVersion
-	fields["kernelrelease"] = ro.KernelRelease
-	fields["kernelversion"] = ro.KernelVersion
-	fields["target"] = ro.Target
+	if ro.DriverVersion != "" {
+		fields["driverversion"] = ro.DriverVersion
+	}
+	if ro.KernelRelease != "" {
+		fields["kernelrelease"] = ro.KernelRelease
+	}
+	if ro.KernelVersion > 0 {
+		fields["kernelversion"] = ro.KernelVersion
+	}
+	if ro.Target != "" {
+		fields["target"] = ro.Target
+	}
 
 	logger.WithFields(fields).Debug("running with options")
 }

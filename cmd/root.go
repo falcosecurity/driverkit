@@ -47,9 +47,8 @@ func persistentValidateFunc(rootCommand *cobra.Command, rootOpts *RootOptions) f
 				}
 				logger.Fatal("exiting for validation errors")
 			}
+			rootOpts.Log()
 		}
-
-		rootOpts.Log()
 	}
 }
 
