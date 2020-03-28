@@ -1,3 +1,5 @@
+// +build !race
+
 package cmd
 
 import (
@@ -12,11 +14,12 @@ import (
 )
 
 type expect struct {
-	err error
+	err string
 	out string
 }
 
 type testCase struct {
+	descr  string
 	args   []string
 	expect expect
 }
@@ -25,44 +28,35 @@ var tests = []testCase{
 	{
 		args: []string{"help"},
 		expect: expect{
-			err: nil,
 			out: "testdata/help.txt",
 		},
 	},
 	{
 		args: []string{},
 		expect: expect{
-			err: nil,
 			out: "testdata/autohelp.txt",
 		},
 	},
 	{
 		args: []string{"help", "--loglevel", "debug"},
 		expect: expect{
-			err: nil,
 			out: "testdata/help-debug.txt",
 		},
 	},
-}
-
-func TestCLI(t *testing.T) {
-	for _, test := range tests {
-		if test.expect.out == "" {
-			t.Fatal("each CLI test needs an output fixture")
-		}
-		name := strings.TrimSuffix(filepath.Base(test.expect.out), ".txt")
-
-		out, err := ioutil.ReadFile(test.expect.out)
-		if err != nil {
-			t.Fatalf("output fixture not found: %v", err)
-		}
-		test.expect.out = string(out)
-
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-			run(t, test)
-		})
-	}
+	{
+		args: []string{"docker"},
+		expect: expect{
+			out: "testdata/noflags.txt",
+		},
+	},
+	{
+		descr: "invalid-processor",
+		args:  []string{"abc"},
+		expect: expect{
+			out: "testdata/non-existent-processor.txt",
+			err: `invalid argument "abc" for "driverkit"`,
+		},
+	},
 }
 
 func run(t *testing.T, test testCase) {
@@ -73,7 +67,11 @@ func run(t *testing.T, test testCase) {
 	c.SetArgs(test.args)
 	// Test
 	if err := c.Execute(); err != nil {
-		t.Fatalf("error executing CLI: %v", err)
+		if test.expect.err == "" {
+			t.Fatalf("error executing CLI: %v", err)
+		} else {
+			assert.Error(t, err, test.expect.err)
+		}
 	}
 	out, err := ioutil.ReadAll(b)
 	if err != nil {
@@ -82,4 +80,25 @@ func run(t *testing.T, test testCase) {
 	res := stripansi.Strip(string(out))
 
 	assert.Equal(t, test.expect.out, res)
+}
+
+func TestCLI(t *testing.T) {
+	for _, test := range tests {
+		descr := test.descr
+		if descr == "" {
+			test.descr = strings.TrimSuffix(filepath.Base(test.expect.out), ".txt")
+		}
+		if test.expect.out != "" {
+			out, err := ioutil.ReadFile(test.expect.out)
+			if err != nil {
+				t.Fatalf("output fixture not found: %v", err)
+			}
+			test.expect.out = string(out)
+		}
+
+		t.Run(test.descr, func(t *testing.T) {
+			t.Parallel()
+			run(t, test)
+		})
+	}
 }

@@ -108,7 +108,7 @@ func NewRootCmd() *RootCmd {
 
 // SetOutput sets the main command output writer.
 func (r *RootCmd) SetOutput(w io.Writer) {
-	r.c.SetOut(w)
+	r.c.SetOutput(w)
 	logger.SetOutput(w)
 }
 
