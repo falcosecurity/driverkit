@@ -24,8 +24,10 @@ func NewKubernetesCmd(rootOpts *RootOptions) *cobra.Command {
 
 	kubernetesCmd.Run = func(cmd *cobra.Command, args []string) {
 		logrus.WithField("processor", cmd.Name()).Info("driver building, it will take a few seconds to complete")
-		if err := kubernetesRun(cmd, args, kubefactory, rootOpts); err != nil {
-			logger.WithError(err).Fatal("exiting")
+		if !configOptions.DryRun {
+			if err := kubernetesRun(cmd, args, kubefactory, rootOpts); err != nil {
+				logger.WithError(err).Fatal("exiting")
+			}
 		}
 	}
 

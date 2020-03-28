@@ -15,8 +15,10 @@ func NewDockerCmd(rootOpts *RootOptions) *cobra.Command {
 		Short: "Build Falco kernel modules and eBPF probes against a docker daemon.",
 		Run: func(c *cobra.Command, args []string) {
 			logrus.WithField("processor", c.Name()).Info("driver building, it will take a few seconds to complete")
-			if err := driverbuilder.NewDockerBuildProcessor(viper.GetInt("timeout")).Start(rootOpts.toBuild()); err != nil {
-				logger.WithError(err).Fatal("exiting")
+			if !configOptions.DryRun {
+				if err := driverbuilder.NewDockerBuildProcessor(viper.GetInt("timeout")).Start(rootOpts.toBuild()); err != nil {
+					logger.WithError(err).Fatal("exiting")
+				}
 			}
 		},
 	}
