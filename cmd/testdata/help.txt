@@ -12,6 +12,7 @@ Available Commands:
 Flags:
   -c, --config string             config file path (default $HOME/.driverkit.yaml if exists)
       --driverversion string      driver version as a git commit hash or as a git tag (default "dev")
+      --dryrun                    do not actually perform the action
   -h, --help                      help for driverkit
       --kernelconfigdata string   kernel config data, base64 encoded. In some systems this can be found under the /boot directory, in oder is gzip compressed under /proc
       --kernelrelease string      kernel release to build the module for, it can be found by executing 'uname -v'
