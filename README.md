@@ -198,6 +198,7 @@ driverkit docker -c /tmp/vanilla.yaml --timeout=300
   - [x] CentOS 8
   - [x] CentOS 7
   - [x] CentOS 6
+  - [x] AmazonLinux (`amazonlinux`, `amazonlinux2`)
   - [x] Debian
   - [x] Vanilla kernel (`vanilla`)
 
