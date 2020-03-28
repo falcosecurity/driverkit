@@ -19,6 +19,7 @@ func persistentValidateFunc(rootCommand *cobra.Command, rootOpts *RootOptions) f
 			"config":   true,
 			"timeout":  true,
 			"loglevel": true,
+			"dryrun":   true,
 		}
 		nested := map[string]string{ // handle nested options in config file
 			"output-module": "output.module",
@@ -68,6 +69,7 @@ func NewRootCmd() *RootCmd {
 		ValidArgs:             validProcessors,
 		Args:                  cobra.OnlyValidArgs,
 		DisableFlagsInUseLine: true,
+		DisableAutoGenTag:     true,
 		Run: func(c *cobra.Command, args []string) {
 			if len(args) == 0 {
 				logger.WithField("processors", validProcessors).Info("specify the processor")
@@ -83,10 +85,10 @@ func NewRootCmd() *RootCmd {
 	flags.StringVarP(&configOptions.ConfigFile, "config", "c", configOptions.ConfigFile, "config file path (default $HOME/.driverkit.yaml if exists)")
 	flags.StringVarP(&configOptions.LogLevel, "loglevel", "l", configOptions.LogLevel, "log level")
 	flags.IntVar(&configOptions.Timeout, "timeout", configOptions.Timeout, "timeout in seconds")
+	flags.BoolVar(&configOptions.DryRun, "dryrun", configOptions.DryRun, "do not actually perform the action")
 
 	flags.StringVar(&rootOpts.Output.Module, "output-module", rootOpts.Output.Module, "filepath where to save the resulting kernel module")
 	flags.StringVar(&rootOpts.Output.Probe, "output-probe", rootOpts.Output.Probe, "filepath where to save the resulting eBPF probe")
-
 	flags.StringVar(&rootOpts.DriverVersion, "driverversion", rootOpts.DriverVersion, "driver version as a git commit hash or as a git tag")
 	flags.Uint16Var(&rootOpts.KernelVersion, "kernelversion", rootOpts.KernelVersion, "kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v'")
 	flags.StringVar(&rootOpts.KernelRelease, "kernelrelease", rootOpts.KernelRelease, "kernel release to build the module for, it can be found by executing 'uname -v'")
