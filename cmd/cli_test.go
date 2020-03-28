@@ -30,6 +30,13 @@ var tests = []testCase{
 		},
 	},
 	{
+		args: []string{},
+		expect: expect{
+			err: nil,
+			out: "testdata/autohelp.txt",
+		},
+	},
+	{
 		args: []string{"help", "--loglevel", "debug"},
 		expect: expect{
 			err: nil,
@@ -52,7 +59,7 @@ func TestCLI(t *testing.T) {
 		test.expect.out = string(out)
 
 		t.Run(name, func(t *testing.T) {
-			//t.Parallel()
+			t.Parallel()
 			run(t, test)
 		})
 	}
