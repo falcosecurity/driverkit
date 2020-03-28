@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"io"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -52,8 +53,13 @@ func persistentValidateFunc(rootCommand *cobra.Command, rootOpts *RootOptions) f
 	}
 }
 
-// NewRootCmd ...
-func NewRootCmd() *cobra.Command {
+// RootCmd wraps the main cobra.Command.
+type RootCmd struct {
+	c *cobra.Command
+}
+
+// NewRootCmd instantiates the root command.
+func NewRootCmd() *RootCmd {
 	configOptions = NewConfigOptions()
 	rootOpts := NewRootOptions()
 	rootCmd := &cobra.Command{
@@ -93,7 +99,25 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.AddCommand(NewKubernetesCmd(rootOpts))
 	rootCmd.AddCommand(NewDockerCmd(rootOpts))
 
-	return rootCmd
+	return &RootCmd{
+		c: rootCmd,
+	}
+}
+
+// SetOutput sets the main command output writer.
+func (r *RootCmd) SetOutput(w io.Writer) {
+	r.c.SetOut(w)
+	logger.SetOutput(w)
+}
+
+// SetArgs proxies the arguments to the underlying cobra.Command.
+func (r *RootCmd) SetArgs(args []string) {
+	r.c.SetArgs(args)
+}
+
+// Execute proxies the cobra.Command execution.
+func (r *RootCmd) Execute() error {
+	return r.c.Execute()
 }
 
 // Start creates the root command and runs it.
@@ -105,6 +129,12 @@ func Start() {
 }
 
 func init() {
+	logger.SetFormatter(&logger.TextFormatter{
+		ForceColors:            true,
+		DisableLevelTruncation: true,
+		DisableTimestamp:       true,
+	})
+
 	cobra.OnInitialize(initConfig)
 }
 
