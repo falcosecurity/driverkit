@@ -1,8 +1,9 @@
 package kernelrelease
 
 import (
-	"reflect"
 	"testing"
+
+	"gotest.tools/assert"
 )
 
 func TestFromString(t *testing.T) {
@@ -113,9 +114,7 @@ func TestFromString(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			got := FromString(tt.kernelVersionStr)
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("FromString() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
