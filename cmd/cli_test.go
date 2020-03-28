@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/acarl005/stripansi"
 	"gotest.tools/assert"
 )
 
@@ -26,6 +27,13 @@ var tests = []testCase{
 		expect: expect{
 			err: nil,
 			out: "testdata/help.txt",
+		},
+	},
+	{
+		args: []string{"help", "--loglevel", "debug"},
+		expect: expect{
+			err: nil,
+			out: "testdata/help-debug.txt",
 		},
 	},
 }
@@ -51,16 +59,20 @@ func TestCLI(t *testing.T) {
 }
 
 func run(t *testing.T, test testCase) {
+	// Setup
 	c := NewRootCmd()
 	b := bytes.NewBufferString("")
-	c.SetOut(b)
+	c.SetOutput(b)
 	c.SetArgs(test.args)
+	// Test
 	if err := c.Execute(); err != nil {
 		t.Fatalf("error executing CLI: %v", err)
 	}
-	res, err := ioutil.ReadAll(b)
+	out, err := ioutil.ReadAll(b)
 	if err != nil {
 		t.Fatal(err)
 	}
-	assert.Equal(t, test.expect.out, string(res))
+	res := stripansi.Strip(string(out))
+
+	assert.Equal(t, test.expect.out, res)
 }
