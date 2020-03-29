@@ -1,5 +1,0 @@
-ERROR error validating build options                error="kernel release is a required field"
-ERROR error validating build options                error="target is a required field"
-ERROR error validating build options                error="output module path is required when probe is missing"
-ERROR error validating build options                error="output probe path is required when module is missing"
-FATAL exiting for validation errors
