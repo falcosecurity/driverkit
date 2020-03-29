@@ -32,7 +32,8 @@ var tests = []testCase{
 		},
 	},
 	{
-		args: []string{},
+		descr: "empty",
+		args:  []string{},
 		expect: expect{
 			out: "testdata/autohelp.txt",
 		},
@@ -44,17 +45,35 @@ var tests = []testCase{
 		},
 	},
 	{
-		args: []string{"docker"},
-		expect: expect{
-			out: "testdata/noflags.txt",
-		},
-	},
-	{
 		descr: "invalid-processor",
 		args:  []string{"abc"},
 		expect: expect{
 			out: "testdata/non-existent-processor.txt",
 			err: `invalid argument "abc" for "driverkit"`,
+		},
+	},
+	{
+		args: []string{
+			"docker",
+			"--kernelrelease",
+			"4.15.0-1057-aws",
+			"--kernelversion",
+			"59",
+			"--target",
+			"ubuntu-aws",
+			"--output-module",
+			"/tmp/falco-ubuntu-aws.ko",
+		},
+		expect: expect{
+			out: "testdata/docker-with-flags.txt",
+		},
+	},
+	{
+		descr: "docker-wo-options",
+		args:  []string{"docker"},
+		expect: expect{
+			err: "exiting for validation errors",
+			out: "testdata/dockernoopts.txt",
 		},
 	},
 }
@@ -64,9 +83,11 @@ func run(t *testing.T, test testCase) {
 	c := NewRootCmd()
 	b := bytes.NewBufferString("")
 	c.SetOutput(b)
+	test.args = append(test.args, "--dryrun")
 	c.SetArgs(test.args)
 	// Test
-	if err := c.Execute(); err != nil {
+	err := c.Execute()
+	if err != nil {
 		if test.expect.err == "" {
 			t.Fatalf("error executing CLI: %v", err)
 		} else {
@@ -86,6 +107,9 @@ func TestCLI(t *testing.T) {
 	for _, test := range tests {
 		descr := test.descr
 		if descr == "" {
+			if test.expect.out == "" {
+				t.Fatal("malformed test case: missing both descr and expect.out fields")
+			}
 			test.descr = strings.TrimSuffix(filepath.Base(test.expect.out), ".txt")
 		}
 		if test.expect.out != "" {
@@ -97,7 +121,6 @@ func TestCLI(t *testing.T) {
 		}
 
 		t.Run(test.descr, func(t *testing.T) {
-			t.Parallel()
 			run(t, test)
 		})
 	}
