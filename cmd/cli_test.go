@@ -5,6 +5,7 @@ package cmd
 import (
 	"bytes"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -20,6 +21,7 @@ type expect struct {
 
 type testCase struct {
 	descr  string
+	env    map[string]string
 	args   []string
 	expect expect
 }
@@ -45,7 +47,7 @@ var tests = []testCase{
 		},
 	},
 	{
-		descr: "invalid-processor",
+		descr: "invalid/processor",
 		args:  []string{"abc"},
 		expect: expect{
 			out: "testdata/non-existent-processor.txt",
@@ -53,6 +55,7 @@ var tests = []testCase{
 		},
 	},
 	{
+		descr: "docker/all-flags",
 		args: []string{
 			"docker",
 			"--kernelrelease",
@@ -69,11 +72,49 @@ var tests = []testCase{
 		},
 	},
 	{
-		descr: "docker-wo-options",
+		descr: "docker/empty",
 		args:  []string{"docker"},
 		expect: expect{
 			err: "exiting for validation errors",
 			out: "testdata/dockernoopts.txt",
+		},
+	},
+	{
+		descr: "docker/all-flags-debug",
+		args: []string{
+			"docker",
+			"--kernelrelease",
+			"4.15.0-1057-aws",
+			"--kernelversion",
+			"59",
+			"--target",
+			"ubuntu-aws",
+			"--output-module",
+			"/tmp/falco-ubuntu-aws.ko",
+			"--loglevel",
+			"debug",
+		},
+		expect: expect{
+			out: "testdata/docker-with-flags-debug.txt",
+		},
+	},
+	{
+		descr: "docker/merge-from-env",
+		env: map[string]string{
+			"DRIVERKIT_KERNELVERSION": "59",
+			"DRIVERKIT_OUTPUT_MODULE": "/tmp/falco-ubuntu-aws.ko",
+		},
+		args: []string{
+			"docker",
+			"--kernelrelease",
+			"4.15.0-1057-aws",
+			"-t",
+			"ubuntu-aws",
+			"--loglevel",
+			"debug",
+		},
+		expect: expect{
+			out: "testdata/docker-with-flags-debug.txt",
 		},
 	},
 }
@@ -85,6 +126,11 @@ func run(t *testing.T, test testCase) {
 	c.SetOutput(b)
 	test.args = append(test.args, "--dryrun")
 	c.SetArgs(test.args)
+	for k, v := range test.env {
+		if err := os.Setenv(k, v); err != nil {
+			t.Fatalf("error setting env variables: %v", err)
+		}
+	}
 	// Test
 	err := c.Execute()
 	if err != nil {
@@ -96,11 +142,16 @@ func run(t *testing.T, test testCase) {
 	}
 	out, err := ioutil.ReadAll(b)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("error reading CLI output: %v", err)
 	}
 	res := stripansi.Strip(string(out))
-
 	assert.Equal(t, test.expect.out, res)
+	// Teardown
+	for k := range test.env {
+		if err := os.Unsetenv(k); err != nil {
+			t.Fatalf("error tearing down: %v", err)
+		}
+	}
 }
 
 func TestCLI(t *testing.T) {
