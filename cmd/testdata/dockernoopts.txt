@@ -1,18 +1,18 @@
-Error: invalid argument "abc" for "driverkit"
+ERROR error validating build options                error="kernel release is a required field"
+ERROR error validating build options                error="target is a required field"
+ERROR error validating build options                error="output module path is required when probe is missing"
+ERROR error validating build options                error="output probe path is required when module is missing"
+Error: exiting for validation errors
 Usage:
-  driverkit
-  driverkit [command]
-
-Available Commands:
-  docker      Build Falco kernel modules and eBPF probes against a docker daemon.
-  help        Help about any command
-  kubernetes  Build Falco kernel modules and eBPF probes against a Kubernetes cluster.
+  driverkit docker [flags]
 
 Flags:
+  -h, --help   help for docker
+
+Global Flags:
   -c, --config string             config file path (default $HOME/.driverkit.yaml if exists)
       --driverversion string      driver version as a git commit hash or as a git tag (default "dev")
       --dryrun                    do not actually perform the action
-  -h, --help                      help for driverkit
       --kernelconfigdata string   base64 encoded kernel config data: in some systems it can be found under the /boot directory, in other it is gzip compressed under /proc
       --kernelrelease string      kernel release to build the module for, it can be found by executing 'uname -v'
       --kernelversion uint16      kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v' (default 1)
@@ -21,6 +21,4 @@ Flags:
       --output-probe string       filepath where to save the resulting eBPF probe
   -t, --target string             the system to target the build for
       --timeout int               timeout in seconds (default 60)
-
-Use "driverkit [command] --help" for more information about a command.
 
