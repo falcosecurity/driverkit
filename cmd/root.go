@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"io"
 	"strings"
 
@@ -12,8 +13,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-func persistentValidateFunc(rootCommand *cobra.Command, rootOpts *RootOptions) func(c *cobra.Command, args []string) {
-	return func(c *cobra.Command, args []string) {
+func persistentValidateFunc(rootCommand *cobra.Command, rootOpts *RootOptions) func(c *cobra.Command, args []string) error {
+	return func(c *cobra.Command, args []string) error {
 		// Merge environment variables or config file values into the RootOptions instance
 		skip := map[string]bool{ // do not merge these
 			"config":   true,
@@ -47,10 +48,11 @@ func persistentValidateFunc(rootCommand *cobra.Command, rootOpts *RootOptions) f
 				for _, err := range errs {
 					logger.WithError(err).Error("error validating build options")
 				}
-				logger.Fatal("exiting for validation errors")
+				return fmt.Errorf("exiting for validation errors")
 			}
 			rootOpts.Log()
 		}
+		return nil
 	}
 }
 
@@ -78,7 +80,7 @@ func NewRootCmd() *RootCmd {
 			c.Help()
 		},
 	}
-	rootCmd.PersistentPreRun = persistentValidateFunc(rootCmd, rootOpts)
+	rootCmd.PersistentPreRunE = persistentValidateFunc(rootCmd, rootOpts)
 
 	flags := rootCmd.PersistentFlags()
 
@@ -93,7 +95,7 @@ func NewRootCmd() *RootCmd {
 	flags.Uint16Var(&rootOpts.KernelVersion, "kernelversion", rootOpts.KernelVersion, "kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v'")
 	flags.StringVar(&rootOpts.KernelRelease, "kernelrelease", rootOpts.KernelRelease, "kernel release to build the module for, it can be found by executing 'uname -v'")
 	flags.StringVarP(&rootOpts.Target, "target", "t", rootOpts.Target, "the system to target the build for")
-	flags.StringVar(&rootOpts.KernelConfigData, "kernelconfigdata", rootOpts.KernelConfigData, "kernel config data, base64 encoded. In some systems this can be found under the /boot directory, in oder is gzip compressed under /proc")
+	flags.StringVar(&rootOpts.KernelConfigData, "kernelconfigdata", rootOpts.KernelConfigData, "base64 encoded kernel config data: in some systems it can be found under the /boot directory, in other it is gzip compressed under /proc")
 
 	viper.BindPFlags(flags)
 
@@ -108,7 +110,8 @@ func NewRootCmd() *RootCmd {
 
 // SetOutput sets the main command output writer.
 func (r *RootCmd) SetOutput(w io.Writer) {
-	r.c.SetOutput(w)
+	r.c.SetOut(w)
+	r.c.SetErr(w)
 	logger.SetOutput(w)
 }
 
