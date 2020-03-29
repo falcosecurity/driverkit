@@ -117,6 +117,36 @@ var tests = []testCase{
 			out: "testdata/docker-with-flags-debug.txt",
 		},
 	},
+	{
+		descr: "docker/from-config-file",
+		args: []string{
+			"docker",
+			"-c",
+			"testdata/configs/1.yaml",
+			"--loglevel",
+			"debug",
+		},
+		expect: expect{
+			out: "testdata/docker-from-config-debug.txt",
+		},
+	},
+	{
+		descr: "docker/override-from-config-file",
+		env: map[string]string{
+			"DRIVERKIT_KERNELVERSION": "229",
+			"DRIVERKIT_OUTPUT_MODULE": "/tmp/override.ko",
+		},
+		args: []string{
+			"docker",
+			"-c",
+			"testdata/configs/1.yaml",
+			"--loglevel",
+			"debug",
+		},
+		expect: expect{
+			out: "testdata/docker-override-from-config-debug.txt",
+		},
+	},
 }
 
 func run(t *testing.T, test testCase) {
