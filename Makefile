@@ -32,6 +32,7 @@ endif
 GOTAGS := ${SQLITE_TAGS}
 
 driverkit ?= _output/bin/driverkit
+driverkit_docgen ?= _output/bin/docgen
 
 .PHONY: build
 build: clean ${driverkit}
@@ -83,3 +84,13 @@ push/latest:
 test:
 	go test -v -race ./...
 	go test -v ./cmd
+
+.PHONY: ${driverkit_docgen}
+${driverkit_docgen}: ${PWD}/docgen
+	go build -v -o $@ $^
+
+.PHONY: docs
+docs: ${driverkit_docgen}
+	$(RM) -R docs/*
+	@mkdir -p docs
+	${driverkit_docgen}
