@@ -108,6 +108,11 @@ func NewRootCmd() *RootCmd {
 	}
 }
 
+// Command returns the underlying cobra.Command.
+func (r *RootCmd) Command() *cobra.Command {
+	return r.c
+}
+
 // SetOutput sets the main command output writer.
 func (r *RootCmd) SetOutput(w io.Writer) {
 	r.c.SetOut(w)
