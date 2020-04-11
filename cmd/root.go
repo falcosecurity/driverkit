@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -13,7 +14,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func persistentValidateFunc(rootCommand *cobra.Command, rootOpts *RootOptions) func(c *cobra.Command, args []string) error {
+func persistentValidateFunc(rootCommand *RootCmd, rootOpts *RootOptions) func(c *cobra.Command, args []string) error {
 	return func(c *cobra.Command, args []string) error {
 		// Merge environment variables or config file values into the RootOptions instance
 		skip := map[string]bool{ // do not merge these
@@ -26,7 +27,7 @@ func persistentValidateFunc(rootCommand *cobra.Command, rootOpts *RootOptions) f
 			"output-module": "output.module",
 			"output-probe":  "output.probe",
 		}
-		rootCommand.PersistentFlags().VisitAll(func(f *pflag.Flag) {
+		rootCommand.c.PersistentFlags().VisitAll(func(f *pflag.Flag) {
 			if name := f.Name; !skip[name] {
 				value := viper.GetString(name)
 				if value == "" {
@@ -37,10 +38,13 @@ func persistentValidateFunc(rootCommand *cobra.Command, rootOpts *RootOptions) f
 				}
 				// set the value, if any, otherwise let the default
 				if value != "" {
-					rootCommand.PersistentFlags().Set(name, value)
+					rootCommand.c.PersistentFlags().Set(name, value)
 				}
 			}
 		})
+
+		// Avoid sensitive info into default values help line
+		rootCommand.StripSensitive()
 
 		// Do not block root or help command to exec disregarding the persistent flags validity
 		if c.Root() != c && c.Name() != "help" {
@@ -80,7 +84,11 @@ func NewRootCmd() *RootCmd {
 			c.Help()
 		},
 	}
-	rootCmd.PersistentPreRunE = persistentValidateFunc(rootCmd, rootOpts)
+	ret := &RootCmd{
+		c: rootCmd,
+	}
+
+	rootCmd.PersistentPreRunE = persistentValidateFunc(ret, rootOpts)
 
 	flags := rootCmd.PersistentFlags()
 
@@ -103,8 +111,25 @@ func NewRootCmd() *RootCmd {
 	rootCmd.AddCommand(NewKubernetesCmd(rootOpts))
 	rootCmd.AddCommand(NewDockerCmd(rootOpts))
 
-	return &RootCmd{
-		c: rootCmd,
+	ret.StripSensitive()
+
+	return ret
+}
+
+// Sensitive is a list of sensitive environment variable to replace into the help outputs.
+var Sensitive = []string{
+	"HOME",
+}
+
+// StripSensitive removes sensistive info from default values printed into the help messages.
+func (r *RootCmd) StripSensitive() {
+	for _, s := range Sensitive {
+		homeDir := os.Getenv(s)
+		for _, childCommand := range r.c.Commands() {
+			childCommand.Flags().VisitAll(func(f *pflag.Flag) {
+				f.DefValue = strings.ReplaceAll(f.DefValue, homeDir, fmt.Sprintf("$%s", s))
+			})
+		}
 	}
 }
 
