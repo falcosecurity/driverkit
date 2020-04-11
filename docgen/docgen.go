@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -45,8 +47,9 @@ func main() {
 	flag.Parse()
 
 	// Get root command
-	driverkit := cmd.NewRootCmd().Command()
-	num := len(driverkit.Commands()) + 1
+	driverkit := cmd.NewRootCmd()
+	root := driverkit.Command()
+	num := len(root.Commands()) + 1
 
 	// Setup prepender hook
 	prepender := func(num int) func(filename string) string {
@@ -67,7 +70,7 @@ func main() {
 	}
 
 	// Generate markdown docs
-	err := doc.GenMarkdownTreeCustom(driverkit, outputDir, prepender(num), linker)
+	err := doc.GenMarkdownTreeCustom(root, outputDir, prepender(num), linker)
 	if err != nil {
 		logger.WithError(err).Fatal("docs generation")
 	}
@@ -78,4 +81,40 @@ func main() {
 			logger.WithError(err).Fatal("renaming main docs page")
 		}
 	}
+
+	if err := stripSensitive(); err != nil {
+		logger.WithError(err).Fatal("error replacing sensitive data")
+	}
+}
+
+func stripSensitive() error {
+	f, err := os.Open(outputDir)
+	if err != nil {
+		return err
+	}
+	files, err := f.Readdir(-1)
+	f.Close()
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		filePath := path.Join(outputDir, file.Name())
+		file, err := ioutil.ReadFile(filePath)
+		if err != nil {
+			return err
+		}
+
+		envMark := []byte{36} // $
+		for _, s := range cmd.Sensitive {
+			target := []byte(os.Getenv(s))
+			fmt.Println(string(target))
+			file = bytes.ReplaceAll(file, target, append(envMark, []byte(s)...))
+		}
+		if err = ioutil.WriteFile(filePath, file, 0666); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
