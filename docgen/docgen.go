@@ -72,7 +72,7 @@ func main() {
 	// Generate markdown docs
 	err := doc.GenMarkdownTreeCustom(root, outputDir, prepender(num), linker)
 	if err != nil {
-		logger.WithError(err).Fatal("docs generation")
+		logger.WithError(err).Fatal("markdown generation")
 	}
 
 	if targetWebsite {
@@ -108,7 +108,6 @@ func stripSensitive() error {
 		envMark := []byte{36} // $
 		for _, s := range cmd.Sensitive {
 			target := []byte(os.Getenv(s))
-			fmt.Println(string(target))
 			file = bytes.ReplaceAll(file, target, append(envMark, []byte(s)...))
 		}
 		if err = ioutil.WriteFile(filePath, file, 0666); err != nil {
