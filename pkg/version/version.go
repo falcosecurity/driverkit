@@ -7,16 +7,31 @@ import (
 )
 
 // Populated by makefile
-var gitCommit string
-var buildTime string
-var versionFormat = "git commit: %s\nbuild date: %s"
+var (
+	gitCommit         string
+	commitsFromGitTag string
+	gitTag            string
+	buildTime         string
+)
 
-// GitCommit returns the git commit
+const versionFormat = "%s-%s+%s"
+
+// GitCommit returns the git commit of the current driverkit version.
 func GitCommit() string {
 	return gitCommit
 }
 
-// Time returns the build time
+// GitTag returns the git tag of the current driverkit version.
+func GitTag() string {
+	return gitTag
+}
+
+// CommitsSinceGitTag returns the number of git commits since the current driverkit version contains w.r.t to the previous version.
+func CommitsSinceGitTag() string {
+	return commitsFromGitTag
+}
+
+// Time returns the build time of the current driverkit version.
 func Time() *time.Time {
 	if len(buildTime) == 0 {
 		return nil
@@ -29,11 +44,7 @@ func Time() *time.Time {
 	return &t
 }
 
-// String returns version info as a string
+// String returns current driverkit version info as a string.
 func String() string {
-	ts := Time()
-	if ts == nil {
-		return fmt.Sprintf(versionFormat, GitCommit(), "undefined")
-	}
-	return fmt.Sprintf(versionFormat, GitCommit(), ts.String())
+	return fmt.Sprintf(versionFormat, GitTag(), CommitsSinceGitTag(), GitCommit())
 }
