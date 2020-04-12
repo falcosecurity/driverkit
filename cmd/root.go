@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 	"strings"
 
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
@@ -47,7 +49,7 @@ func persistentValidateFunc(rootCommand *RootCmd, rootOpts *RootOptions) func(c 
 		rootCommand.StripSensitive()
 
 		// Do not block root or help command to exec disregarding the persistent flags validity
-		if c.Root() != c && c.Name() != "help" {
+		if c.Root() != c && c.Name() != "help" && c.Name() != "__complete" && c.Name() != "__completeNoDesc" {
 			if errs := rootOpts.Validate(); errs != nil {
 				for _, err := range errs {
 					logger.WithError(err).Error("error validating build options")
@@ -73,12 +75,13 @@ func NewRootCmd() *RootCmd {
 		Use:                   "driverkit",
 		Short:                 "A command line tool to build Falco kernel modules and eBPF probes.",
 		ValidArgs:             validProcessors,
+		ArgAliases:            aliasProcessors,
 		Args:                  cobra.OnlyValidArgs,
 		DisableFlagsInUseLine: true,
 		DisableAutoGenTag:     true,
 		Run: func(c *cobra.Command, args []string) {
 			if len(args) == 0 {
-				logger.WithField("processors", validProcessors).Info("specify the processor")
+				logger.WithField("processors", validProcessors).Info("specify a valid processor")
 			}
 			// Fallback to help
 			c.Help()
@@ -106,6 +109,16 @@ func NewRootCmd() *RootCmd {
 	flags.StringVar(&rootOpts.KernelConfigData, "kernelconfigdata", rootOpts.KernelConfigData, "base64 encoded kernel config data: in some systems it can be found under the /boot directory, in other it is gzip compressed under /proc")
 
 	viper.BindPFlags(flags)
+
+	// Flag annotations and custom completions
+	flags.Lookup("config").Annotations = map[string][]string{
+		cobra.BashCompFilenameExt: viper.SupportedExts,
+	}
+	rootCmd.RegisterFlagCompletionFunc("target", func(c *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		targets := builder.BuilderByTarget.Targets()
+		sort.Strings(targets)
+		return targets, cobra.ShellCompDirectiveDefault
+	})
 
 	// Subcommands
 	rootCmd.AddCommand(NewKubernetesCmd(rootOpts))
