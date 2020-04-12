@@ -10,6 +10,7 @@ import (
 )
 
 var validProcessors = []string{"docker", "kubernetes"}
+var aliasProcessors = []string{"docker", "k8s"}
 var configOptions *ConfigOptions
 
 // ConfigOptions represent the persistent configuration flags of driverkit.
