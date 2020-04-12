@@ -1,4 +1,4 @@
-INFO specify the processor                         processors="[docker kubernetes]"
+INFO specify a valid processor                     processors="[docker kubernetes]"
 A command line tool to build Falco kernel modules and eBPF probes.
 
 Usage:

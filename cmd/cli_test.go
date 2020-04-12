@@ -147,6 +147,42 @@ var tests = []testCase{
 			out: "testdata/docker-override-from-config-debug.txt",
 		},
 	},
+	{
+		descr: "completion/docker/targets",
+		args: []string{
+			"__complete",
+			"docker",
+			"--target",
+			"ENTER",
+		},
+		expect: expect{
+			out: "testdata/completion-targets.txt",
+		},
+	},
+	{
+		descr: "completion/kubernetes-alias/targets",
+		args: []string{
+			"__complete",
+			"k8s",
+			"--target",
+			"ENTER",
+		},
+		expect: expect{
+			out: "testdata/completion-targets.txt",
+		},
+	},
+	{
+		descr: "completion/kubernetes/targets",
+		args: []string{
+			"__complete",
+			"kubernetes",
+			"--target",
+			"ENTER",
+		},
+		expect: expect{
+			out: "testdata/completion-targets.txt",
+		},
+	},
 }
 
 func run(t *testing.T, test testCase) {
@@ -154,7 +190,9 @@ func run(t *testing.T, test testCase) {
 	c := NewRootCmd()
 	b := bytes.NewBufferString("")
 	c.SetOutput(b)
-	test.args = append(test.args, "--dryrun")
+	if len(test.args) == 0 || (test.args[0] != "__complete" && test.args[0] != "__completeNoDesc") {
+		test.args = append(test.args, "--dryrun")
+	}
 	c.SetArgs(test.args)
 	for k, v := range test.env {
 		if err := os.Setenv(k, v); err != nil {

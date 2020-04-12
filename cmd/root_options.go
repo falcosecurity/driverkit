@@ -19,7 +19,7 @@ type OutputOptions struct {
 // RootOptions ...
 type RootOptions struct {
 	Architecture     string `default:"x86_64" validate:"required,oneof=x86_64" name:"architecture"`
-	DriverVersion    string `default:"dev" validate:"required,eq=dev|sha1|semver" name:"driver version"`
+	DriverVersion    string `default:"dev" validate:"eq=dev|sha1|semver" name:"driver version"`
 	KernelVersion    uint16 `default:"1" validate:"omitempty,number" name:"kernel version"`
 	KernelRelease    string `validate:"required,ascii" name:"kernel release"`
 	Target           string `validate:"required,target" name:"target"`
