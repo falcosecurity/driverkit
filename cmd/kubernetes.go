@@ -13,8 +13,9 @@ import (
 // NewKubernetesCmd creates the `driverkit kubernetes` command.
 func NewKubernetesCmd(rootOpts *RootOptions) *cobra.Command {
 	kubernetesCmd := &cobra.Command{
-		Use:   "kubernetes",
-		Short: "Build Falco kernel modules and eBPF probes against a Kubernetes cluster.",
+		Use:     "kubernetes",
+		Short:   "Build Falco kernel modules and eBPF probes against a Kubernetes cluster.",
+		Aliases: []string{"k8s"},
 	}
 
 	// Add Kubernetes client Flags
