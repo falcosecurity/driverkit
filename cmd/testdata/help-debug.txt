@@ -1,4 +1,4 @@
-DEBUG running without a configuration file         
+DEBU running without a configuration file         
 A command line tool to build Falco kernel modules and eBPF probes.
 
 Usage:

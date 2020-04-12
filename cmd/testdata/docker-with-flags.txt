@@ -1,1 +1,1 @@
-INFO driver building, it will take a few seconds to complete  processor=docker
+INFO driver building, it will take a few seconds   processor=docker
