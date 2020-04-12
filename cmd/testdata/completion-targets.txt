@@ -1,0 +1,9 @@
+amazonlinux
+amazonlinux2
+centos
+debian
+ubuntu-aws
+ubuntu-generic
+vanilla
+:0
+Completion ended with directive: ShellCompDirectiveDefault
