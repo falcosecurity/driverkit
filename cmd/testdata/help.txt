@@ -5,6 +5,7 @@ Usage:
   driverkit [command]
 
 Available Commands:
+  completion  Generates completion scripts.
   docker      Build Falco kernel modules and eBPF probes against a docker daemon.
   help        Help about any command
   kubernetes  Build Falco kernel modules and eBPF probes against a Kubernetes cluster.

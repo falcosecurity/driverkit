@@ -41,12 +41,6 @@ var tests = []testCase{
 		},
 	},
 	{
-		args: []string{"help", "--loglevel", "debug"},
-		expect: expect{
-			out: "testdata/help-debug.txt",
-		},
-	},
-	{
 		descr: "invalid/processor",
 		args:  []string{"abc"},
 		expect: expect{
@@ -148,7 +142,7 @@ var tests = []testCase{
 		},
 	},
 	{
-		descr: "completion/docker/targets",
+		descr: "complete/docker/targets",
 		args: []string{
 			"__complete",
 			"docker",
@@ -160,7 +154,7 @@ var tests = []testCase{
 		},
 	},
 	{
-		descr: "completion/kubernetes-alias/targets",
+		descr: "complete/kubernetes-alias/targets",
 		args: []string{
 			"__complete",
 			"k8s",
@@ -172,7 +166,7 @@ var tests = []testCase{
 		},
 	},
 	{
-		descr: "completion/kubernetes/targets",
+		descr: "complete/kubernetes/targets",
 		args: []string{
 			"__complete",
 			"kubernetes",
@@ -183,6 +177,35 @@ var tests = []testCase{
 			out: "testdata/completion-targets.txt",
 		},
 	},
+	{
+		descr: "completion/empty",
+		args: []string{
+			"completion",
+		},
+		expect: expect{
+			out: "testdata/completion-noargs.txt",
+		},
+	},
+	{
+		descr: "completion/help",
+		args: []string{
+			"completion",
+			"help",
+		},
+		expect: expect{
+			out: "testdata/completion-noargs.txt",
+		},
+	},
+	{
+		descr: "completion/help-short-flag",
+		args: []string{
+			"completion",
+			"-h",
+		},
+		expect: expect{
+			out: "testdata/completion-noargs.txt",
+		},
+	},
 }
 
 func run(t *testing.T, test testCase) {
@@ -190,7 +213,7 @@ func run(t *testing.T, test testCase) {
 	c := NewRootCmd()
 	b := bytes.NewBufferString("")
 	c.SetOutput(b)
-	if len(test.args) == 0 || (test.args[0] != "__complete" && test.args[0] != "__completeNoDesc") {
+	if len(test.args) == 0 || (test.args[0] != "__complete" && test.args[0] != "__completeNoDesc" && test.args[0] != "help" && test.args[0] != "completion") {
 		test.args = append(test.args, "--dryrun")
 	}
 	c.SetArgs(test.args)
