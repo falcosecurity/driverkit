@@ -5,11 +5,12 @@ import (
 	"github.com/sirupsen/logrus"
 	logger "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
-// NewDockerCmd ...
-func NewDockerCmd(rootOpts *RootOptions) *cobra.Command {
+// NewDockerCmd creates the `driverkit docker` command.
+func NewDockerCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Command {
 	dockerCmd := &cobra.Command{
 		Use:   "docker",
 		Short: "Build Falco kernel modules and eBPF probes against a docker daemon.",
@@ -22,6 +23,8 @@ func NewDockerCmd(rootOpts *RootOptions) *cobra.Command {
 			}
 		},
 	}
+	// Add root flags
+	dockerCmd.PersistentFlags().AddFlagSet(rootFlags)
 
 	return dockerCmd
 }
