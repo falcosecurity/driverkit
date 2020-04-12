@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
+	"github.com/falcosecurity/driverkit/pkg/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
@@ -79,6 +80,7 @@ func NewRootCmd() *RootCmd {
 		Args:                  cobra.OnlyValidArgs,
 		DisableFlagsInUseLine: true,
 		DisableAutoGenTag:     true,
+		Version:               version.String(),
 		Run: func(c *cobra.Command, args []string) {
 			if len(args) == 0 {
 				logger.WithField("processors", validProcessors).Info("specify a valid processor")
