@@ -24,5 +24,6 @@ Flags:
       --output-probe string       filepath where to save the resulting eBPF probe
   -t, --target string             the system to target the build for
       --timeout int               timeout in seconds (default 60)
+  -v, --version                   version for driverkit
 
 Use "driverkit [command] --help" for more information about a command.
