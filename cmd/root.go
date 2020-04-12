@@ -29,7 +29,7 @@ func persistentValidateFunc(rootCommand *RootCmd, rootOpts *RootOptions) func(c 
 			"output-module": "output.module",
 			"output-probe":  "output.probe",
 		}
-		rootCommand.c.PersistentFlags().VisitAll(func(f *pflag.Flag) {
+		rootCommand.c.Flags().VisitAll(func(f *pflag.Flag) {
 			if name := f.Name; !skip[name] {
 				value := viper.GetString(name)
 				if value == "" {
@@ -40,7 +40,7 @@ func persistentValidateFunc(rootCommand *RootCmd, rootOpts *RootOptions) func(c 
 				}
 				// set the value, if any, otherwise let the default
 				if value != "" {
-					rootCommand.c.PersistentFlags().Set(name, value)
+					rootCommand.c.Flags().Set(name, value)
 				}
 			}
 		})
@@ -48,8 +48,8 @@ func persistentValidateFunc(rootCommand *RootCmd, rootOpts *RootOptions) func(c 
 		// Avoid sensitive info into default values help line
 		rootCommand.StripSensitive()
 
-		// Do not block root or help command to exec disregarding the persistent flags validity
-		if c.Root() != c && c.Name() != "help" && c.Name() != "__complete" && c.Name() != "__completeNoDesc" {
+		// Do not block root or help command to exec disregarding the root flags validity
+		if c.Root() != c && c.Name() != "help" && c.Name() != "__complete" && c.Name() != "__completeNoDesc" && c.Name() != "completion" {
 			if errs := rootOpts.Validate(); errs != nil {
 				for _, err := range errs {
 					logger.WithError(err).Error("error validating build options")
@@ -93,7 +93,7 @@ func NewRootCmd() *RootCmd {
 
 	rootCmd.PersistentPreRunE = persistentValidateFunc(ret, rootOpts)
 
-	flags := rootCmd.PersistentFlags()
+	flags := rootCmd.Flags()
 
 	flags.StringVarP(&configOptions.ConfigFile, "config", "c", configOptions.ConfigFile, "config file path (default $HOME/.driverkit.yaml if exists)")
 	flags.StringVarP(&configOptions.LogLevel, "loglevel", "l", configOptions.LogLevel, "log level")
@@ -111,9 +111,7 @@ func NewRootCmd() *RootCmd {
 	viper.BindPFlags(flags)
 
 	// Flag annotations and custom completions
-	flags.Lookup("config").Annotations = map[string][]string{
-		cobra.BashCompFilenameExt: viper.SupportedExts,
-	}
+	rootCmd.MarkFlagFilename("config", viper.SupportedExts...)
 	rootCmd.RegisterFlagCompletionFunc("target", func(c *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		targets := builder.BuilderByTarget.Targets()
 		sort.Strings(targets)
@@ -121,8 +119,9 @@ func NewRootCmd() *RootCmd {
 	})
 
 	// Subcommands
-	rootCmd.AddCommand(NewKubernetesCmd(rootOpts))
-	rootCmd.AddCommand(NewDockerCmd(rootOpts))
+	rootCmd.AddCommand(NewKubernetesCmd(rootOpts, flags))
+	rootCmd.AddCommand(NewDockerCmd(rootOpts, flags))
+	rootCmd.AddCommand(NewCompletionCmd())
 
 	ret.StripSensitive()
 
