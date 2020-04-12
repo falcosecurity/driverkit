@@ -1,26 +1,43 @@
 package cmd
 
 import (
+	"regexp"
+	"strings"
+
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder"
 	"github.com/falcosecurity/driverkit/pkg/kubernetes/factory"
 	"github.com/sirupsen/logrus"
 	logger "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 // NewKubernetesCmd creates the `driverkit kubernetes` command.
-func NewKubernetesCmd(rootOpts *RootOptions) *cobra.Command {
+func NewKubernetesCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Command {
 	kubernetesCmd := &cobra.Command{
 		Use:     "kubernetes",
 		Short:   "Build Falco kernel modules and eBPF probes against a Kubernetes cluster.",
 		Aliases: []string{"k8s"},
 	}
 
-	// Add Kubernetes client Flags
+	// Add Kubernetes client flags
 	configFlags := genericclioptions.NewConfigFlags(false)
 	configFlags.AddFlags(kubernetesCmd.PersistentFlags())
+	// Some styling to make Kubernetes client flags look like they were ours
+	dotEndingRegexp := regexp.MustCompile(`\.$`)
+	upperAfterPointRegexp := regexp.MustCompile(`\. ([A-Z0-9])`)
+	upperAfterCommaRegexp := regexp.MustCompile(`, ([A-Z0-9])`)
+	kubernetesCmd.PersistentFlags().VisitAll(func(f *pflag.Flag) {
+		f.Usage = strings.ToLower(f.Usage[:1]) + f.Usage[1:]
+		f.Usage = dotEndingRegexp.ReplaceAllString(f.Usage, "")
+		f.Usage = upperAfterPointRegexp.ReplaceAllString(f.Usage, ", ${1}")
+		f.Usage = upperAfterCommaRegexp.ReplaceAllStringFunc(f.Usage, strings.ToLower)
+	})
+	// Add root flags
+	kubernetesCmd.PersistentFlags().AddFlagSet(rootFlags)
+
 	kubefactory := factory.NewFactory(configFlags)
 
 	kubernetesCmd.Run = func(cmd *cobra.Command, args []string) {
