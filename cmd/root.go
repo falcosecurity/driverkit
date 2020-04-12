@@ -166,7 +166,7 @@ func Start() {
 func init() {
 	logger.SetFormatter(&logger.TextFormatter{
 		ForceColors:            true,
-		DisableLevelTruncation: true,
+		DisableLevelTruncation: false,
 		DisableTimestamp:       true,
 	})
 
