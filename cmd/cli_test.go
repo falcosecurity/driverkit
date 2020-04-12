@@ -34,6 +34,12 @@ var tests = []testCase{
 		},
 	},
 	{
+		args: []string{"-h"},
+		expect: expect{
+			out: "testdata/help-flag.txt",
+		},
+	},
+	{
 		descr: "empty",
 		args:  []string{},
 		expect: expect{
