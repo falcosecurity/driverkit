@@ -90,10 +90,12 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	ctx := context.Background()
 	ctx = signals.WithStandardSignals(ctx)
 
-	_, err = cli.ImagePull(ctx, builderBaseImage, types.ImagePullOptions{All: true})
-
-	if err != nil {
-		return err
+	if _, _, err = cli.ImageInspectWithRaw(ctx, builderBaseImage); client.IsErrNotFound(err) {
+		logger.WithField("image", builderBaseImage).Debug("pulling builder image")
+		_, err := cli.ImagePull(ctx, builderBaseImage, types.ImagePullOptions{All: true})
+		if err != nil {
+			return err
+		}
 	}
 
 	containerCfg := &container.Config{
