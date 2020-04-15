@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -42,6 +43,7 @@ func (bp *DockerBuildProcessor) String() string {
 	return DockerBuildProcessorName
 }
 
+// Start the docker processor
 func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	logger.Debug("doing a new docker build")
 	cli, err := client.NewClientWithOpts(client.FromEnv)
@@ -92,7 +94,12 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 
 	if _, _, err = cli.ImageInspectWithRaw(ctx, builderBaseImage); client.IsErrNotFound(err) {
 		logger.WithField("image", builderBaseImage).Debug("pulling builder image")
-		_, err := cli.ImagePull(ctx, builderBaseImage, types.ImagePullOptions{All: true})
+		pullRes, err := cli.ImagePull(ctx, builderBaseImage, types.ImagePullOptions{})
+		if err != nil {
+			return err
+		}
+		defer pullRes.Close()
+		_, err = io.Copy(ioutil.Discard, pullRes)
 		if err != nil {
 			return err
 		}
