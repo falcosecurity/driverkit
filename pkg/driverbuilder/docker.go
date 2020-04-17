@@ -163,12 +163,13 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		AttachStdin:  false,
 		AttachStderr: true,
 		AttachStdout: true,
-		Detach:       false,
+		Detach:       true,
 		Cmd: []string{
 			"/bin/bash",
 			"/driverkit/driverkit.sh",
 		},
 	})
+
 	if err != nil {
 		return err
 	}
@@ -177,6 +178,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	if err != nil {
 		return err
 	}
+	defer hr.Close()
 
 	forwardLogs(hr.Reader)
 
