@@ -34,10 +34,7 @@ func (v ubuntuGeneric) Script(c Config) (string, error) {
 
 	kr := kernelrelease.FromString(c.Build.KernelRelease)
 
-	urls, err := getResolvingURLs(fetchUbuntuGenericKernelURL(kr, c.Build.KernelVersion))
-	if err != nil {
-		return "", err
-	}
+	urls, err := ubuntuGenericHeadersURLFromRelease(kr, c.Build.KernelVersion)
 	if len(urls) != 2 {
 		return "", fmt.Errorf("specific kernel headers not found")
 	}
@@ -50,6 +47,7 @@ func (v ubuntuGeneric) Script(c Config) (string, error) {
 		KernelHeadersPattern: "*generic",
 		BuildModule:          len(c.Build.ModuleFilePath) > 0,
 		BuildProbe:           len(c.Build.ProbeFilePath) > 0,
+		GCCVersion:           ubuntuGCCVersionFromKernelRelease(kr),
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -74,10 +72,7 @@ func (v ubuntuAWS) Script(c Config) (string, error) {
 
 	kr := kernelrelease.FromString(c.Build.KernelRelease)
 
-	urls, err := getResolvingURLs(fetchUbuntuAWSKernelURLS(kr, c.Build.KernelVersion))
-	if err != nil {
-		return "", err
-	}
+	urls, err := ubuntuAWSHeadersURLFromRelease(kr, c.Build.KernelVersion)
 	if len(urls) != 2 {
 		return "", fmt.Errorf("specific kernel headers not found")
 	}
@@ -90,6 +85,7 @@ func (v ubuntuAWS) Script(c Config) (string, error) {
 		KernelHeadersPattern: "*",
 		BuildModule:          len(c.Build.ModuleFilePath) > 0,
 		BuildProbe:           len(c.Build.ProbeFilePath) > 0,
+		GCCVersion:           ubuntuGCCVersionFromKernelRelease(kr),
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -100,11 +96,42 @@ func (v ubuntuAWS) Script(c Config) (string, error) {
 	return buf.String(), nil
 }
 
-func fetchUbuntuGenericKernelURL(kr kernelrelease.KernelRelease, kernelVersion uint16) []string {
+func ubuntuAWSHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint16) ([]string, error) {
+	baseURL := []string{
+		"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws",
+		"http://security.ubuntu.com/ubuntu/pool/main/l/linux-aws",
+	}
+
+	for _, u := range baseURL {
+		urls, err := getResolvingURLs(fetchUbuntuAWSKernelURLS(u, kr, kv))
+		if err == nil {
+			return urls, err
+		}
+	}
+	return nil, fmt.Errorf("kernel headers not found")
+}
+
+func ubuntuGenericHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint16) ([]string, error) {
+	baseURL := []string{
+		"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux",
+		"http://security.ubuntu.com/ubuntu/pool/main/l/linux",
+	}
+
+	for _, u := range baseURL {
+		urls, err := getResolvingURLs(fetchUbuntuGenericKernelURL(u, kr, kv))
+		if err == nil {
+			return urls, err
+		}
+	}
+	return nil, fmt.Errorf("kernel headers not found")
+}
+
+func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernelVersion uint16) []string {
 	firstExtra := extractExtraNumber(kr.Extraversion)
 	return []string{
 		fmt.Sprintf(
-			"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-%s-%s_%s-%s.%d_all.deb",
+			"%s/linux-headers-%s-%s_%s-%s.%d_all.deb",
+			baseURL,
 			kr.Fullversion,
 			firstExtra,
 			kr.Fullversion,
@@ -112,7 +139,8 @@ func fetchUbuntuGenericKernelURL(kr kernelrelease.KernelRelease, kernelVersion u
 			kernelVersion,
 		),
 		fmt.Sprintf(
-			"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-%s%s_%s-%s.%d_amd64.deb",
+			"%s/linux-headers-%s%s_%s-%s.%d_amd64.deb",
+			baseURL,
 			kr.Fullversion,
 			kr.FullExtraversion,
 			kr.Fullversion,
@@ -122,11 +150,12 @@ func fetchUbuntuGenericKernelURL(kr kernelrelease.KernelRelease, kernelVersion u
 	}
 }
 
-func fetchUbuntuAWSKernelURLS(kr kernelrelease.KernelRelease, kernelVersion uint16) []string {
+func fetchUbuntuAWSKernelURLS(baseURL string, kr kernelrelease.KernelRelease, kernelVersion uint16) []string {
 	firstExtra := extractExtraNumber(kr.Extraversion)
 	return []string{
 		fmt.Sprintf(
-			"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws/linux-aws-headers-%s-%s_%s-%s.%d_all.deb",
+			"%s/linux-aws-headers-%s-%s_%s-%s.%d_all.deb",
+			baseURL,
 			kr.Fullversion,
 			firstExtra,
 			kr.Fullversion,
@@ -134,7 +163,8 @@ func fetchUbuntuAWSKernelURLS(kr kernelrelease.KernelRelease, kernelVersion uint
 			kernelVersion,
 		),
 		fmt.Sprintf(
-			"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws/linux-headers-%s%s_%s-%s.%d_amd64.deb",
+			"%s/linux-aws-headers-%s%s_%s-%s.%d_amd64.deb",
+			baseURL,
 			kr.Fullversion,
 			kr.FullExtraversion,
 			kr.Fullversion,
@@ -160,6 +190,7 @@ type ubuntuTemplateData struct {
 	KernelHeadersPattern string
 	BuildProbe           bool
 	BuildModule          bool
+	GCCVersion           string
 }
 
 const ubuntuTemplate = `
@@ -192,6 +223,9 @@ sourcedir=$(find . -type d -name "linux-headers{{ .KernelHeadersPattern }}" | he
 
 ls -la $sourcedir
 
+# Change current gcc
+ln -sf /usr/bin/gcc-{{ .GCCVersion }} /usr/bin/gcc
+
 {{ if .BuildModule }}
 # Build the module
 cd {{ .DriverBuildDir }}
@@ -208,3 +242,11 @@ make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc-8 KERNELDIR=$sour
 ls -l probe.o
 {{ end }}
 `
+
+func ubuntuGCCVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
+	switch kr.Version {
+	case "3":
+		return "5"
+	}
+	return "8"
+}
