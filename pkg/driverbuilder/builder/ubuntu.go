@@ -123,6 +123,7 @@ func ubuntuGenericHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint1
 			return urls, err
 		}
 	}
+
 	return nil, fmt.Errorf("kernel headers not found")
 }
 
@@ -163,7 +164,7 @@ func fetchUbuntuAWSKernelURLS(baseURL string, kr kernelrelease.KernelRelease, ke
 			kernelVersion,
 		),
 		fmt.Sprintf(
-			"%s/linux-aws-headers-%s%s_%s-%s.%d_amd64.deb",
+			"%s/linux-headers-%s%s_%s-%s.%d_amd64.deb",
 			baseURL,
 			kr.Fullversion,
 			kr.FullExtraversion,
@@ -246,7 +247,10 @@ ls -l probe.o
 func ubuntuGCCVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
 	switch kr.Version {
 	case "3":
-		return "5"
+		if kr.PatchLevel == "13" || kr.PatchLevel == "2" {
+			return "4.8"
+		}
+		return "6"
 	}
 	return "8"
 }
