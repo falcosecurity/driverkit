@@ -215,7 +215,7 @@ cd /tmp/kernel-download
 {{range $url := .KernelDownloadURLS}}
 curl --silent -o kernel.deb -SL {{ $url }}
 ar x kernel.deb
-tar -xvf data.tar.xz
+tar -xvf data.tar.*
 {{end}}
 ls -la /tmp/kernel-download
 
