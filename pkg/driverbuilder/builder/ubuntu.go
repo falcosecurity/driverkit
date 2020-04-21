@@ -3,6 +3,9 @@ package builder
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -108,6 +111,22 @@ func ubuntuAWSHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint16) (
 			return urls, err
 		}
 	}
+
+	// If we can't find the aws files in the main folders,
+	// try to proactively parse the subfolders to find what we need
+	for _, u := range baseURL {
+		url := fmt.Sprintf("%s-%s.%s", u, kr.Version, kr.PatchLevel)
+		urls, err := parseUbuntuAWSKernelURLS(url, kr, kv)
+		if err != nil {
+			continue
+		}
+		urls, err = getResolvingURLs(urls)
+		if err == nil {
+			return urls, err
+		}
+
+	}
+
 	return nil, fmt.Errorf("kernel headers not found")
 }
 
@@ -173,6 +192,30 @@ func fetchUbuntuAWSKernelURLS(baseURL string, kr kernelrelease.KernelRelease, ke
 			kernelVersion,
 		),
 	}
+}
+
+func parseUbuntuAWSKernelURLS(baseURL string, kr kernelrelease.KernelRelease, kernelVersion uint16) ([]string, error) {
+	resp, err := http.Get(baseURL)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	firstExtra := extractExtraNumber(kr.Extraversion)
+	rmatch := `href="(linux(?:-aws)?-headers-%s-%s(?:-aws)?_%s-%s\.%d.*(?:amd64|all)\.deb)"`
+	fullRegex := fmt.Sprintf(rmatch, kr.Fullversion, firstExtra, kr.Fullversion, firstExtra, kernelVersion)
+	pattern := regexp.MustCompile(fullRegex)
+	matches := pattern.FindAllStringSubmatch(string(body), 2)
+	if len(matches) != 2 {
+		return nil, fmt.Errorf("kernel headers and kernel headers common not found")
+	}
+
+	foundURLs := []string{fmt.Sprintf("%s/%s", baseURL, matches[0][1])}
+	foundURLs = append(foundURLs, fmt.Sprintf("%s/%s", baseURL, matches[1][1]))
+	return foundURLs, nil
 }
 
 func extractExtraNumber(extraversion string) string {
