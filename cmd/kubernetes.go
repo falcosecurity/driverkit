@@ -2,12 +2,12 @@ package cmd
 
 import (
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder"
-	"github.com/falcosecurity/driverkit/pkg/kubernetes/factory"
 	"github.com/sirupsen/logrus"
 	logger "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
+	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 )
 
 // NewKubernetesCmd creates the `driverkit kubernetes` command.
@@ -18,14 +18,16 @@ func NewKubernetesCmd(rootOpts *RootOptions) *cobra.Command {
 	}
 
 	// Add Kubernetes client Flags
+	flags := kubernetesCmd.PersistentFlags()
 	configFlags := genericclioptions.NewConfigFlags(false)
-	configFlags.AddFlags(kubernetesCmd.PersistentFlags())
-	kubefactory := factory.NewFactory(configFlags)
+	configFlags.AddFlags(flags)
+	matchVersionFlags := cmdutil.NewMatchVersionFlags(configFlags)
+	matchVersionFlags.AddFlags(flags)
 
 	kubernetesCmd.Run = func(cmd *cobra.Command, args []string) {
 		logrus.WithField("processor", cmd.Name()).Info("driver building, it will take a few seconds to complete")
 		if !configOptions.DryRun {
-			if err := kubernetesRun(cmd, args, kubefactory, rootOpts); err != nil {
+			if err := kubernetesRun(cmd, args, cmdutil.NewFactory(matchVersionFlags), rootOpts); err != nil {
 				logger.WithError(err).Fatal("exiting")
 			}
 		}
@@ -34,7 +36,7 @@ func NewKubernetesCmd(rootOpts *RootOptions) *cobra.Command {
 	return kubernetesCmd
 }
 
-func kubernetesRun(cmd *cobra.Command, args []string, kubefactory factory.Factory, rootOpts *RootOptions) error {
+func kubernetesRun(cmd *cobra.Command, args []string, kubefactory cmdutil.Factory, rootOpts *RootOptions) error {
 	f := cmd.Flags()
 	b := rootOpts.toBuild()
 
@@ -54,9 +56,9 @@ func kubernetesRun(cmd *cobra.Command, args []string, kubefactory factory.Factor
 	if err != nil {
 		return err
 	}
-	if err := factory.SetKubernetesDefaults(clientConfig); err != nil {
-		return err
-	}
+	// if err := factory.SetKubernetesDefaults(clientConfig); err != nil {
+	// 	return err
+	// }
 
 	buildProcessor := driverbuilder.NewKubernetesBuildProcessor(kc.CoreV1(), clientConfig, namespaceStr, viper.GetInt("timeout"))
 
