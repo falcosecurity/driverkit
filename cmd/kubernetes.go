@@ -8,6 +8,9 @@ import (
 	"github.com/spf13/viper"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
+
+	// Initialize all k8s client auth plugins
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
 // NewKubernetesCmd creates the `driverkit kubernetes` command.
