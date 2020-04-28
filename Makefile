@@ -1,6 +1,7 @@
 SHELL=/bin/bash -o pipefail
 
 DOCKER ?= docker
+GORELEASER ?= goreleaser
 
 GIT_TAG := $(shell git describe --tags --abbrev=0 2> /dev/null || echo "0.0.0")
 COMMITS_FROM_GIT_TAG := $(shell git rev-list ${GIT_TAG}.. --count 2> /dev/null || echo "0")
@@ -21,14 +22,14 @@ IMAGE_NAME_DRIVERKIT_BRANCH := $(IMAGE_NAME_DRIVERKIT):$(GIT_BRANCH_CLEAN)
 IMAGE_NAME_DRIVERKIT_COMMIT := $(IMAGE_NAME_DRIVERKIT):$(GIT_COMMIT)
 IMAGE_NAME_DRIVERKIT_LATEST := $(IMAGE_NAME_DRIVERKIT):latest
 
-LDFLAGS := -ldflags '-X github.com/falcosecurity/driverkit/pkg/version.buildTime=$(shell date +%s) -X github.com/falcosecurity/driverkit/pkg/version.gitCommit=${GIT_COMMIT} -X github.com/falcosecurity/driverkit/pkg/version.gitTag=${GIT_TAG} -X github.com/falcosecurity/driverkit/pkg/version.commitsFromGitTag=${COMMITS_FROM_GIT_TAG} -X github.com/falcosecurity/driverkit/pkg/driverbuilder.builderBaseImage=${IMAGE_NAME_BUILDER_COMMIT}'
+LDFLAGS := -X github.com/falcosecurity/driverkit/pkg/version.buildTime=$(shell date +%s) -X github.com/falcosecurity/driverkit/pkg/version.gitCommit=${GIT_COMMIT} -X github.com/falcosecurity/driverkit/pkg/version.gitTag=${GIT_TAG} -X github.com/falcosecurity/driverkit/pkg/version.commitsFromGitTag=${COMMITS_FROM_GIT_TAG} -X github.com/falcosecurity/driverkit/pkg/driverbuilder.builderBaseImage=${IMAGE_NAME_BUILDER_COMMIT}
 
 OS_NAME := $(shell uname -s | tr A-Z a-z)
-SQLITE_TAGS := --tags
+SQLITE_TAGS :=
 ifeq ($(OS_NAME),darwin)
-	SQLITE_TAGS += "sqlite_omit_load_extension libsqlite3 darwin"
+	SQLITE_TAGS +=sqlite_omit_load_extension libsqlite3 darwin
 else ifeq ($(OS_NAME),linux)
-	SQLITE_TAGS += "sqlite_omit_load_extension linux"
+	SQLITE_TAGS +=sqlite_omit_load_extension linux
 endif
 
 GOTAGS := ${SQLITE_TAGS}
@@ -40,10 +41,15 @@ driverkit_docgen ?= _output/bin/docgen
 build: clean ${driverkit}
 
 ${driverkit}:
-	CGO_ENABLED=1 go build -v ${LDFLAGS} ${GOTAGS} -o $@ .
+	CGO_ENABLED=1 go build -v -ldflags '${LDFLAGS}' -tags '${GOTAGS}' -o $@ .
+
+.PHONY: release
+release: clean
+	CGO_ENABLED=1 LDFLAGS="${LDFLAGS}" GOTAGS="${GOTAGS}" $(GORELEASER) release
 
 .PHONY: clean
 clean:
+	$(RM) -R dist
 	$(RM) -R _output
 
 image/all: image/builder image/driverkit

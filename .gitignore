@@ -1,4 +1,5 @@
 _output/
+dist/
 vendor/
 
 driverkit
