@@ -1,0 +1,18 @@
+project_name: driverkit
+builds:
+  - id: "driverkit"
+    goos:
+    - linux
+    goarch:
+    - amd64
+    main: .
+    flags:
+      - -v 
+      - "-tags={{ .Env.GOTAGS }}"
+    ldflags: 
+      - "{{.Env.LDFLAGS}}"
+    binary: driverkit
+
+release:
+  github:
+  prerelease: auto
