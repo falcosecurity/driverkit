@@ -22,6 +22,9 @@ IMAGE_NAME_DRIVERKIT_BRANCH := $(IMAGE_NAME_DRIVERKIT):$(GIT_BRANCH_CLEAN)
 IMAGE_NAME_DRIVERKIT_COMMIT := $(IMAGE_NAME_DRIVERKIT):$(GIT_COMMIT)
 IMAGE_NAME_DRIVERKIT_LATEST := $(IMAGE_NAME_DRIVERKIT):latest
 
+IMAGE_VERSION ?= $(shell echo "$(GIT_TAG)" | sed -e "s/^v//")
+IMAGE_NAME_DRIVERKIT_VERSION := $(IMAGE_NAME_DRIVERKIT):$(IMAGE_VERSION)
+
 LDFLAGS := -X github.com/falcosecurity/driverkit/pkg/version.buildTime=$(shell date +%s) -X github.com/falcosecurity/driverkit/pkg/version.gitCommit=${GIT_COMMIT} -X github.com/falcosecurity/driverkit/pkg/version.gitTag=${GIT_TAG} -X github.com/falcosecurity/driverkit/pkg/version.commitsFromGitTag=${COMMITS_FROM_GIT_TAG} -X github.com/falcosecurity/driverkit/pkg/driverbuilder.builderBaseImage=${IMAGE_NAME_BUILDER_COMMIT}
 
 OS_NAME := $(shell uname -s | tr A-Z a-z)
@@ -87,6 +90,12 @@ push/latest:
 	$(DOCKER) push $(IMAGE_NAME_BUILDER_LATEST)
 	$(DOCKER) tag $(IMAGE_NAME_DRIVERKIT_COMMIT) $(IMAGE_NAME_DRIVERKIT_LATEST)
 	$(DOCKER) push $(IMAGE_NAME_DRIVERKIT_LATEST)
+
+.PHONY: release/image
+release/image:
+	$(DOCKER) pull $(IMAGE_NAME_DRIVERKIT_COMMIT) 
+	$(DOCKER) tag $(IMAGE_NAME_DRIVERKIT_COMMIT) $(IMAGE_NAME_DRIVERKIT_VERSION)
+	$(DOCKER) push $(IMAGE_NAME_DRIVERKIT_VERSION)
 
 .PHONY: test
 test:
