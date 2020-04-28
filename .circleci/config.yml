@@ -33,11 +33,36 @@ jobs:
       - run:
           name: Push latest images
           command: make push/latest
+  "release":
+    docker:
+      - image: circleci/golang:1.14
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Prepare env
+          command: |
+            echo ${DOCKERHUB_SECRET} | docker login -u ${DOCKERHUB_USER} --password-stdin
+      - run:
+          name: Install goreleaser
+          command: |
+            curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh
+      - run:
+          name: Release binary
+          command: |
+            make release
+      - run:
+          name: Release image
+          command: |
+            make release/image
 workflows:
   version: 2
   build:
     jobs:
-      - "test"
+      - "test":
+          filters:
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(-.*)*/
       - "images":
           context: falco
           filters:
@@ -46,3 +71,12 @@ workflows:
                 - master
           requires:
             - "test"
+      - "release":
+          context: falco
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(-.*)*/
+          requires:
+            - test
