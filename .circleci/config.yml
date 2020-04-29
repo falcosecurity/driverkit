@@ -24,37 +24,31 @@ jobs:
             apk add make bash git
       - run:
           name: Build all the docker images
-          command: make GIT_BRANCH=master image/all
+          command: GIT_BRANCH="$CIRCLE_BRANCH" GIT_TAG="$CIRCLE_TAG" make image/all
       - run:
           name: Push images
-          command: |
-            make GIT_BRANCH=master push/builder
-            make GIT_BRANCH=master push/driverkit
+          command: GIT_BRANCH="$CIRCLE_BRANCH" GIT_TAG="$CIRCLE_TAG" make push/all
       - run:
           name: Push latest images
-          command: make push/latest
+          command: |
+            if [ -n "$CIRCLE_TAG" ]
+            then
+              GIT_BRANCH="$CIRCLE_BRANCH" GIT_TAG="$CIRCLE_TAG" make push/latest
+            else
+              echo "Skipping (no git tag)"
+            fi
   "release":
     docker:
       - image: circleci/golang:1.14
     steps:
       - checkout
-      - setup_remote_docker
-      - run:
-          name: Prepare env
-          command: |
-            echo ${DOCKERHUB_SECRET} | docker login -u ${DOCKERHUB_USER} --password-stdin
       - run:
           name: Install goreleaser
           command: |
-            curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh
+            curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | BINDIR=$HOME/.local/bin sh
       - run:
-          name: Release binary
-          command: |
-            make release
-      - run:
-          name: Release image
-          command: |
-            make release/image
+          name: Release
+          command: GIT_TAG="$CIRCLE_TAG" make release
 workflows:
   version: 2
   build:
@@ -69,6 +63,8 @@ workflows:
             branches:
               only:
                 - master
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(-.*)*/
           requires:
             - "test"
       - "release":
@@ -79,4 +75,5 @@ workflows:
             tags:
               only: /v[0-9]+(\.[0-9]+)*(-.*)*/
           requires:
-            - test
+            - "test"
+            - "images"
