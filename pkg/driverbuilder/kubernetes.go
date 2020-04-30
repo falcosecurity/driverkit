@@ -131,6 +131,21 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 			"module-downloader.sh":   waitForModuleAndCat,
 		},
 	}
+	// Construct environment variable array of corev1.EnvVar
+	var envs []corev1.EnvVar
+	// Add http_porxy and https_proxy environment variable
+	if c.ProxyURL != "" {
+		envs = append(envs,
+			corev1.EnvVar{
+				Name:  "http_proxy",
+				Value: c.ProxyURL,
+			},
+			corev1.EnvVar{
+				Name:  "https_proxy",
+				Value: c.ProxyURL,
+			},
+		)
+	}
 
 	pod := &corev1.Pod{
 		ObjectMeta: commonMeta,
@@ -142,6 +157,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 					Name:            name,
 					Image:           builderBaseImage,
 					Command:         buildCmd,
+					Env:             envs,
 					ImagePullPolicy: corev1.PullIfNotPresent,
 
 					Resources: corev1.ResourceRequirements{

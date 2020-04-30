@@ -109,7 +109,7 @@ func NewRootCmd() *RootCmd {
 	flags.StringVar(&rootOpts.KernelRelease, "kernelrelease", rootOpts.KernelRelease, "kernel release to build the module for, it can be found by executing 'uname -v'")
 	flags.StringVarP(&rootOpts.Target, "target", "t", rootOpts.Target, "the system to target the build for")
 	flags.StringVar(&rootOpts.KernelConfigData, "kernelconfigdata", rootOpts.KernelConfigData, "base64 encoded kernel config data: in some systems it can be found under the /boot directory, in other it is gzip compressed under /proc")
-
+	flags.StringVar(&rootOpts.ProxyURL, "proxy", rootOpts.ProxyURL, "the system use the proxy to download data")
 	viper.BindPFlags(flags)
 
 	// Flag annotations and custom completions

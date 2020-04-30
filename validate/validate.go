@@ -37,6 +37,7 @@ func init() {
 	V.RegisterValidation("sha1", isSHA1)
 	V.RegisterValidation("target", isTargetSupported)
 	V.RegisterValidation("semver", isSemVer)
+	V.RegisterValidation("proxy", isProxy)
 
 	eng := en.New()
 	uni := ut.New(eng, eng)
@@ -152,6 +153,19 @@ func init() {
 		T,
 		func(ut ut.Translator) error {
 			return ut.Add("endswith", "{0} must end with {1}", true)
+		},
+		func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T(fe.Tag(), fe.Field(), fe.Param())
+
+			return t
+		},
+	)
+
+	V.RegisterTranslation(
+		"proxy",
+		T,
+		func(ut ut.Translator) error {
+			return ut.Add("proxy", "{0} must start with http:// | https:// | socks5://", true)
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
 			t, _ := ut.T(fe.Tag(), fe.Field(), fe.Param())
