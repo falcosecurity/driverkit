@@ -157,6 +157,16 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		return err
 	}
 
+	// Construct environment variable array of string
+	var envs []string
+	// Add http_porxy and https_proxy environment variable
+	if c.ProxyURL != "" {
+		envs = append(envs,
+			fmt.Sprintf("http_proxy=%s", c.ProxyURL),
+			fmt.Sprintf("https_proxy=%s", c.ProxyURL),
+		)
+	}
+
 	edata, err := cli.ContainerExecCreate(ctx, cdata.ID, types.ExecConfig{
 		Privileged:   false,
 		Tty:          false,
@@ -164,6 +174,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		AttachStderr: true,
 		AttachStdout: true,
 		Detach:       true,
+		Env:          envs,
 		Cmd: []string{
 			"/bin/bash",
 			"/driverkit/driverkit.sh",

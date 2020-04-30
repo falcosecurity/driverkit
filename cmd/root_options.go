@@ -24,6 +24,7 @@ type RootOptions struct {
 	KernelRelease    string `validate:"required,ascii" name:"kernel release"`
 	Target           string `validate:"required,target" name:"target"`
 	KernelConfigData string `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level
+	ProxyURL         string `validate:"omitempty,proxy" name:"proxy url"`
 	Output           OutputOptions
 }
 
@@ -97,6 +98,7 @@ func (ro *RootOptions) toBuild() *builder.Build {
 		KernelConfigData: kernelConfigData,
 		ModuleFilePath:   ro.Output.Module,
 		ProbeFilePath:    ro.Output.Probe,
+		ProxyURL:         ro.ProxyURL,
 	}
 }
 
