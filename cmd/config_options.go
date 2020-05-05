@@ -20,6 +20,8 @@ type ConfigOptions struct {
 	Timeout    int    `validate:"number,min=30" default:"60" name:"timeout"`
 	ProxyURL   string `validate:"omitempty,proxy" name:"proxy url"`
 	DryRun     bool
+
+	configErrors bool
 }
 
 // NewConfigOptions creates an instance of ConfigOptions.
@@ -40,6 +42,7 @@ func (co *ConfigOptions) Validate() []error {
 			// Translate each error one at a time
 			errArr = append(errArr, fmt.Errorf(e.Translate(validate.T)))
 		}
+		co.configErrors = true
 		return errArr
 	}
 	return nil

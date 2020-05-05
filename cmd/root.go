@@ -19,6 +19,10 @@ import (
 
 func persistentValidateFunc(rootCommand *RootCmd, rootOpts *RootOptions) func(c *cobra.Command, args []string) error {
 	return func(c *cobra.Command, args []string) error {
+		// Early exit if detect some error into config flags
+		if configOptions.configErrors {
+			return fmt.Errorf("exiting for validation errors")
+		}
 		// Merge environment variables or config file values into the RootOptions instance
 		skip := map[string]bool{ // do not merge these
 			"config":   true,
@@ -194,7 +198,7 @@ func initConfig() {
 		for _, err := range errs {
 			logger.WithError(err).Error("error validating config options")
 		}
-		logger.Fatal("exiting for validation errors")
+		// configOptions.configErrors should be true here
 	}
 	if configOptions.ConfigFile != "" {
 		viper.SetConfigFile(configOptions.ConfigFile)
@@ -202,7 +206,8 @@ func initConfig() {
 		// Find home directory.
 		home, err := homedir.Dir()
 		if err != nil {
-			logger.WithError(err).Fatal("error getting the home directory")
+			logger.WithError(err).Debug("error getting the home directory")
+			// not setting configOptions.configErrors = true because we fallback to `$HOME/.driverkit.yaml` and try with it
 		}
 
 		viper.AddConfigPath(home)
@@ -222,7 +227,8 @@ func initConfig() {
 			logger.Debug("running without a configuration file")
 		} else {
 			// Config file was found but another error was produced
-			logger.WithField("file", viper.ConfigFileUsed()).WithError(err).Fatal("error running with config file")
+			logger.WithField("file", viper.ConfigFileUsed()).WithError(err).Debug("error running with config file")
+			configOptions.configErrors = true
 		}
 	}
 }
