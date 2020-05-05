@@ -55,6 +55,17 @@ var tests = []testCase{
 		},
 	},
 	{
+		descr: "invalid/config/proxy",
+		args: []string{
+			"--proxy",
+			"wrong",
+		},
+		expect: expect{
+			out: "testdata/invalid-proxyconfig.txt",
+			err: "exiting for validation errors",
+		},
+	},
+	{
 		descr: "docker/all-flags",
 		args: []string{
 			"docker",
