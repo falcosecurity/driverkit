@@ -25,17 +25,20 @@ import (
 	"k8s.io/apimachinery/pkg/util/uuid"
 )
 
+// DockerBuildProcessorName is a constant containing the docker name.
 const DockerBuildProcessorName = "docker"
 
 type DockerBuildProcessor struct {
 	clean   bool
 	timeout int
+	proxy   string
 }
 
 // NewDockerBuildProcessor ...
-func NewDockerBuildProcessor(timeout int) *DockerBuildProcessor {
+func NewDockerBuildProcessor(timeout int, proxy string) *DockerBuildProcessor {
 	return &DockerBuildProcessor{
 		timeout: timeout,
+		proxy:   proxy,
 	}
 }
 
@@ -159,11 +162,11 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 
 	// Construct environment variable array of string
 	var envs []string
-	// Add http_porxy and https_proxy environment variable
-	if c.ProxyURL != "" {
+	// Add http_proxy and https_proxy environment variable
+	if bp.proxy != "" {
 		envs = append(envs,
-			fmt.Sprintf("http_proxy=%s", c.ProxyURL),
-			fmt.Sprintf("https_proxy=%s", c.ProxyURL),
+			fmt.Sprintf("http_proxy=%s", bp.proxy),
+			fmt.Sprintf("https_proxy=%s", bp.proxy),
 		)
 	}
 

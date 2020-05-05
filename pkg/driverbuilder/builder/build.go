@@ -10,5 +10,4 @@ type Build struct {
 	Architecture     string
 	ModuleFilePath   string
 	ProbeFilePath    string
-	ProxyURL         string
 }
