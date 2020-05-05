@@ -165,7 +165,7 @@ func init() {
 		"proxy",
 		T,
 		func(ut ut.Translator) error {
-			return ut.Add("proxy", "{0} must start with http:// | https:// | socks5://", true)
+			return ut.Add("proxy", "{0} must start with http:// or https:// or socks5:// prefix", true)
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
 			t, _ := ut.T(fe.Tag(), fe.Field(), fe.Param())
