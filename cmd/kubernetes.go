@@ -76,7 +76,7 @@ func kubernetesRun(cmd *cobra.Command, args []string, kubefactory factory.Factor
 		return err
 	}
 
-	buildProcessor := driverbuilder.NewKubernetesBuildProcessor(kc.CoreV1(), clientConfig, namespaceStr, viper.GetInt("timeout"))
+	buildProcessor := driverbuilder.NewKubernetesBuildProcessor(kc.CoreV1(), clientConfig, namespaceStr, viper.GetInt("timeout"), viper.GetString("proxy"))
 
 	return buildProcessor.Start(b)
 }

@@ -33,18 +33,20 @@ type KubernetesBuildProcessor struct {
 	clientConfig *restclient.Config
 	namespace    string
 	timeout      int
+	proxy        string
 }
 
 // NewKubernetesBuildProcessor constructs a KubernetesBuildProcessor
 // starting from a kubernetes.Clientset. bufferSize represents the length of the
 // channel we use to do the builds. A bigger bufferSize will mean that we can save more Builds
 // for processing, however setting this to a big value will have impacts
-func NewKubernetesBuildProcessor(corev1Client v1.CoreV1Interface, clientConfig *restclient.Config, namespace string, timeout int) *KubernetesBuildProcessor {
+func NewKubernetesBuildProcessor(corev1Client v1.CoreV1Interface, clientConfig *restclient.Config, namespace string, timeout int, proxy string) *KubernetesBuildProcessor {
 	return &KubernetesBuildProcessor{
 		coreV1Client: corev1Client,
 		clientConfig: clientConfig,
 		namespace:    namespace,
 		timeout:      timeout,
+		proxy:        proxy,
 	}
 }
 
@@ -134,15 +136,15 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 	// Construct environment variable array of corev1.EnvVar
 	var envs []corev1.EnvVar
 	// Add http_porxy and https_proxy environment variable
-	if c.ProxyURL != "" {
+	if bp.proxy != "" {
 		envs = append(envs,
 			corev1.EnvVar{
 				Name:  "http_proxy",
-				Value: c.ProxyURL,
+				Value: bp.proxy,
 			},
 			corev1.EnvVar{
 				Name:  "https_proxy",
-				Value: c.ProxyURL,
+				Value: bp.proxy,
 			},
 		)
 	}
