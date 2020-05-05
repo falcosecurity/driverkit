@@ -25,6 +25,7 @@ func persistentValidateFunc(rootCommand *RootCmd, rootOpts *RootOptions) func(c 
 			"timeout":  true,
 			"loglevel": true,
 			"dryrun":   true,
+			"proxy":    true,
 		}
 		nested := map[string]string{ // handle nested options in config file
 			"output-module": "output.module",
@@ -101,6 +102,7 @@ func NewRootCmd() *RootCmd {
 	flags.StringVarP(&configOptions.LogLevel, "loglevel", "l", configOptions.LogLevel, "log level")
 	flags.IntVar(&configOptions.Timeout, "timeout", configOptions.Timeout, "timeout in seconds")
 	flags.BoolVar(&configOptions.DryRun, "dryrun", configOptions.DryRun, "do not actually perform the action")
+	flags.StringVar(&configOptions.ProxyURL, "proxy", configOptions.ProxyURL, "the proxy to use to download data")
 
 	flags.StringVar(&rootOpts.Output.Module, "output-module", rootOpts.Output.Module, "filepath where to save the resulting kernel module")
 	flags.StringVar(&rootOpts.Output.Probe, "output-probe", rootOpts.Output.Probe, "filepath where to save the resulting eBPF probe")
@@ -109,7 +111,6 @@ func NewRootCmd() *RootCmd {
 	flags.StringVar(&rootOpts.KernelRelease, "kernelrelease", rootOpts.KernelRelease, "kernel release to build the module for, it can be found by executing 'uname -v'")
 	flags.StringVarP(&rootOpts.Target, "target", "t", rootOpts.Target, "the system to target the build for")
 	flags.StringVar(&rootOpts.KernelConfigData, "kernelconfigdata", rootOpts.KernelConfigData, "base64 encoded kernel config data: in some systems it can be found under the /boot directory, in other it is gzip compressed under /proc")
-	flags.StringVar(&rootOpts.ProxyURL, "proxy", rootOpts.ProxyURL, "the system use the proxy to download data")
 	viper.BindPFlags(flags)
 
 	// Flag annotations and custom completions
