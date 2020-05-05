@@ -18,6 +18,7 @@ type ConfigOptions struct {
 	ConfigFile string
 	LogLevel   string `validate:"logrus" name:"log level" default:"info"`
 	Timeout    int    `validate:"number,min=30" default:"60" name:"timeout"`
+	ProxyURL   string `validate:"omitempty,proxy" name:"proxy url"`
 	DryRun     bool
 }
 
