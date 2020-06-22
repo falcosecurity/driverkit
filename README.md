@@ -210,10 +210,10 @@ You can find the results of the survey [here](http://bit.ly/driverkit-survey-res
 
 ## Creating a new Builder
 
-You probably came here because you want to tell the [Falco Infrastructure](https://github.com/falcosecurity/test-infra) to
+You probably came here because you want to tell the [Falco Drivers Build Grid](https://github.com/falcosecurity/test-infra/tree/master/driverkit) to
 build drivers for a specific distro you care about.
 
-If that distribution is not supported by Driverkit, the Falco Infrastructure will not be able to just build it like it does for other distros.
+If that distribution is not supported by driverkit, the Falco Drivers Build Grid will not be able to just build it as it does for other distros.
 
 To add a new supported distribution, you need to create a specific file implementing the `builder.Builder` interface.
 
@@ -221,7 +221,7 @@ You can find the specific distribution files into the [pkg/driverbuilder/builder
 
 Here's the [Ubuntu](/pkg/driverbuilder/builder/ubuntu.go) one for reference.
 
-Following this simple set of instructions should help you while you write a new Builder.
+Following this simple set of instructions should help you while you implement a new `builder.Builder`.
 
 
 ### 1. Builder file
@@ -235,7 +235,7 @@ touch pkg/driverbuilder/builder/archlinux.go
 
 Your builder will need a constant for the target it implements. Usually that constant
 can just be the name of the distribution you are implementing. A builder can implement 
-more than one target at time. For example, the Ubuntu Builder implements both `ubuntu-generic` and `ubuntu-aws`
+more than one target at time. For example, the Ubuntu builder implements both `ubuntu-generic` and `ubuntu-aws`
 to reflect the organization that the distro itself has.
 
 Once you have the constant, you will need to add it to the `BuilderByTarget` map.
@@ -255,7 +255,7 @@ func init() {
 }
 ```
 
-Now, you can implement the `builder.Builder` interface for the `archLinux` struct
+Now, you can implement the `builder.Builder` interface for the `archlinux` struct
 you just registered.
 
 Here's a very minimalistic example.
@@ -284,6 +284,5 @@ If the user specifies:
 
 The `/tmp/driver` MUST be interpolated from the `DriverDirectory` constant from [`builders.go`](/pkg/driverbuilder/builder/builders.go).
 
-If you look at the various builder impelmented, you will see that the task of creating a new builder
+If you look at the various builder implemented, you will see that the task of creating a new builder
 can be easy or difficult depending on how the distribution ships their artifacts.
-
