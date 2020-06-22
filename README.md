@@ -207,3 +207,83 @@ driverkit docker -c /tmp/vanilla.yaml --timeout=300
 We are conducting a [survey](http://bit.ly/driverkit-survey-vote) to know what is the most interesting set of Operating Systems we must support first in driverkit.
 
 You can find the results of the survey [here](http://bit.ly/driverkit-survey-results)
+
+## Creating a new Builder
+
+You probably came here because you want to tell the [Falco Infrastructure](https://github.com/falcosecurity/test-infra) to
+build drivers for a specific distro you care about.
+
+If that distribution is not supported by Driverkit, the Falco Infrastructure will not be able to just build it like it does for other distros.
+
+To add a new supported distribution, you need to create a specific file implementing the `builder.Builder` interface.
+
+You can find the specific distribution files into the [pkg/driverbuilder/builder](/pkg/driverbuilder/builder) folder.
+
+Here's the [Ubuntu](/pkg/driverbuilder/builder/ubuntu.go) one for reference.
+
+Following this simple set of instructions should help you while you write a new Builder.
+
+
+### 1. Builder file
+Create a file, named with the name of the distro you want to add in the `pkg/driverbuilder/builder` folder.
+
+```bash
+touch pkg/driverbuilder/builder/archlinux.go
+```
+
+### 2. Target name
+
+Your builder will need a constant for the target it implements. Usually that constant
+can just be the name of the distribution you are implementing. A builder can implement 
+more than one target at time. For example, the Ubuntu Builder implements both `ubuntu-generic` and `ubuntu-aws`
+to reflect the organization that the distro itself has.
+
+Once you have the constant, you will need to add it to the `BuilderByTarget` map.
+
+
+Open your file and you will need to have something like this:
+
+```go
+// TargetTypeArchLinux identifies the Arch Linux target.
+const TargetTypeArchLinux Type = "archlinux"
+
+type archLinux struct {
+}
+
+func init() {
+	BuilderByTarget[TargetTypeArchLinux] = &archLinux{}
+}
+```
+
+Now, you can implement the `builder.Builder` interface for the `archLinux` struct
+you just registered.
+
+Here's a very minimalistic example.
+
+
+```go
+func (v archLinux) Script(c Config) (string, error) {
+  return "echo 'hello world'", nil
+}
+```
+
+Essentially, the `Script` function that you are implementing will need to return a string containing
+a `bash` script that will be executed by driverkit at build time.
+
+Depending on how the distro works, the script will need to fetch the kernel headers for it at the specific kernel version specified
+in the `Config` struct at `c.Build.KernelVersion`.
+Once you have those, based on what that kernel can do and based on what was configured
+by the user you will need to build the kernel module driver and/or the eBPF probe driver.
+
+How does this work?
+
+If the user specifies:
+
+- `c.Build.ModuleFilePath` you will need to build the kernel module and save it in /tmp/driver/falco.ko`
+- `c.Build.ProbeFilePath` you will need to build the eBPF probe and save it in /tmp/driver/probe.ko`
+
+The `/tmp/driver` MUST be interpolated from the `DriverDirectory` constant from [`builders.go`](/pkg/driverbuilder/builder/builders.go).
+
+If you look at the various builder impelmented, you will see that the task of creating a new builder
+can be easy or difficult depending on how the distribution ships their artifacts.
+
