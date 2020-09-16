@@ -112,7 +112,7 @@ func ubuntuAWSHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint16) (
 		}
 	}
 
-	// If we can't find the aws files in the main folders,
+	// If we can't find the AWS files in the main folders,
 	// try to proactively parse the subfolders to find what we need
 	for _, u := range baseURL {
 		url := fmt.Sprintf("%s-%s.%s", u, kr.Version, kr.PatchLevel)
@@ -205,8 +205,8 @@ func parseUbuntuAWSKernelURLS(baseURL string, kr kernelrelease.KernelRelease, ke
 		return nil, err
 	}
 	firstExtra := extractExtraNumber(kr.Extraversion)
-	rmatch := `href="(linux(?:-aws)?-headers-%s-%s(?:-aws)?_%s-%s\.%d.*(?:amd64|all)\.deb)"`
-	fullRegex := fmt.Sprintf(rmatch, kr.Fullversion, firstExtra, kr.Fullversion, firstExtra, kernelVersion)
+	rmatch := `href="(linux(?:-aws-%s.%s)?-headers-%s-%s(?:-aws)?_%s-%s\.%d.*(?:amd64|all)\.deb)"`
+	fullRegex := fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel, kr.Fullversion, firstExtra, kr.Fullversion, firstExtra, kernelVersion)
 	pattern := regexp.MustCompile(fullRegex)
 	matches := pattern.FindAllStringSubmatch(string(body), 2)
 	if len(matches) != 2 {
