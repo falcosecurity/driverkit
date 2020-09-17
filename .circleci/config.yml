@@ -12,8 +12,6 @@ jobs:
     docker:
       - image: docker:stable
     steps:
-      - attach_workspace:
-          at: /
       - checkout
       - setup_remote_docker
       - run:
