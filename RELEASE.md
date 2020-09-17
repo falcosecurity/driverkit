@@ -14,6 +14,9 @@ When we release we do the following process:
 Tag the version
 
 ```bash
-git tag -a v0.1.0-rc.0 -m "v0.1.0-rc.0"
-git push origin v0.1.0-rc.0
+git pull
+git checkout master
+git tag x.y.z
+git push origin x.y.z
 ```
+> N.B.: do NOT use an annotated tag
