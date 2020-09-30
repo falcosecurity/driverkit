@@ -158,9 +158,19 @@ func debianHeadersURLFromRelease(kr kernelrelease.KernelRelease) ([]string, erro
 }
 
 func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRelease) ([]string, error) {
+	rmatch := `href="(linux-headers-%s\.%s\.%s%s-(%s)_.*(amd64|all)\.deb)"`
+
+	// match for kernel versions like 4.19.0-6-amd64
 	extraVersionPartial := strings.TrimSuffix(kr.FullExtraversion, "-amd64")
-	rmatch := `href="(linux-headers-%s\.%s\.%s%s-(amd64|common)_.*(amd64|all)\.deb)"`
-	fullregex := fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel, kr.Sublevel, extraVersionPartial)
+	matchExtraGroup := "amd64|common"
+
+	// match for kernel versions like 4.19.0-6-cloud-amd64
+	if strings.Contains(kr.FullExtraversion, "-cloud") {
+		extraVersionPartial = strings.TrimSuffix(extraVersionPartial, "-cloud")
+		matchExtraGroup = "cloud-amd64|common"
+	}
+
+	fullregex := fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel, kr.Sublevel, extraVersionPartial, matchExtraGroup)
 	pattern := regexp.MustCompile(fullregex)
 	resp, err := http.Get(baseURL)
 	if err != nil {
