@@ -11,12 +11,12 @@ When we release we do the following process:
 
 ## Release commands
 
-Tag the version
+Tag the version, keep the `v` and replace `x.y.z` with the version number. e.g: `0.2.0`
 
 ```bash
 git pull
 git checkout master
-git tag x.y.z
-git push origin x.y.z
+git tag vx.y.z
+git push origin vx.y.z
 ```
 > N.B.: do NOT use an annotated tag
