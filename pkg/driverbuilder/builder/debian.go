@@ -146,19 +146,23 @@ func debianHeadersURLFromRelease(kr kernelrelease.KernelRelease) ([]string, erro
 		"https://mirrors.edge.kernel.org/debian/pool/main/l/linux/",
 	}
 
+	var err error
+
 	for _, u := range baseURLS {
-		urls, err := fetchDebianHeadersURLFromRelease(u, kr)
+		var urls []string
+		urls, err = fetchDebianHeadersURLFromRelease(u, kr)
 
 		if err == nil {
 			return urls, err
 		}
 	}
 
-	return nil, fmt.Errorf("kernel headers not found")
+	return nil, err
 }
 
 func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRelease) ([]string, error) {
 	rmatch := `href="(linux-headers-%s\.%s\.%s%s-(%s)_.*(amd64|all)\.deb)"`
+	extraGroups := []string{"common", "amd64"}
 
 	// match for kernel versions like 4.19.0-6-amd64
 	extraVersionPartial := strings.TrimSuffix(kr.FullExtraversion, "-amd64")
@@ -184,7 +188,13 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 	matches := pattern.FindAllStringSubmatch(string(body), 2)
 
 	if len(matches) != 2 {
-		return nil, fmt.Errorf("kernel headers and kernel headers common not found")
+		var missingHeaders []string
+		for _, extraGroup := range extraGroups {
+			if ! stringSliceContains(matches, extraGroup) {
+				missingHeaders = append(missingHeaders, extraGroup)
+			}
+		}
+		return nil, fmt.Errorf("kernel headers not found for extra groups: (%q)", missingHeaders)
 	}
 
 	foundURLs := []string{fmt.Sprintf("%s%s", baseURL, matches[0][1])}
@@ -192,6 +202,17 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 	foundURLs = append(foundURLs, fmt.Sprintf("%s%s", baseURL, matches[1][1]))
 
 	return foundURLs, nil
+}
+
+func stringSliceContains(slice [][]string, substr string) bool {
+	for _, v := range slice {
+		for _, y := range v {
+			if strings.Contains(y, substr) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func debianKbuildURLFromRelease(kr kernelrelease.KernelRelease) (string, error) {
