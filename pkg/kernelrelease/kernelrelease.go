@@ -2,6 +2,7 @@ package kernelrelease
 
 import (
 	"regexp"
+	"strings"
 )
 
 var (
@@ -16,6 +17,11 @@ type KernelRelease struct {
 	Sublevel         string
 	Extraversion     string
 	FullExtraversion string
+}
+
+// IsGKE tells whether the current kernel release is for GKE by looking at its name.
+func (kr *KernelRelease) IsGKE() bool {
+	return strings.HasSuffix(kr.Extraversion, "gke")
 }
 
 // FromString extracts a KernelRelease object from string.
