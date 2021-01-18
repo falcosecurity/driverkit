@@ -110,6 +110,17 @@ func TestFromString(t *testing.T) {
 				FullExtraversion: "-136.231.amzn2.x86_64",
 			},
 		},
+		"gke version": {
+			kernelVersionStr: "4.15.0-1044-gke",
+			want: KernelRelease{
+				Fullversion:      "4.15.0",
+				Version:          "4",
+				PatchLevel:       "15",
+				Sublevel:         "0",
+				Extraversion:     "1044-gke",
+				FullExtraversion: "-1044-gke",
+			},
+		},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
