@@ -47,10 +47,14 @@ func (v ubuntuGeneric) Script(c Config) (string, error) {
 		ModuleDownloadURL:    fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.Build.DriverVersion),
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
-		KernelHeadersPattern: "*generic",
+		KernelHeadersPattern: "linux-headers*generic",
 		BuildModule:          len(c.Build.ModuleFilePath) > 0,
 		BuildProbe:           len(c.Build.ProbeFilePath) > 0,
 		GCCVersion:           ubuntuGCCVersionFromKernelRelease(kr),
+	}
+
+	if kr.IsGKE() {
+		td.KernelHeadersPattern = "linux-headers*gke"
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -85,7 +89,7 @@ func (v ubuntuAWS) Script(c Config) (string, error) {
 		ModuleDownloadURL:    moduleDownloadURL(c),
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
-		KernelHeadersPattern: "*",
+		KernelHeadersPattern: "linux-headers*",
 		BuildModule:          len(c.Build.ModuleFilePath) > 0,
 		BuildProbe:           len(c.Build.ProbeFilePath) > 0,
 		GCCVersion:           ubuntuGCCVersionFromKernelRelease(kr),
@@ -134,6 +138,8 @@ func ubuntuGenericHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint1
 	baseURL := []string{
 		"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux",
 		"http://security.ubuntu.com/ubuntu/pool/main/l/linux",
+		"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-gke-5.4",
+		"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-gke-4.15",
 	}
 
 	for _, u := range baseURL {
@@ -148,25 +154,50 @@ func ubuntuGenericHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint1
 
 func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernelVersion uint16) []string {
 	firstExtra := extractExtraNumber(kr.Extraversion)
-	return []string{
-		fmt.Sprintf(
-			"%s/linux-headers-%s-%s_%s-%s.%d_all.deb",
-			baseURL,
-			kr.Fullversion,
-			firstExtra,
-			kr.Fullversion,
-			firstExtra,
-			kernelVersion,
-		),
-		fmt.Sprintf(
-			"%s/linux-headers-%s%s_%s-%s.%d_amd64.deb",
-			baseURL,
-			kr.Fullversion,
-			kr.FullExtraversion,
-			kr.Fullversion,
-			firstExtra,
-			kernelVersion,
-		),
+	if kr.IsGKE() {
+		return []string{
+			fmt.Sprintf(
+				"%s/linux-gke-%s.%s-headers-%s-%s_%s-%s.%d_amd64.deb",
+				baseURL,
+				kr.Version,
+				kr.PatchLevel,
+				kr.Fullversion,
+				firstExtra,
+				kr.Fullversion,
+				firstExtra,
+				kernelVersion,
+			),
+			fmt.Sprintf(
+				"%s/linux-headers-%s%s_%s-%s.%d_amd64.deb",
+				baseURL,
+				kr.Fullversion,
+				kr.FullExtraversion,
+				kr.Fullversion,
+				firstExtra,
+				kernelVersion,
+			),
+		}
+	} else {
+		return []string{
+			fmt.Sprintf(
+				"%s/linux-headers-%s-%s_%s-%s.%d_all.deb",
+				baseURL,
+				kr.Fullversion,
+				firstExtra,
+				kr.Fullversion,
+				firstExtra,
+				kernelVersion,
+			),
+			fmt.Sprintf(
+				"%s/linux-headers-%s%s_%s-%s.%d_amd64.deb",
+				baseURL,
+				kr.Fullversion,
+				kr.FullExtraversion,
+				kr.Fullversion,
+				firstExtra,
+				kernelVersion,
+			),
+		}
 	}
 }
 
@@ -263,7 +294,7 @@ tar -xvf data.tar.*
 ls -la /tmp/kernel-download
 
 cd /tmp/kernel-download/usr/src/
-sourcedir=$(find . -type d -name "linux-headers{{ .KernelHeadersPattern }}" | head -n 1 | xargs readlink -f)
+sourcedir=$(find . -type d -name "{{ .KernelHeadersPattern }}" | head -n 1 | xargs readlink -f)
 
 ls -la $sourcedir
 
