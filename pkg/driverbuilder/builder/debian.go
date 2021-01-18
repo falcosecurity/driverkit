@@ -162,16 +162,16 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 
 	// match for kernel versions like 4.19.0-6-amd64
 	extraVersionPartial := strings.TrimSuffix(kr.FullExtraversion, "-amd64")
-	matchExtraGroup := "amd64|common"
+	matchExtraGroup := "amd64"
+	matchExtraGroupCommon := "common"
 
 	// match for kernel versions like 4.19.0-6-cloud-amd64
 	if strings.Contains(kr.FullExtraversion, "-cloud") {
 		extraVersionPartial = strings.TrimSuffix(extraVersionPartial, "-cloud")
-		matchExtraGroup = "cloud-amd64|common"
+		matchExtraGroup = "cloud-amd64"
 	}
 
-	fullregex := fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel, kr.Sublevel, extraVersionPartial, matchExtraGroup)
-	pattern := regexp.MustCompile(fullregex)
+	// download index
 	resp, err := http.Get(baseURL)
 	if err != nil {
 		return nil, err
@@ -181,15 +181,26 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 	if err != nil {
 		return nil, err
 	}
-	matches := pattern.FindAllStringSubmatch(string(body), 2)
+	bodyStr := string(body)
 
-	if len(matches) != 2 {
-		return nil, fmt.Errorf("kernel headers and kernel headers common not found")
+	// look for kernel headers
+	fullregex := fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel, kr.Sublevel, extraVersionPartial, matchExtraGroup)
+	pattern := regexp.MustCompile(fullregex)
+	matches := pattern.FindStringSubmatch(bodyStr)
+	if len(matches) < 1 {
+		return nil, fmt.Errorf("kernel headers not found")
 	}
 
-	foundURLs := []string{fmt.Sprintf("%s%s", baseURL, matches[0][1])}
+	// look for kernel headers common
+	fullregexCommon := fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel, kr.Sublevel, extraVersionPartial, matchExtraGroupCommon)
+	patternCommon := regexp.MustCompile(fullregexCommon)
+	matchesCommon := patternCommon.FindStringSubmatch(bodyStr)
+	if len(matchesCommon) < 1 {
+		return nil, fmt.Errorf("kernel headers common not found")
+	}
 
-	foundURLs = append(foundURLs, fmt.Sprintf("%s%s", baseURL, matches[1][1]))
+	foundURLs := []string{fmt.Sprintf("%s%s", baseURL, matches[1])}
+	foundURLs = append(foundURLs, fmt.Sprintf("%s%s", baseURL, matchesCommon[1]))
 
 	return foundURLs, nil
 }
