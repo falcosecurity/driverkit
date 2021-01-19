@@ -156,6 +156,7 @@ func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease,
 	firstExtra := extractExtraNumber(kr.Extraversion)
 	if kr.IsGKE() {
 		return []string{
+			// For 4.15 GKE kernels
 			fmt.Sprintf(
 				"%s/linux-gke-%s.%s-headers-%s-%s_%s-%s.%d_amd64.deb",
 				baseURL,
@@ -176,12 +177,12 @@ func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease,
 				firstExtra,
 				kernelVersion,
 			),
-		}
-	} else {
-		return []string{
+			// For 5.4 GKE kernels
 			fmt.Sprintf(
-				"%s/linux-headers-%s-%s_%s-%s.%d_all.deb",
+				"%s/linux-gke-%s.%s-headers-%s-%s_%s-%s.%d~18.04.1_amd64.deb",
 				baseURL,
+				kr.Version,
+				kr.PatchLevel,
 				kr.Fullversion,
 				firstExtra,
 				kr.Fullversion,
@@ -189,7 +190,7 @@ func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease,
 				kernelVersion,
 			),
 			fmt.Sprintf(
-				"%s/linux-headers-%s%s_%s-%s.%d_amd64.deb",
+				"%s/linux-headers-%s%s_%s-%s.%d~18.04.1_amd64.deb",
 				baseURL,
 				kr.Fullversion,
 				kr.FullExtraversion,
@@ -198,6 +199,27 @@ func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease,
 				kernelVersion,
 			),
 		}
+	}
+
+	return []string{
+		fmt.Sprintf(
+			"%s/linux-headers-%s-%s_%s-%s.%d_all.deb",
+			baseURL,
+			kr.Fullversion,
+			firstExtra,
+			kr.Fullversion,
+			firstExtra,
+			kernelVersion,
+		),
+		fmt.Sprintf(
+			"%s/linux-headers-%s%s_%s-%s.%d_amd64.deb",
+			baseURL,
+			kr.Fullversion,
+			kr.FullExtraversion,
+			kr.Fullversion,
+			firstExtra,
+			kernelVersion,
+		),
 	}
 }
 
