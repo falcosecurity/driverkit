@@ -29,16 +29,20 @@ import (
 const DockerBuildProcessorName = "docker"
 
 type DockerBuildProcessor struct {
-	clean   bool
-	timeout int
-	proxy   string
+	clean       bool
+	timeout     int
+	proxy       string
+    dns         []string
+    networkMode string
 }
 
 // NewDockerBuildProcessor ...
-func NewDockerBuildProcessor(timeout int, proxy string) *DockerBuildProcessor {
+func NewDockerBuildProcessor(timeout int, proxy string, dns []string, networkMode string) *DockerBuildProcessor {
 	return &DockerBuildProcessor{
-		timeout: timeout,
-		proxy:   proxy,
+		timeout:     timeout,
+		proxy:       proxy,
+        dns:         dns,
+        networkMode: networkMode,
 	}
 }
 
@@ -115,7 +119,9 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	}
 
 	hostCfg := &container.HostConfig{
-		AutoRemove: true,
+		AutoRemove:  true,
+        DNS:         bp.dns,
+        NetworkMode: container.NetworkMode(bp.networkMode),
 	}
 	networkCfg := &network.NetworkingConfig{}
 	uid := uuid.NewUUID()
