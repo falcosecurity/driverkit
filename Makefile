@@ -3,12 +3,12 @@ SHELL=/bin/bash -o pipefail
 DOCKER ?= docker
 GORELEASER ?= goreleaser
 
-GIT_TAG ?= $(shell git describe --tags --abbrev=0 2> /dev/null)
-COMMITS_FROM_GIT_TAG := $(shell git rev-list ${GIT_TAG}.. --count 2> /dev/null || echo "0")
-COMMIT_NO := $(shell git rev-parse --short HEAD 2> /dev/null || true)
-GIT_COMMIT := $(if $(shell git status --porcelain --untracked-files=no),${COMMIT_NO}.dirty,${COMMIT_NO})
-GIT_BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
-GIT_BRANCH_CLEAN := $(shell echo $(GIT_BRANCH) | sed -e "s/[^[:alnum:]]/-/g")
+GIT_TAG ?= $($(SHELL) git describe --tags --abbrev=0 2> /dev/null)
+COMMITS_FROM_GIT_TAG := $($(SHELL) git rev-list ${GIT_TAG}.. --count 2> /dev/null || echo "0")
+COMMIT_NO := $($(SHELL) git rev-parse --short HEAD 2> /dev/null || true)
+GIT_COMMIT := $(if $($(SHELL) git status --porcelain --untracked-files=no),${COMMIT_NO}.dirty,${COMMIT_NO})
+GIT_BRANCH ?= $($(SHELL) git rev-parse --abbrev-ref HEAD 2>/dev/null)
+GIT_BRANCH_CLEAN := $($(SHELL) echo $(GIT_BRANCH) | sed -e "s/[^[:alnum:]]/-/g")
 GIT_REF := ${GIT_BRANCH_CLEAN}
 ifeq ($(COMMITS_FROM_GIT_TAG),0)
 	ifneq ($(GIT_TAG),)
@@ -28,9 +28,9 @@ IMAGE_NAME_DRIVERKIT_REF := $(IMAGE_NAME_DRIVERKIT):$(GIT_REF)
 IMAGE_NAME_DRIVERKIT_COMMIT := $(IMAGE_NAME_DRIVERKIT):$(GIT_COMMIT)
 IMAGE_NAME_DRIVERKIT_LATEST := $(IMAGE_NAME_DRIVERKIT):latest
 
-LDFLAGS := -X github.com/falcosecurity/driverkit/pkg/version.buildTime=$(shell date +%s) -X github.com/falcosecurity/driverkit/pkg/version.gitCommit=${GIT_COMMIT} -X github.com/falcosecurity/driverkit/pkg/version.gitTag=$(if ${GIT_TAG},${GIT_TAG},v0.0.0) -X github.com/falcosecurity/driverkit/pkg/version.commitsFromGitTag=${COMMITS_FROM_GIT_TAG} -X github.com/falcosecurity/driverkit/pkg/driverbuilder.builderBaseImage=${IMAGE_NAME_BUILDER_COMMIT}
+LDFLAGS := -X github.com/falcosecurity/driverkit/pkg/version.buildTime=$($(SHELL) date +%s) -X github.com/falcosecurity/driverkit/pkg/version.gitCommit=${GIT_COMMIT} -X github.com/falcosecurity/driverkit/pkg/version.gitTag=$(if ${GIT_TAG},${GIT_TAG},v0.0.0) -X github.com/falcosecurity/driverkit/pkg/version.commitsFromGitTag=${COMMITS_FROM_GIT_TAG} -X github.com/falcosecurity/driverkit/pkg/driverbuilder.builderBaseImage=${IMAGE_NAME_BUILDER_COMMIT}
 
-OS_NAME := $(shell uname -s | tr A-Z a-z)
+OS_NAME := $($(SHELL) uname -s | tr A-Z a-z)
 SQLITE_TAGS :=
 ifeq ($(OS_NAME),darwin)
 	SQLITE_TAGS +=sqlite_omit_load_extension libsqlite3 darwin
