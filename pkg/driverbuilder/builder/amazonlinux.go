@@ -139,8 +139,9 @@ func script(c Config, targetType Type) (string, error) {
 
 var reposByTarget = map[Type][]string{
 	TargetTypeAmazonLinux2: []string{
-		"2.0",
-		"latest",
+		"core/2.0",
+		"core/latest",
+		"extras/kernel-5.4/latest",
 	},
 	TargetTypeAmazonLinux: []string{
 		"latest/updates",
@@ -170,7 +171,7 @@ func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, arch string, t
 		case TargetTypeAmazonLinux:
 			baseURL = fmt.Sprintf("http://repo.us-east-1.amazonaws.com/%s", v)
 		case TargetTypeAmazonLinux2:
-			baseURL = fmt.Sprintf("%s/2/core/%s/%s", amazonlinux2baseURL, v, arch)
+			baseURL = fmt.Sprintf("%s/2/%s/%s", amazonlinux2baseURL, v, arch)
 		default:
 			return nil, fmt.Errorf("unsupported target")
 		}
