@@ -62,7 +62,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	c := builder.Config{
 		DriverName:      "falco",
 		DeviceName:      "falco",
-		DownloadBaseURL: "https://github.com/draios/sysdig/archive",
+		DownloadBaseURL: "https://github.com/falcosecurity/libs/archive",
 		Build:           b,
 	}
 

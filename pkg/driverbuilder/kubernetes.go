@@ -75,9 +75,9 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 	}
 
 	c := builder.Config{
-		DriverName:      "falco",                                    // TODO: make this configurable
-		DeviceName:      "falco",                                    // TODO: make this configurable
-		DownloadBaseURL: "https://github.com/draios/sysdig/archive", // TODO: make this configurable
+		DriverName:      "falco",                                         // TODO: make this configurable
+		DeviceName:      "falco",                                         // TODO: make this configurable
+		DownloadBaseURL: "https://github.com/falcosecurity/libs/archive", // TODO: make this configurable
 		Build:           build,
 	}
 
