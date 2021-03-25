@@ -82,6 +82,10 @@ const driverConfigTemplate = `
 #define PROBE_NAME "{{ .DriverName }}"
 
 #define PROBE_DEVICE_NAME "{{ .DeviceName }}"
+
+#ifndef KBUILD_MODNAME
+#define KBUILD_MODNAME PROBE_NAME
+#endif
 `
 
 func renderDriverConfig(w io.Writer, dd driverConfigData) error {
