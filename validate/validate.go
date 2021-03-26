@@ -74,7 +74,7 @@ func init() {
 		"required_kernelconfigdata_with_target_vanilla",
 		T,
 		func(ut ut.Translator) error {
-			return ut.Add("required_kernelconfigdata_with_target_vanilla", "{0} is a required field when target is vanilla", true)
+			return ut.Add("required_kernelconfigdata_with_target_vanilla", "{0} is a required field when target is vanilla and the kernel headers are not local", true)
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
 			t, _ := ut.T("required_kernelconfigdata_with_target_vanilla", "kernel config data") // fixme ? tag "name" does not work when used at struct level

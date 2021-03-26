@@ -18,13 +18,14 @@ type OutputOptions struct {
 
 // RootOptions ...
 type RootOptions struct {
-	Architecture     string `default:"x86_64" validate:"required,oneof=x86_64" name:"architecture"`
-	DriverVersion    string `default:"dev" validate:"eq=dev|sha1|semver" name:"driver version"`
-	KernelVersion    uint16 `default:"1" validate:"omitempty,number" name:"kernel version"`
-	KernelRelease    string `validate:"required,ascii" name:"kernel release"`
-	Target           string `validate:"required,target" name:"target"`
-	KernelConfigData string `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level
-	Output           OutputOptions
+	Architecture        string `default:"x86_64" validate:"required,oneof=x86_64" name:"architecture"`
+	DriverVersion       string `default:"dev" validate:"eq=dev|sha1|semver" name:"driver version"`
+	KernelVersion       uint16 `default:"1" validate:"omitempty,number" name:"kernel version"`
+	KernelRelease       string `validate:"required,ascii" name:"kernel release"`
+	Target              string `validate:"required,target" name:"target"`
+	KernelConfigData    string `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level
+	LocalKernelBuildDir string `validate:"omitempty,dir" name:"local kernel build directory"`
+	Output              OutputOptions
 }
 
 func init() {
@@ -78,6 +79,9 @@ func (ro *RootOptions) Log() {
 	if ro.Target != "" {
 		fields["target"] = ro.Target
 	}
+	if ro.LocalKernelBuildDir != "" {
+		fields["localkernelbuilddir"] = ro.LocalKernelBuildDir
+	}
 
 	logger.WithFields(fields).Debug("running with options")
 }
@@ -89,14 +93,15 @@ func (ro *RootOptions) toBuild() *builder.Build {
 	}
 
 	return &builder.Build{
-		TargetType:       builder.Type(ro.Target),
-		DriverVersion:    ro.DriverVersion,
-		KernelVersion:    ro.KernelVersion,
-		KernelRelease:    ro.KernelRelease,
-		Architecture:     ro.Architecture,
-		KernelConfigData: kernelConfigData,
-		ModuleFilePath:   ro.Output.Module,
-		ProbeFilePath:    ro.Output.Probe,
+		TargetType:          builder.Type(ro.Target),
+		DriverVersion:       ro.DriverVersion,
+		KernelVersion:       ro.KernelVersion,
+		KernelRelease:       ro.KernelRelease,
+		Architecture:        ro.Architecture,
+		KernelConfigData:    kernelConfigData,
+		ModuleFilePath:      ro.Output.Module,
+		ProbeFilePath:       ro.Output.Probe,
+		LocalKernelBuildDir: ro.LocalKernelBuildDir,
 	}
 }
 
@@ -106,7 +111,7 @@ func (ro *RootOptions) toBuild() *builder.Build {
 func RootOptionsLevelValidation(level validator.StructLevel) {
 	opts := level.Current().Interface().(RootOptions)
 
-	if len(opts.KernelConfigData) == 0 && opts.Target == builder.TargetTypeVanilla.String() {
+	if len(opts.KernelConfigData) == 0 && opts.Target == builder.TargetTypeVanilla.String() && len(opts.LocalKernelBuildDir) == 0 {
 		level.ReportError(opts.KernelConfigData, "kernelConfigData", "KernelConfigData", "required_kernelconfigdata_with_target_vanilla", "")
 	}
 
