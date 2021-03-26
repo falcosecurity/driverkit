@@ -155,6 +155,10 @@ driverversion: dev
 
 ### vanilla
 
+> **Important:** if you want to build against an user-provided kernel instead of
+letting driverkit download a kernel from kernel.org please see the section below.
+
+
 In case of vanilla, you also need to pass the kernel config data in base64 format.
 
 In most systems you can get `kernelconfigdata`  by reading `/proc/config.gz`.
@@ -185,6 +189,45 @@ So, we suggest to increase the `driverkit` timeout (defaults to `60` seconds):
 
 ```bash
 driverkit docker -c /tmp/vanilla.yaml --timeout=300
+```
+
+### vanilla with an user-provided kernel build directory
+
+The vanilla builder can also build the Kernel module or eBPF probe by
+using an user-provided kernel build directory. This means, that instead
+of downloading kernel from `kernel.org` it will use the one provided locally.
+
+If you build in this mode, you can't to pass a `kernelconfigdata`.
+
+This can be achieved by using the `-k` option and passing to it a local
+path to a kernel build directory.
+
+This can either be:
+
+- `/lib/modules/$(uname -r)/build`
+- A kernel downloaded from kernel.org and prepared to build modules
+- A kernel downloaded from a distribution repository
+
+The important thing to remember is that the build folder will need to contain
+the Makefile to build against the kernel.
+
+Example of build folder:
+
+```shell
+ls /lib/modules/$(uname -r)/build 
+arch   certs   drivers  include  Kconfig  lib                     localversion.20-pkgname  mm              net      scripts   sound       tools  version  vmlinux
+block  crypto  fs       init     kernel   localversion.10-pkgrel  Makefile                 Module.symvers  samples  security  System.map  usr    virt
+```
+
+**Usage**
+
+```shell
+driverkit docker \
+  --driverversion=2aa88dcf6243982697811df4c1b484bcbe9488a2 \
+  -k /lib/modules/$(uname -r)/build \
+  --target vanilla \
+  --kernelrelease $(uname -v)
+  --output-module falco.ko
 ```
 
 ## Goals
