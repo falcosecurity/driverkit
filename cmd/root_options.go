@@ -24,6 +24,8 @@ type RootOptions struct {
 	KernelRelease       string `validate:"required,ascii" name:"kernel release"`
 	Target              string `validate:"required,target" name:"target"`
 	KernelConfigData    string `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level
+	// LocalKernelBuildDir is only supported in the docker executor now
+	// however, the option is left in root to extend support to other builder executors in the future
 	LocalKernelBuildDir string `validate:"omitempty,dir" name:"local kernel build directory"`
 	Output              OutputOptions
 }
@@ -111,6 +113,9 @@ func (ro *RootOptions) toBuild() *builder.Build {
 func RootOptionsLevelValidation(level validator.StructLevel) {
 	opts := level.Current().Interface().(RootOptions)
 
+	if len(opts.LocalKernelBuildDir) > 0 && builder.TargetTypeVanilla.String() != opts.Target {
+		level.ReportError(opts.LocalKernelBuildDir, "localKernelBuildDir", "LocalKernelBuildDir", "required_vanilla_for_local_kernel_build", "")
+	}
 	if len(opts.KernelConfigData) == 0 && opts.Target == builder.TargetTypeVanilla.String() && len(opts.LocalKernelBuildDir) == 0 {
 		level.ReportError(opts.KernelConfigData, "kernelConfigData", "KernelConfigData", "required_kernelconfigdata_with_target_vanilla", "")
 	}

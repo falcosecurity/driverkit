@@ -115,7 +115,6 @@ func NewRootCmd() *RootCmd {
 	flags.StringVar(&rootOpts.KernelRelease, "kernelrelease", rootOpts.KernelRelease, "kernel release to build the module for, it can be found by executing 'uname -v'")
 	flags.StringVarP(&rootOpts.Target, "target", "t", rootOpts.Target, "the system to target the build for")
 	flags.StringVar(&rootOpts.KernelConfigData, "kernelconfigdata", rootOpts.KernelConfigData, "base64 encoded kernel config data: in some systems it can be found under the /boot directory, in other it is gzip compressed under /proc")
-	flags.StringVarP(&rootOpts.LocalKernelBuildDir, "localkernelbuilddir", "k", rootOpts.LocalKernelBuildDir, "path to the local kernel build dir to use instead of downloading it from the internet. It can be either the one under /lib/modules/$(uname -r)/build or one coming from somewhere else")
 	viper.BindPFlags(flags)
 
 	// Flag annotations and custom completions

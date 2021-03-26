@@ -84,6 +84,19 @@ func init() {
 	)
 
 	V.RegisterTranslation(
+		"required_vanilla_for_local_kernel_build",
+		T,
+		func(ut ut.Translator) error {
+			return ut.Add("required_vanilla_for_local_kernel_build", "local kernel builds are only supported by the vanilla target", true)
+		},
+		func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T("required_vanilla_for_local_kernel_build", "local kernel build dir")
+
+			return t
+		},
+	)
+
+	V.RegisterTranslation(
 		"required_kernelversion_with_target_ubuntu",
 		T,
 		func(ut ut.Translator) error {
