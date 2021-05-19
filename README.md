@@ -280,7 +280,7 @@ How does this work?
 If the user specifies:
 
 - `c.Build.ModuleFilePath` you will need to build the kernel module and save it in /tmp/driver/falco.ko`
-- `c.Build.ProbeFilePath` you will need to build the eBPF probe and save it in /tmp/driver/probe.ko`
+- `c.Build.ProbeFilePath` you will need to build the eBPF probe and save it in /tmp/driver/probe.o`
 
 The `/tmp/driver` MUST be interpolated from the `DriverDirectory` constant from [`builders.go`](/pkg/driverbuilder/builder/builders.go).
 
