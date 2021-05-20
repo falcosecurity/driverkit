@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -142,22 +143,20 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	}
 
 	files := []dockerCopyFile{
-		{"/driverkit/driverkit.sh", res},
-		{"/driverkit/kernel.config", string(configDecoded)},
-		{"/driverkit/module-Makefile", bufMakefile.String()},
-		{"/driverkit/module-driver-config.h", bufDriverConfig.String()},
+		{"/driverkit/driverkit.sh", []byte(res)},
+		{"/driverkit/kernel.config", configDecoded},
+		{"/driverkit/module-Makefile", bufMakefile.Bytes()},
+		{"/driverkit/module-driver-config.h", bufDriverConfig.Bytes()},
 	}
 
-	var buf bytes.Buffer
-	err = tarWriterFiles(&buf, files)
-	if err != nil {
+	if err := copyToContainer(ctx, cli, cdata.ID, files); err != nil {
 		return err
 	}
 
-	// Copy the needed files to the container
-	err = cli.CopyToContainer(ctx, cdata.ID, "/", &buf, types.CopyToContainerOptions{})
-	if err != nil {
-		return err
+	if len(b.LocalKernelBuildDir) > 0 {
+		if err := copyDirToContainerRecursively(ctx, cli, cdata.ID, b.LocalKernelBuildDir); err != nil {
+			return err
+		}
 	}
 
 	// Construct environment variable array of string
@@ -249,6 +248,71 @@ func copyFromContainer(ctx context.Context, cli *client.Client, ID, from, to str
 	return nil
 }
 
+func copyDirToContainerRecursively(ctx context.Context, cli *client.Client, ID, root string) error {
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+	defer tw.Close()
+
+	err := filepath.Walk(root,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			hdr, err := tar.FileInfoHeader(info, path)
+			if err != nil {
+				return err
+			}
+
+			n := filepath.Join("/tmp/kernel", filepath.ToSlash(strings.TrimPrefix(path, root)))
+			fmt.Println(n)
+
+			hdr.Name = n
+			if err := tw.WriteHeader(hdr); err != nil {
+				return err
+			}
+			if !info.Mode().IsRegular() {
+				return nil
+			}
+
+			data, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+			defer data.Close()
+			if _, err := io.Copy(tw, data); err != nil {
+				return err
+			}
+
+			return nil
+		})
+	if err != nil {
+		return err
+	}
+
+	// Copy the needed files to the container
+	err = cli.CopyToContainer(ctx, ID, "/", &buf, types.CopyToContainerOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func copyToContainer(ctx context.Context, cli *client.Client, ID string, files []dockerCopyFile) error {
+	var buf bytes.Buffer
+	err := tarWriterFiles(&buf, files)
+	if err != nil {
+		return err
+	}
+
+	// Copy the needed files to the container
+	err = cli.CopyToContainer(ctx, ID, "/", &buf, types.CopyToContainerOptions{})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (bp *DockerBuildProcessor) cleanup(ctx context.Context, cli *client.Client, ID string) {
 	if !bp.clean {
 		bp.clean = true
@@ -262,7 +326,7 @@ func (bp *DockerBuildProcessor) cleanup(ctx context.Context, cli *client.Client,
 
 type dockerCopyFile struct {
 	Name string
-	Body string
+	Body []byte
 }
 
 func tarWriterFiles(buf io.Writer, files []dockerCopyFile) error {
@@ -277,7 +341,7 @@ func tarWriterFiles(buf io.Writer, files []dockerCopyFile) error {
 		if err := tw.WriteHeader(hdr); err != nil {
 			return err
 		}
-		if _, err := tw.Write([]byte(file.Body)); err != nil {
+		if _, err := tw.Write(file.Body); err != nil {
 			return err
 		}
 	}

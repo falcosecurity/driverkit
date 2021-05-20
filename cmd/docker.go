@@ -24,7 +24,10 @@ func NewDockerCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Comman
 		},
 	}
 	// Add root flags
-	dockerCmd.PersistentFlags().AddFlagSet(rootFlags)
+
+	flags := dockerCmd.PersistentFlags()
+	flags.AddFlagSet(rootFlags)
+	flags.StringVarP(&rootOpts.LocalKernelBuildDir, "localkernelbuilddir", "k", rootOpts.LocalKernelBuildDir, "path to the local kernel build dir to use instead of downloading it from the internet. \nIt can be either the one under /lib/modules/$(uname -r)/build or one coming from somewhere else (vanilla target only)")
 
 	return dockerCmd
 }

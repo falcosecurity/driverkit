@@ -74,10 +74,23 @@ func init() {
 		"required_kernelconfigdata_with_target_vanilla",
 		T,
 		func(ut ut.Translator) error {
-			return ut.Add("required_kernelconfigdata_with_target_vanilla", "{0} is a required field when target is vanilla", true)
+			return ut.Add("required_kernelconfigdata_with_target_vanilla", "{0} is a required field when target is vanilla and the kernel headers are not local", true)
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
 			t, _ := ut.T("required_kernelconfigdata_with_target_vanilla", "kernel config data") // fixme ? tag "name" does not work when used at struct level
+
+			return t
+		},
+	)
+
+	V.RegisterTranslation(
+		"required_vanilla_for_local_kernel_build",
+		T,
+		func(ut ut.Translator) error {
+			return ut.Add("required_vanilla_for_local_kernel_build", "local kernel builds are only supported by the vanilla target", true)
+		},
+		func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T("required_vanilla_for_local_kernel_build", "local kernel build dir")
 
 			return t
 		},

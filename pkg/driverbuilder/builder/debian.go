@@ -134,7 +134,7 @@ modinfo falco.ko
 {{ if .BuildProbe }}
 # Build the eBPF probe
 cd {{ .DriverBuildDir }}/bpf
-make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
+make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 KERNELDIR=$sourcedir
 ls -l probe.o
 {{ end }}
 `
