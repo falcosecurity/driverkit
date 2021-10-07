@@ -98,6 +98,13 @@ func fetchCentosKernelURLS(kr kernelrelease.KernelRelease) []string {
 		"8.1.1911/updates",
 	}
 
+	centos8VaultReleases := []string{
+		"8.0.1905/BaseOS",
+		"8.1.1911/BaseOS",
+		"8.2.2004/BaseOS",
+		"8.3.2011/BaseOS",
+	}
+
 	edgeReleases := []string{
 		"6/os",
 		"6/updates",
@@ -108,8 +115,6 @@ func fetchCentosKernelURLS(kr kernelrelease.KernelRelease) []string {
 	streamReleases := []string{
 		"8/BaseOS",
 		"8-stream/BaseOS",
-		"8.0.1905/BaseOS",
-		"8.1.1911/BaseOS",
 	}
 
 	urls := []string{}
@@ -132,6 +137,14 @@ func fetchCentosKernelURLS(kr kernelrelease.KernelRelease) []string {
 	for _, r := range vaultReleases {
 		urls = append(urls, fmt.Sprintf(
 			"http://vault.centos.org/%s/x86_64/Packages/kernel-devel-%s%s.rpm",
+			r,
+			kr.Fullversion,
+			kr.FullExtraversion,
+		))
+	}
+	for _, r := range centos8VaultReleases {
+		urls = append(urls, fmt.Sprintf(
+			"http://vault.centos.org/%s/x86_64/os/Packages/kernel-devel-%s%s.rpm",
 			r,
 			kr.Fullversion,
 			kr.FullExtraversion,
