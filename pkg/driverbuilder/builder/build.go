@@ -10,4 +10,6 @@ type Build struct {
 	Architecture     string
 	ModuleFilePath   string
 	ProbeFilePath    string
+	ModuleDriverName string
+	ModuleDeviceName string
 }

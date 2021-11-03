@@ -48,6 +48,8 @@ func (v ubuntuGeneric) Script(c Config) (string, error) {
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
 		KernelHeadersPattern: "linux-headers*generic",
+		ModuleDriverName:     c.Build.ModuleDriverName,
+		ModuleFullPath:       ModuleFullPath,
 		BuildModule:          len(c.Build.ModuleFilePath) > 0,
 		BuildProbe:           len(c.Build.ProbeFilePath) > 0,
 		GCCVersion:           ubuntuGCCVersionFromKernelRelease(kr),
@@ -90,6 +92,8 @@ func (v ubuntuAWS) Script(c Config) (string, error) {
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
 		KernelHeadersPattern: "linux-headers*",
+		ModuleDriverName:     c.Build.ModuleDriverName,
+		ModuleFullPath:       ModuleFullPath,
 		BuildModule:          len(c.Build.ModuleFilePath) > 0,
 		BuildProbe:           len(c.Build.ProbeFilePath) > 0,
 		GCCVersion:           ubuntuGCCVersionFromKernelRelease(kr),
@@ -285,6 +289,8 @@ type ubuntuTemplateData struct {
 	KernelDownloadURLS   []string
 	KernelLocalVersion   string
 	KernelHeadersPattern string
+	ModuleDriverName     string
+	ModuleFullPath       string
 	BuildProbe           bool
 	BuildModule          bool
 	GCCVersion           string
@@ -327,9 +333,10 @@ ln -sf /usr/bin/gcc-{{ .GCCVersion }} /usr/bin/gcc
 # Build the module
 cd {{ .DriverBuildDir }}
 make KERNELDIR=$sourcedir
-strip -g falco.ko
+mv {{ .ModuleDriverName }}.ko {{ .ModuleFullPath }}
+strip -g {{ .ModuleFullPath }}
 # Print results
-modinfo falco.ko
+modinfo {{ .ModuleFullPath }}
 {{ end }}
 
 {{ if .BuildProbe }}

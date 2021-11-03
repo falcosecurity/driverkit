@@ -58,8 +58,10 @@ make KCONFIG_CONFIG=/tmp/kernel.config modules_prepare
 # Build the kernel module
 cd {{ .DriverBuildDir }}
 make KERNELDIR=/tmp/kernel
+mv {{ .ModuleDriverName }}.ko {{ .ModuleFullPath }}
+strip -g {{ .ModuleFullPath }}
 # Print results
-modinfo falco.ko
+modinfo {{ .ModuleFullPath }}
 {{ end }}
 
 {{ if .BuildProbe }}
@@ -75,6 +77,8 @@ type vanillaTemplateData struct {
 	ModuleDownloadURL  string
 	KernelDownloadURL  string
 	KernelLocalVersion string
+	ModuleDriverName   string
+	ModuleFullPath     string
 	BuildModule        bool
 	BuildProbe         bool
 }
@@ -100,6 +104,8 @@ func (v vanilla) Script(c Config) (string, error) {
 		ModuleDownloadURL:  moduleDownloadURL(c),
 		KernelDownloadURL:  urls[0],
 		KernelLocalVersion: kv.FullExtraversion,
+		ModuleDriverName:   c.DriverName,
+		ModuleFullPath:     ModuleFullPath,
 		BuildModule:        len(c.Build.ModuleFilePath) > 0,
 		BuildProbe:         len(c.Build.ProbeFilePath) > 0,
 	}

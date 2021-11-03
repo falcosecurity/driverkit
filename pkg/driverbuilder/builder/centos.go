@@ -40,6 +40,8 @@ func (c centos) Script(cfg Config) (string, error) {
 		ModuleDownloadURL: moduleDownloadURL(cfg),
 		KernelDownloadURL: urls[0],
 		GCCVersion:        centosGccVersionFromKernelRelease(kr),
+		ModuleDriverName:  cfg.DriverName,
+		ModuleFullPath:    ModuleFullPath,
 		BuildModule:       len(cfg.Build.ModuleFilePath) > 0,
 		BuildProbe:        len(cfg.Build.ProbeFilePath) > 0,
 	}
@@ -145,6 +147,8 @@ type centosTemplateData struct {
 	ModuleDownloadURL string
 	KernelDownloadURL string
 	GCCVersion        string
+	ModuleDriverName  string
+	ModuleFullPath    string
 	BuildModule       bool
 	BuildProbe        bool
 }
@@ -177,11 +181,13 @@ mv usr/src/kernels/*/* /tmp/kernel
 ln -sf /usr/bin/gcc-{{ .GCCVersion }} /usr/bin/gcc
 
 {{ if .BuildModule }}
-# Build the kernel module
+# Build the module
 cd {{ .DriverBuildDir }}
 make KERNELDIR=/tmp/kernel
+mv {{ .ModuleDriverName }}.ko {{ .ModuleFullPath }}
+strip -g {{ .ModuleFullPath }}
 # Print results
-modinfo falco.ko
+modinfo {{ .ModuleFullPath }}
 {{ end }}
 
 {{ if .BuildProbe }}
