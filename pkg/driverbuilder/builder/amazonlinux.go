@@ -69,8 +69,9 @@ mv usr/src/kernels/*/* /tmp/kernel
 # Build the kernel module
 cd {{ .DriverBuildDir }}
 make KERNELDIR=/tmp/kernel
+mv {{ .ModuleDriverName }}.ko {{ .ModuleFullPath }}
 # Print results
-modinfo falco.ko
+modinfo {{ .ModuleFullPath }}
 {{ end }}
 
 {{ if .BuildProbe }}
@@ -85,6 +86,8 @@ type amazonlinuxTemplateData struct {
 	DriverBuildDir     string
 	ModuleDownloadURL  string
 	KernelDownloadURLs []string
+	ModuleDriverName   string
+	ModuleFullPath     string
 	BuildModule        bool
 	BuildProbe         bool
 }
@@ -125,6 +128,8 @@ func script(c Config, targetType Type) (string, error) {
 		DriverBuildDir:     DriverDirectory,
 		ModuleDownloadURL:  moduleDownloadURL(c),
 		KernelDownloadURLs: urls,
+		ModuleDriverName:   c.DriverName,
+		ModuleFullPath:     ModuleFullPath,
 		BuildModule:        len(c.Build.ModuleFilePath) > 0,
 		BuildProbe:         len(c.Build.ProbeFilePath) > 0,
 	}

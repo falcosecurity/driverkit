@@ -68,15 +68,15 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 	podClient := bp.coreV1Client.Pods(namespace)
 	configClient := bp.coreV1Client.ConfigMaps(namespace)
 
-	// create a builder based on the choosen build type
+	// create a builder based on the chosen build type
 	v, err := builder.Factory(build.TargetType)
 	if err != nil {
 		return err
 	}
 
 	c := builder.Config{
-		DriverName:      "falco",                                         // TODO: make this configurable
-		DeviceName:      "falco",                                         // TODO: make this configurable
+		DriverName:      build.ModuleDriverName,
+		DeviceName:      build.ModuleDeviceName,
 		DownloadBaseURL: "https://github.com/falcosecurity/libs/archive", // TODO: make this configurable
 		Build:           build,
 	}

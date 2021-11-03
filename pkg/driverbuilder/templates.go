@@ -10,7 +10,7 @@ import (
 var waitForModuleScript = `
 touch /tmp/module-download.lock
 while true; do
-  if [ ! -f ` + builder.FalcoModuleFullPath + ` ]; then
+  if [ ! -f ` + builder.ModuleFullPath + ` ]; then
     echo "Falco module not found - waiting for 10 seconds"
 	sleep 10
 	continue
@@ -30,13 +30,13 @@ done
 // the download file itself because it goes trough stdout
 var waitForModuleAndCat = `
 while true; do
-  if [ ! -f ` + builder.FalcoModuleFullPath + ` ]; then
+  if [ ! -f ` + builder.ModuleFullPath + ` ]; then
 	sleep 10 1>&/dev/null
 	continue
   fi
   break
 done
-cat ` + builder.FalcoModuleFullPath + `
+cat ` + builder.ModuleFullPath + `
 rm /tmp/module-download.lock 1>&/dev/null
 `
 

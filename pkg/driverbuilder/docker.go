@@ -60,14 +60,14 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		return err
 	}
 	c := builder.Config{
-		DriverName:      "falco",
-		DeviceName:      "falco",
+		DriverName:      b.ModuleDriverName,
+		DeviceName:      b.ModuleDeviceName,
 		DownloadBaseURL: "https://github.com/falcosecurity/libs/archive",
 		Build:           b,
 	}
 
 	// Generate the build script from the builder
-	res, err := v.Script(c)
+	driverkitScript, err := v.Script(c)
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	}
 
 	files := []dockerCopyFile{
-		{"/driverkit/driverkit.sh", res},
+		{"/driverkit/driverkit.sh", driverkitScript},
 		{"/driverkit/kernel.config", string(configDecoded)},
 		{"/driverkit/module-Makefile", bufMakefile.String()},
 		{"/driverkit/module-driver-config.h", bufDriverConfig.String()},
@@ -197,14 +197,14 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	forwardLogs(hr.Reader)
 
 	if len(b.ModuleFilePath) > 0 {
-		if err := copyFromContainer(ctx, cli, cdata.ID, builder.FalcoModuleFullPath, b.ModuleFilePath); err != nil {
+		if err := copyFromContainer(ctx, cli, cdata.ID, builder.ModuleFullPath, b.ModuleFilePath); err != nil {
 			return err
 		}
 		logrus.WithField("path", b.ModuleFilePath).Info("kernel module available")
 	}
 
 	if len(b.ProbeFilePath) > 0 {
-		if err := copyFromContainer(ctx, cli, cdata.ID, builder.FalcoProbeFullPath, b.ProbeFilePath); err != nil {
+		if err := copyFromContainer(ctx, cli, cdata.ID, builder.ProbeFullPath, b.ProbeFilePath); err != nil {
 			return err
 		}
 		logrus.WithField("path", b.ProbeFilePath).Info("eBPF probe available")

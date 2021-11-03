@@ -51,6 +51,8 @@ func (v debian) Script(c Config) (string, error) {
 		ModuleDownloadURL:  fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.Build.DriverVersion),
 		KernelDownloadURLS: urls,
 		KernelLocalVersion: kr.FullExtraversion,
+		ModuleDriverName:   c.DriverName,
+		ModuleFullPath:     ModuleFullPath,
 		BuildModule:        len(c.Build.ModuleFilePath) > 0,
 		BuildProbe:         len(c.Build.ProbeFilePath) > 0,
 	}
@@ -83,6 +85,8 @@ type debianTemplateData struct {
 	ModuleDownloadURL  string
 	KernelDownloadURLS []string
 	KernelLocalVersion string
+	ModuleDriverName   string
+	ModuleFullPath     string
 	BuildModule        bool
 	BuildProbe         bool
 }
@@ -126,9 +130,10 @@ ls -la $sourcedir
 # Build the module
 cd {{ .DriverBuildDir }}
 make CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
-strip -g falco.ko
+mv {{ .ModuleDriverName }}.ko {{ .ModuleFullPath }}
+strip -g {{ .ModuleFullPath }}
 # Print results
-modinfo falco.ko
+modinfo {{ .ModuleFullPath }}
 {{ end }}
 
 {{ if .BuildProbe }}

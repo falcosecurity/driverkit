@@ -12,16 +12,16 @@ import (
 const DriverDirectory = "/tmp/driver"
 
 // ModuleFileName is the standard file name for the kernel module.
-const ModuleFileName = "falco.ko"
+const ModuleFileName = "module.ko"
 
 // ProbeFileName is the standard file name for the eBPF probe.
 const ProbeFileName = "probe.o"
 
-// FalcoModuleFullPath is the standard path for the kernel module.
-var FalcoModuleFullPath = path.Join(DriverDirectory, ModuleFileName)
+// ModuleFullPath is the standard path for the kernel module. Builders must place the compiled module at this location.
+var ModuleFullPath = path.Join(DriverDirectory, ModuleFileName)
 
-// FalcoProbeFullPath is the standard path for the eBPF probe.
-var FalcoProbeFullPath = path.Join(DriverDirectory, "bpf", ProbeFileName)
+// ProbeFullPath is the standard path for the eBPF probe. Builders must place the compiled probe at this location.
+var ProbeFullPath = path.Join(DriverDirectory, "bpf", ProbeFileName)
 
 // Config contains all the configurations needed to build the kernel module or the eBPF probe.
 type Config struct {
