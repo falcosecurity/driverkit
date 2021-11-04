@@ -149,6 +149,11 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 		)
 	}
 
+	builderImage := builderBaseImage
+	if len(build.CustomBuilderImage) > 0 {
+		builderImage = build.CustomBuilderImage
+	}
+
 	pod := &corev1.Pod{
 		ObjectMeta: commonMeta,
 		Spec: corev1.PodSpec{
@@ -157,7 +162,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 			Containers: []corev1.Container{
 				{
 					Name:            name,
-					Image:           builderBaseImage,
+					Image:           builderImage,
 					Command:         buildCmd,
 					Env:             envs,
 					ImagePullPolicy: corev1.PullIfNotPresent,
