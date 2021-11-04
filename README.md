@@ -56,6 +56,11 @@ Now run driverkit using the configuration file:
 driverkit docker -c ubuntu-aws.yaml
 ```
 
+### Configure the kernel module name
+
+It is possible to customize the kernel module name that is produced by Driverkit with the `moduledevicename` and `moduledrivername` options.
+In this context, the _device name_ is the prefix used for the devices in `/dev/`, while the _driver name_ is the kernel module name as reported by `modinfo` or `lsmod` once the module is loaded.
+
 ## Supported targets
 
 ### ubuntu-generic
