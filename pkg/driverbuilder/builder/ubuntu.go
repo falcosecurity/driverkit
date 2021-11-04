@@ -342,7 +342,19 @@ modinfo {{ .ModuleFullPath }}
 {{ if .BuildProbe }}
 # Build the eBPF probe
 cd {{ .DriverBuildDir }}/bpf
-make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
+if [[ -x /usr/bin/llc ]]; then
+	LLC_BIN=/usr/bin/llc
+else
+	LLC_BIN=/usr/bin/llc-7
+fi
+
+if [[ -x /usr/bin/clang ]]; then
+	CLANG_BIN=/usr/bin/clang
+else
+	CLANG_BIN=/usr/bin/clang-7
+fi
+
+make LLC=$LLC_BIN CLANG=$CLANG_BIN CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
 ls -l probe.o
 {{ end }}
 `

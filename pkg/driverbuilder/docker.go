@@ -91,13 +91,18 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		return err
 	}
 
+	builderImage := builderBaseImage
+	if len(b.CustomBuilderImage) > 0 {
+		builderImage = b.CustomBuilderImage
+	}
+
 	// Create the container
 	ctx := context.Background()
 	ctx = signals.WithStandardSignals(ctx)
 
-	if _, _, err = cli.ImageInspectWithRaw(ctx, builderBaseImage); client.IsErrNotFound(err) {
-		logger.WithField("image", builderBaseImage).Debug("pulling builder image")
-		pullRes, err := cli.ImagePull(ctx, builderBaseImage, types.ImagePullOptions{})
+	if _, _, err = cli.ImageInspectWithRaw(ctx, builderImage); client.IsErrNotFound(err) {
+		logger.WithField("image", builderImage).Debug("pulling builder image")
+		pullRes, err := cli.ImagePull(ctx, builderImage, types.ImagePullOptions{})
 		if err != nil {
 			return err
 		}
@@ -111,7 +116,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	containerCfg := &container.Config{
 		Tty:   true,
 		Cmd:   []string{"/bin/sleep", strconv.Itoa(bp.timeout)},
-		Image: builderBaseImage,
+		Image: builderImage,
 	}
 
 	hostCfg := &container.HostConfig{
