@@ -21,8 +21,8 @@ type RootOptions struct {
 	Architecture     string `default:"x86_64" validate:"required,oneof=x86_64" name:"architecture"`
 	DriverVersion    string `default:"dev" validate:"eq=dev|sha1|semver" name:"driver version"`
 	KernelVersion    uint16 `default:"1" validate:"omitempty,number" name:"kernel version"`
-	ModuleDriverName string `default:"falco" name:"kernel module driver name"`
-	ModuleDeviceName string `default:"falco" name:"kernel module device name"`
+	ModuleDriverName string `default:"falco" validate:"max=60" name:"kernel module driver name"`
+	ModuleDeviceName string `default:"falco" validate:"excludes=/,max=255" name:"kernel module device name"`
 	KernelRelease    string `validate:"required,ascii" name:"kernel release"`
 	Target           string `validate:"required,target" name:"target"`
 	KernelConfigData string `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level
