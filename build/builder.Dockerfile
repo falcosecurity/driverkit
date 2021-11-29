@@ -31,17 +31,17 @@ RUN apt-get update \
 	libudev-dev \
 	libpci-dev \
 	libiberty-dev \
-    lsb-release \
-    wget \
-    software-properties-common \
-    gpg \
+	lsb-release \
+	wget \
+	software-properties-common \
+	gpg \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Install clang 12
 RUN cd /tmp \
-    && wget https://apt.llvm.org/llvm.sh \
-    && chmod +x llvm.sh \
-    && ./llvm.sh 12
+	&& wget https://apt.llvm.org/llvm.sh \
+	&& chmod +x llvm.sh \
+	&& ./llvm.sh 12
 
 # gcc 6 is no longer included in debian stable, but we need it to
 # build kernel modules on the default debian-based ami used by
