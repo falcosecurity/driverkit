@@ -55,6 +55,7 @@ func (v debian) Script(c Config) (string, error) {
 		ModuleFullPath:     ModuleFullPath,
 		BuildModule:        len(c.Build.ModuleFilePath) > 0,
 		BuildProbe:         len(c.Build.ProbeFilePath) > 0,
+		LLVMVersion:        debianLLVMVersionFromKernelRelease(kr),
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -89,6 +90,7 @@ type debianTemplateData struct {
 	ModuleFullPath     string
 	BuildModule        bool
 	BuildProbe         bool
+	LLVMVersion        string
 }
 
 const debianTemplate = `
@@ -139,7 +141,7 @@ modinfo {{ .ModuleFullPath }}
 {{ if .BuildProbe }}
 # Build the eBPF probe
 cd {{ .DriverBuildDir }}/bpf
-make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
+make LLC=/usr/bin/llc-{{ .LLVMVersion }} CLANG=/usr/bin/clang-{{ .LLVMVersion }} CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
 ls -l probe.o
 {{ end }}
 `
@@ -234,4 +236,12 @@ func debianKbuildURLFromRelease(kr kernelrelease.KernelRelease) (string, error) 
 	}
 
 	return fmt.Sprintf("%s%s", baseURL, match[1]), nil
+}
+
+func debianLLVMVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
+	switch kr.Version {
+	case "5":
+		return "12"
+	}
+	return "7"
 }
