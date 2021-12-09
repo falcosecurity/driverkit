@@ -94,6 +94,8 @@ func fetchCentosKernelURLS(kr kernelrelease.KernelRelease) []string {
 		"7.6.1810/updates",
 		"7.7.1908/os",
 		"7.7.1908/updates",
+		"7.8.2003/os",
+		"7.8.2003/updates",
 		"8.0.1905/os",
 		"8.0.1905/updates",
 		"8.1.1911/os",
