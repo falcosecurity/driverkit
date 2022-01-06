@@ -105,6 +105,7 @@ func fetchCentosKernelURLS(kr kernelrelease.KernelRelease) []string {
 		"8.1.1911/BaseOS",
 		"8.2.2004/BaseOS",
 		"8.3.2011/BaseOS",
+		"8.4.2105/BaseOS",
 	}
 
 	edgeReleases := []string{
