@@ -34,19 +34,21 @@ type KubernetesBuildProcessor struct {
 	namespace    string
 	timeout      int
 	proxy        string
+	image        string
 }
 
 // NewKubernetesBuildProcessor constructs a KubernetesBuildProcessor
 // starting from a kubernetes.Clientset. bufferSize represents the length of the
 // channel we use to do the builds. A bigger bufferSize will mean that we can save more Builds
 // for processing, however setting this to a big value will have impacts
-func NewKubernetesBuildProcessor(corev1Client v1.CoreV1Interface, clientConfig *restclient.Config, namespace string, timeout int, proxy string) *KubernetesBuildProcessor {
+func NewKubernetesBuildProcessor(corev1Client v1.CoreV1Interface, clientConfig *restclient.Config, namespace string, timeout int, proxy, image string) *KubernetesBuildProcessor {
 	return &KubernetesBuildProcessor{
 		coreV1Client: corev1Client,
 		clientConfig: clientConfig,
 		namespace:    namespace,
 		timeout:      timeout,
 		proxy:        proxy,
+		image:        image,
 	}
 }
 
@@ -157,7 +159,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 			Containers: []corev1.Container{
 				{
 					Name:            name,
-					Image:           builderBaseImage,
+					Image:           bp.image,
 					Command:         buildCmd,
 					Env:             envs,
 					ImagePullPolicy: corev1.PullIfNotPresent,

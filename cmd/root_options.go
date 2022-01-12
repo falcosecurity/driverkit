@@ -23,6 +23,7 @@ type RootOptions struct {
 	KernelVersion    uint16 `default:"1" validate:"omitempty,number" name:"kernel version"`
 	ModuleDriverName string `default:"falco" validate:"max=60" name:"kernel module driver name"`
 	ModuleDeviceName string `default:"falco" validate:"excludes=/,max=255" name:"kernel module device name"`
+	DockerImage      string `name:"docker image"`
 	KernelRelease    string `validate:"required,ascii" name:"kernel release"`
 	Target           string `validate:"required,target" name:"target"`
 	KernelConfigData string `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level

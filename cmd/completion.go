@@ -61,10 +61,8 @@ func NewCompletionCmd() *cobra.Command {
 			switch arg {
 			case "bash":
 				c.Root().GenBashCompletion(os.Stdout)
-				break
 			case "zsh":
 				c.Root().GenZshCompletion(os.Stdout)
-				break
 			case "fish":
 				c.Root().GenFishCompletion(os.Stdout, true)
 			case "help":

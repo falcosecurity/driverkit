@@ -20,7 +20,6 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"github.com/falcosecurity/driverkit/pkg/signals"
-	"github.com/sirupsen/logrus"
 	logger "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/uuid"
 )
@@ -32,13 +31,15 @@ type DockerBuildProcessor struct {
 	clean   bool
 	timeout int
 	proxy   string
+	image   string
 }
 
 // NewDockerBuildProcessor ...
-func NewDockerBuildProcessor(timeout int, proxy string) *DockerBuildProcessor {
+func NewDockerBuildProcessor(timeout int, proxy, image string) *DockerBuildProcessor {
 	return &DockerBuildProcessor{
 		timeout: timeout,
 		proxy:   proxy,
+		image:   image,
 	}
 }
 
@@ -95,9 +96,9 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	ctx := context.Background()
 	ctx = signals.WithStandardSignals(ctx)
 
-	if _, _, err = cli.ImageInspectWithRaw(ctx, builderBaseImage); client.IsErrNotFound(err) {
-		logger.WithField("image", builderBaseImage).Debug("pulling builder image")
-		pullRes, err := cli.ImagePull(ctx, builderBaseImage, types.ImagePullOptions{})
+	if _, _, err = cli.ImageInspectWithRaw(ctx, bp.image); client.IsErrNotFound(err) {
+		logger.WithField("image", bp.image).Debug("pulling builder image")
+		pullRes, err := cli.ImagePull(ctx, bp.image, types.ImagePullOptions{})
 		if err != nil {
 			return err
 		}
@@ -111,7 +112,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	containerCfg := &container.Config{
 		Tty:   true,
 		Cmd:   []string{"/bin/sleep", strconv.Itoa(bp.timeout)},
-		Image: builderBaseImage,
+		Image: bp.image,
 	}
 
 	hostCfg := &container.HostConfig{
@@ -200,14 +201,14 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		if err := copyFromContainer(ctx, cli, cdata.ID, builder.ModuleFullPath, b.ModuleFilePath); err != nil {
 			return err
 		}
-		logrus.WithField("path", b.ModuleFilePath).Info("kernel module available")
+		logger.WithField("path", b.ModuleFilePath).Info("kernel module available")
 	}
 
 	if len(b.ProbeFilePath) > 0 {
 		if err := copyFromContainer(ctx, cli, cdata.ID, builder.ProbeFullPath, b.ProbeFilePath); err != nil {
 			return err
 		}
-		logrus.WithField("path", b.ProbeFilePath).Info("eBPF probe available")
+		logger.WithField("path", b.ProbeFilePath).Info("eBPF probe available")
 	}
 
 	return nil
