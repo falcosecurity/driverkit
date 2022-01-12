@@ -12,6 +12,7 @@ Available Commands:
 
 Flags:
   -c, --config string             config file path (default $HOME/.driverkit.yaml if exists)
+      --dockerimage string        docker image to use for build (default "falcosecurity/driverkit-builder:latest")
       --driverversion string      driver version as a git commit hash or as a git tag (default "dev")
       --dryrun                    do not actually perform the action
   -h, --help                      help for driverkit
