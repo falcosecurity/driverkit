@@ -149,7 +149,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 		)
 	}
 
-	builderImage := builderBaseImage
+	builderImage := BuilderBaseImage
 	if len(build.CustomBuilderImage) > 0 {
 		builderImage = build.CustomBuilderImage
 	}

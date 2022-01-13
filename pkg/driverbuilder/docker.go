@@ -20,7 +20,6 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"github.com/falcosecurity/driverkit/pkg/signals"
-	"github.com/sirupsen/logrus"
 	logger "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/uuid"
 )
@@ -91,7 +90,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		return err
 	}
 
-	builderImage := builderBaseImage
+	builderImage := BuilderBaseImage
 	if len(b.CustomBuilderImage) > 0 {
 		builderImage = b.CustomBuilderImage
 	}
@@ -205,14 +204,14 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		if err := copyFromContainer(ctx, cli, cdata.ID, builder.ModuleFullPath, b.ModuleFilePath); err != nil {
 			return err
 		}
-		logrus.WithField("path", b.ModuleFilePath).Info("kernel module available")
+		logger.WithField("path", b.ModuleFilePath).Info("kernel module available")
 	}
 
 	if len(b.ProbeFilePath) > 0 {
 		if err := copyFromContainer(ctx, cli, cdata.ID, builder.ProbeFullPath, b.ProbeFilePath); err != nil {
 			return err
 		}
-		logrus.WithField("path", b.ProbeFilePath).Info("eBPF probe available")
+		logger.WithField("path", b.ProbeFilePath).Info("eBPF probe available")
 	}
 
 	return nil

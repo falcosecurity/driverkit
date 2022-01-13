@@ -6,7 +6,6 @@ import (
 
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder"
 	"github.com/falcosecurity/driverkit/pkg/kubernetes/factory"
-	"github.com/sirupsen/logrus"
 	logger "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -41,7 +40,7 @@ func NewKubernetesCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Co
 	kubefactory := factory.NewFactory(configFlags)
 
 	kubernetesCmd.Run = func(cmd *cobra.Command, args []string) {
-		logrus.WithField("processor", cmd.Name()).Info("driver building, it will take a few seconds")
+		logger.WithField("processor", cmd.Name()).Info("driver building, it will take a few seconds")
 		if !configOptions.DryRun {
 			if err := kubernetesRun(cmd, args, kubefactory, rootOpts); err != nil {
 				logger.WithError(err).Fatal("exiting")

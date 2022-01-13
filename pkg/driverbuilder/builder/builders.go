@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/sirupsen/logrus"
+	logger "github.com/sirupsen/logrus"
 )
 
 // DriverDirectory is the directory the processor uses to store the driver.
@@ -58,7 +58,7 @@ func getResolvingURLs(urls []string) ([]string, error) {
 		}
 		if res.StatusCode == http.StatusOK {
 			results = append(results, u)
-			logrus.WithField("url", u).Debug("kernel header url found")
+			logger.WithField("url", u).Debug("kernel header url found")
 		}
 	}
 	if len(results) == 0 {
