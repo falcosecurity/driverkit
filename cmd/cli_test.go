@@ -15,8 +15,9 @@ import (
 )
 
 type expect struct {
-	err string
-	out string
+	err            string
+	outMatchesFile string // Check if the output matches the corresponding file content
+	outContains    string // Check if the output contains a specific string
 }
 
 type testCase struct {
@@ -30,28 +31,28 @@ var tests = []testCase{
 	{
 		args: []string{"help"},
 		expect: expect{
-			out: "testdata/help.txt",
+			outMatchesFile: "testdata/help.txt",
 		},
 	},
 	{
 		args: []string{"-h"},
 		expect: expect{
-			out: "testdata/help-flag.txt",
+			outMatchesFile: "testdata/help-flag.txt",
 		},
 	},
 	{
 		descr: "empty",
 		args:  []string{},
 		expect: expect{
-			out: "testdata/autohelp.txt",
+			outContains: "Usage",
 		},
 	},
 	{
 		descr: "invalid/processor",
 		args:  []string{"abc"},
 		expect: expect{
-			out: "testdata/non-existent-processor.txt",
-			err: `invalid argument "abc" for "driverkit"`,
+			outContains: "invalid argument",
+			err:         `invalid argument "abc" for "driverkit"`,
 		},
 	},
 	{
@@ -61,8 +62,8 @@ var tests = []testCase{
 			"wrong",
 		},
 		expect: expect{
-			out: "testdata/invalid-proxyconfig.txt",
-			err: "exiting for validation errors",
+			outContains: "proxy url must start",
+			err:         "exiting for validation errors",
 		},
 	},
 	{
@@ -79,15 +80,15 @@ var tests = []testCase{
 			"/tmp/falco-ubuntu-aws.ko",
 		},
 		expect: expect{
-			out: "testdata/docker-with-flags.txt",
+			outMatchesFile: "testdata/docker-with-flags.txt",
 		},
 	},
 	{
 		descr: "docker/empty",
 		args:  []string{"docker"},
 		expect: expect{
-			err: "exiting for validation errors",
-			out: "testdata/dockernoopts.txt",
+			err:         "exiting for validation errors",
+			outContains: "Usage",
 		},
 	},
 	{
@@ -106,7 +107,7 @@ var tests = []testCase{
 			"debug",
 		},
 		expect: expect{
-			out: "testdata/docker-with-flags-debug.txt",
+			outMatchesFile: "testdata/docker-with-flags-debug.txt",
 		},
 	},
 	{
@@ -125,7 +126,7 @@ var tests = []testCase{
 			"debug",
 		},
 		expect: expect{
-			out: "testdata/docker-with-flags-debug.txt",
+			outMatchesFile: "testdata/docker-with-flags-debug.txt",
 		},
 	},
 	{
@@ -138,7 +139,7 @@ var tests = []testCase{
 			"debug",
 		},
 		expect: expect{
-			out: "testdata/docker-from-config-debug.txt",
+			outMatchesFile: "testdata/docker-from-config-debug.txt",
 		},
 	},
 	{
@@ -155,7 +156,7 @@ var tests = []testCase{
 			"debug",
 		},
 		expect: expect{
-			out: "testdata/docker-override-from-config-debug.txt",
+			outMatchesFile: "testdata/docker-override-from-config-debug.txt",
 		},
 	},
 	{
@@ -167,7 +168,7 @@ var tests = []testCase{
 			"ENTER",
 		},
 		expect: expect{
-			out: "testdata/completion-targets.txt",
+			outMatchesFile: "testdata/completion-targets.txt",
 		},
 	},
 	{
@@ -179,7 +180,7 @@ var tests = []testCase{
 			"ENTER",
 		},
 		expect: expect{
-			out: "testdata/completion-targets.txt",
+			outMatchesFile: "testdata/completion-targets.txt",
 		},
 	},
 	{
@@ -191,7 +192,7 @@ var tests = []testCase{
 			"ENTER",
 		},
 		expect: expect{
-			out: "testdata/completion-targets.txt",
+			outMatchesFile: "testdata/completion-targets.txt",
 		},
 	},
 	{
@@ -200,7 +201,7 @@ var tests = []testCase{
 			"completion",
 		},
 		expect: expect{
-			out: "testdata/completion-noargs.txt",
+			outMatchesFile: "testdata/completion-noargs.txt",
 		},
 	},
 	{
@@ -210,7 +211,7 @@ var tests = []testCase{
 			"help",
 		},
 		expect: expect{
-			out: "testdata/completion-noargs.txt",
+			outMatchesFile: "testdata/completion-noargs.txt",
 		},
 	},
 	{
@@ -220,7 +221,7 @@ var tests = []testCase{
 			"-h",
 		},
 		expect: expect{
-			out: "testdata/completion-noargs.txt",
+			outMatchesFile: "testdata/completion-noargs.txt",
 		},
 	},
 }
@@ -253,7 +254,12 @@ func run(t *testing.T, test testCase) {
 		t.Fatalf("error reading CLI output: %v", err)
 	}
 	res := stripansi.Strip(string(out))
-	assert.Equal(t, test.expect.out, res)
+	if test.expect.outMatchesFile != "" {
+		assert.Equal(t, test.expect.outMatchesFile, res)
+	}
+	if test.expect.outContains != "" {
+		assert.Assert(t, strings.Contains(res, test.expect.outContains))
+	}
 	// Teardown
 	for k := range test.env {
 		if err := os.Unsetenv(k); err != nil {
@@ -266,17 +272,17 @@ func TestCLI(t *testing.T) {
 	for _, test := range tests {
 		descr := test.descr
 		if descr == "" {
-			if test.expect.out == "" {
-				t.Fatal("malformed test case: missing both descr and expect.out fields")
+			if test.expect.outMatchesFile == "" && test.expect.outContains == "" {
+				t.Fatal("malformed test case: missing both descr and expect.outMatchesFile/expect.outContains fields")
 			}
-			test.descr = strings.TrimSuffix(filepath.Base(test.expect.out), ".txt")
+			test.descr = strings.TrimSuffix(filepath.Base(test.expect.outMatchesFile), ".txt")
 		}
-		if test.expect.out != "" {
-			out, err := ioutil.ReadFile(test.expect.out)
+		if test.expect.outMatchesFile != "" {
+			out, err := ioutil.ReadFile(test.expect.outMatchesFile)
 			if err != nil {
 				t.Fatalf("output fixture not found: %v", err)
 			}
-			test.expect.out = string(out)
+			test.expect.outMatchesFile = string(out)
 		}
 
 		t.Run(test.descr, func(t *testing.T) {
