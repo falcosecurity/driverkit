@@ -26,13 +26,13 @@ uname -r
 ### Against a Kubernetes cluster
 
 ```bash
-driverkit kubernetes --output-module /tmp/falco.ko --kernelversion=81 --kernelrelease=4.15.0-72-generic --driverversion=dev --target=ubuntu-generic
+driverkit kubernetes --output-module /tmp/falco.ko --kernelversion=81 --kernelrelease=4.15.0-72-generic --driverversion=master --target=ubuntu-generic
 ```
 
 ### Against a Docker daemon
 
 ```bash
-driverkit docker --output-module /tmp/falco.ko --kernelversion=81 --kernelrelease=4.15.0-72-generic --driverversion=dev --target=ubuntu-generic
+driverkit docker --output-module /tmp/falco.ko --kernelversion=81 --kernelrelease=4.15.0-72-generic --driverversion=master --target=ubuntu-generic
 ```
 
 
@@ -47,7 +47,7 @@ target: ubuntu-aws
 output:
   module: /tmp/falco-ubuntu-aws.ko
   probe: /tmp/falco-ubuntu-aws.o
-driverversion: dev
+driverversion: master
 ```
 
 Now run driverkit using the configuration file:
@@ -73,7 +73,7 @@ target: ubuntu-generic
 output:
   module: /tmp/falco-ubuntu-generic.ko
   probe: /tmp/falco-ubuntu-generic.o
-driverversion: dev
+driverversion: master
 ```
 
 ### ubuntu-aws
@@ -87,7 +87,7 @@ target: ubuntu-aws
 output:
   module: /tmp/falco-ubuntu-aws.ko
   probe: /tmp/falco-ubuntu-aws.o
-driverversion: dev
+driverversion: master
 ```
 
 ### centos 6
@@ -98,7 +98,7 @@ kernelversion: 1
 target: centos
 output:
   module: /tmp/falco-centos6.ko
-driverversion: dev
+driverversion: master
 ```
 
 ### centos 7
@@ -109,7 +109,7 @@ kernelversion: 1
 target: centos
 output:
   module: /tmp/falco-centos7.ko
-driverversion: dev
+driverversion: master
 ```
 
 ### centos 8
@@ -120,7 +120,7 @@ kernelversion: 1
 target: centos
 output:
   module: /tmp/falco-centos8.ko
-driverversion: dev
+driverversion: master
 ```
 
 ### amazonlinux
@@ -155,7 +155,7 @@ output:
   module: /tmp/falco-debian.ko
   probe: /tmp/falco-debian.o
 target: debian
-driverversion: dev
+driverversion: master
 ```
 
 ### vanilla
