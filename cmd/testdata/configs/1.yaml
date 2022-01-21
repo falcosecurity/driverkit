@@ -3,4 +3,4 @@ kernelversion: 59
 target: ubuntu-aws
 output:
     module: /tmp/falco-ubuntu-aws.ko
-driverversion: dev
+driverversion: master
