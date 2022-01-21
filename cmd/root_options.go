@@ -19,7 +19,7 @@ type OutputOptions struct {
 // RootOptions ...
 type RootOptions struct {
 	Architecture     string `default:"x86_64" validate:"required,oneof=x86_64" name:"architecture"`
-	DriverVersion    string `default:"dev" validate:"eq=dev|sha1|semver" name:"driver version"`
+	DriverVersion    string `default:"master" validate:"eq=master|sha1|semver" name:"driver version"`
 	KernelVersion    uint16 `default:"1" validate:"omitempty,number" name:"kernel version"`
 	ModuleDriverName string `default:"falco" validate:"max=60" name:"kernel module driver name"`
 	ModuleDeviceName string `default:"falco" validate:"excludes=/,max=255" name:"kernel module device name"`

@@ -113,7 +113,7 @@ func init() {
 		"eq=dev|sha1|semver",
 		T,
 		func(ut ut.Translator) error {
-			return ut.Add("eq=dev|sha1|semver", `{0} must be a valid SHA1, semver-ish, or the "dev" string`, true)
+			return ut.Add("eq=dev|sha1|semver", `{0} must be a valid SHA1, semver-ish, or the "master" string`, true)
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
 			t, _ := ut.T(fe.Tag(), fe.Field())
