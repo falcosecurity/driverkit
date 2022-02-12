@@ -2,9 +2,31 @@ package kernelrelease
 
 import (
 	"testing"
+	"encoding/json"
 
 	"gotest.tools/assert"
 )
+
+func TestFromKrToJson(t *testing.T) {
+	test := struct {
+		kernelRelease	KernelRelease
+		want			string
+	}{
+		kernelRelease: KernelRelease{
+			Fullversion:      "5.16.5",
+			Version:          "5",
+			PatchLevel:       "16",
+			Sublevel:         "5",
+			Extraversion:     "arch1-1",
+			FullExtraversion: "-arch1-1",
+		},
+		want: `{"full_version":"5.16.5","version":"5","patch_level":"16","sublevel":"5","extra_version":"arch1-1","full_extra_version":"-arch1-1"}`,
+	}
+	t.Run("version with local version", func(t *testing.T) {
+		got, _ := json.Marshal(test.kernelRelease)
+		assert.Equal(t, test.want, string(got))
+	})
+}
 
 func TestFromString(t *testing.T) {
 	tests := map[string]struct {

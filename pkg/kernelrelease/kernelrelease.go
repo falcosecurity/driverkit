@@ -11,12 +11,12 @@ var (
 
 // KernelRelease contains all the version parts.
 type KernelRelease struct {
-	Fullversion      string
-	Version          string
-	PatchLevel       string
-	Sublevel         string
-	Extraversion     string
-	FullExtraversion string
+	Fullversion      string `json:"full_version"`
+	Version          string `json:"version"`
+	PatchLevel       string `json:"patch_level"`
+	Sublevel         string `json:"sublevel"`
+	Extraversion     string `json:"extra_version"`
+	FullExtraversion string `json:"full_extra_version"`
 }
 
 // IsGKE tells whether the current kernel release is for GKE by looking at its name.
