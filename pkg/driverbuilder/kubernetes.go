@@ -105,8 +105,8 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 	}
 
 	// Prepare driver config template
-	bufDriverConfig := bytes.NewBuffer(nil)
-	err = renderDriverConfig(bufDriverConfig, driverConfigData{DriverVersion: c.Build.DriverVersion, DriverName: c.DriverName, DeviceName: c.DeviceName})
+	bufFillDriverConfig := bytes.NewBuffer(nil)
+	err = renderFillDriverConfig(bufFillDriverConfig, driverConfigData{DriverVersion: c.Build.DriverVersion, DriverName: c.DriverName, DeviceName: c.DeviceName})
 	if err != nil {
 		return err
 	}
@@ -126,11 +126,11 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 	cm := &corev1.ConfigMap{
 		ObjectMeta: commonMeta,
 		Data: map[string]string{
-			"driverkit.sh":           res,
-			"kernel.config":          string(configDecoded),
-			"module-Makefile":        bufMakefile.String(),
-			"module-driver-config.h": bufDriverConfig.String(),
-			"module-downloader.sh":   waitForModuleAndCat,
+			"driverkit.sh":          res,
+			"kernel.config":         string(configDecoded),
+			"module-Makefile":       bufMakefile.String(),
+			"fill-driver-config.sh": bufFillDriverConfig.String(),
+			"module-downloader.sh":  waitForModuleAndCat,
 		},
 	}
 	// Construct environment variable array of corev1.EnvVar
