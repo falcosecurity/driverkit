@@ -72,6 +72,8 @@ type driverConfigData struct {
 	DeviceName    string
 }
 
+// XXX both PROBE and DRIVER variables are kept for now so that Driverkit is compatible with older versions.
+// they can be removed when versions from early 2022/late 2021 will not be supported anymore.
 const fillDriverConfigTemplate = `
 set -euxo pipefail
 
@@ -85,8 +87,10 @@ cat << EOF > $DRIVER_CONFIG_FILE
 
 #define DRIVER_COMMIT "{{ .DriverVersion }}"
 
+#define PROBE_NAME "{{ .DriverName }}"
 #define DRIVER_NAME "{{ .DriverName }}"
 
+#define PROBE_DEVICE_NAME "{{ .DeviceName }}"
 #define DRIVER_DEVICE_NAME "{{ .DeviceName }}"
 
 #ifndef KBUILD_MODNAME
