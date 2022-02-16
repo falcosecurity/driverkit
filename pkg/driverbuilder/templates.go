@@ -72,25 +72,56 @@ type driverConfigData struct {
 	DeviceName    string
 }
 
-// TODO(fntlnz): these variables are still called probes because of how the driver code
-// references to them. We must change the driver code and then change here to s/PROBE_*/MODULE_*/g
-const driverConfigTemplate = `
+const fillDriverConfigTemplate = `
+set -euxo pipefail
+
+DRIVER_BUILD_DIR=$1
+DRIVER_CONFIG_FILE="$DRIVER_BUILD_DIR/driver_config.h"
+
+cat << EOF > $DRIVER_CONFIG_FILE
 #pragma once
 
-#define PROBE_VERSION "{{ .DriverVersion }}"
+#define DRIVER_VERSION "{{ .DriverVersion }}"
 
-#define PROBE_NAME "{{ .DriverName }}"
+#define DRIVER_COMMIT "{{ .DriverVersion }}"
 
-#define PROBE_DEVICE_NAME "{{ .DeviceName }}"
+#define DRIVER_NAME "{{ .DriverName }}"
+
+#define DRIVER_DEVICE_NAME "{{ .DeviceName }}"
 
 #ifndef KBUILD_MODNAME
-#define KBUILD_MODNAME PROBE_NAME
+#define KBUILD_MODNAME DRIVER_NAME
 #endif
+EOF
+
+API_VERSION_FILE="$DRIVER_BUILD_DIR/API_VERSION"
+if [[ -f $API_VERSION_FILE ]]; then
+	PPM_API_CURRENT_VERSION_MAJOR=$(cut -f 1 -d . "$API_VERSION_FILE")
+	PPM_API_CURRENT_VERSION_MINOR=$(cut -f 2 -d . "$API_VERSION_FILE")
+	PPM_API_CURRENT_VERSION_PATCH=$(cut -f 3 -d . "$API_VERSION_FILE")
+
+	echo "#define PPM_API_CURRENT_VERSION_MAJOR" $PPM_API_CURRENT_VERSION_MAJOR >> $DRIVER_CONFIG_FILE
+	echo "#define PPM_API_CURRENT_VERSION_MINOR" $PPM_API_CURRENT_VERSION_MINOR >> $DRIVER_CONFIG_FILE
+	echo "#define PPM_API_CURRENT_VERSION_PATCH" $PPM_API_CURRENT_VERSION_PATCH >> $DRIVER_CONFIG_FILE
+fi
+
+SCHEMA_VERSION_FILE="$DRIVER_BUILD_DIR/SCHEMA_VERSION"
+if [[ -f $SCHEMA_VERSION_FILE ]]; then
+	PPM_SCHEMA_CURRENT_VERSION_MAJOR=$(cut -f 1 -d . "$SCHEMA_VERSION_FILE")
+	PPM_SCHEMA_CURRENT_VERSION_MINOR=$(cut -f 2 -d . "$SCHEMA_VERSION_FILE")
+	PPM_SCHEMA_CURRENT_VERSION_PATCH=$(cut -f 3 -d . "$SCHEMA_VERSION_FILE")
+
+	echo "#define PPM_SCHEMA_CURRENT_VERSION_MAJOR" $PPM_SCHEMA_CURRENT_VERSION_MAJOR >> $DRIVER_CONFIG_FILE
+	echo "#define PPM_SCHEMA_CURRENT_VERSION_MINOR" $PPM_SCHEMA_CURRENT_VERSION_MINOR >> $DRIVER_CONFIG_FILE
+	echo "#define PPM_SCHEMA_CURRENT_VERSION_PATCH" $PPM_SCHEMA_CURRENT_VERSION_PATCH >> $DRIVER_CONFIG_FILE
+
+	echo '#include "ppm_api_version.h"' >> $DRIVER_CONFIG_FILE
+fi
 `
 
-func renderDriverConfig(w io.Writer, dd driverConfigData) error {
+func renderFillDriverConfig(w io.Writer, dd driverConfigData) error {
 	t := template.New("driverconfig")
-	parsed, err := t.Parse(driverConfigTemplate)
+	parsed, err := t.Parse(fillDriverConfigTemplate)
 	if err != nil {
 		return err
 	}
