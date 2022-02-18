@@ -74,6 +74,9 @@ type driverConfigData struct {
 
 // XXX both PROBE and DRIVER variables are kept for now so that Driverkit is compatible with older versions.
 // they can be removed when versions from early 2022/late 2021 will not be supported anymore.
+
+// Note that in the future DRIVER_COMMIT will be different from DRIVER_VERSION. Currently, it is the same as the commit
+// and no decision has been made yet about the distinction in falcosecurity/libs. Will need to be updated.
 const fillDriverConfigTemplate = `
 set -euxo pipefail
 
