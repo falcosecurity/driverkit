@@ -34,8 +34,7 @@ RUN apt-get update \
 	lsb-release \
 	wget \
 	software-properties-common \
-	gpg \
-	&& rm -rf /var/lib/apt/lists/*
+	gpg
 
 # Install clang 12
 RUN cd /tmp \
@@ -95,10 +94,14 @@ RUN curl -L -o cpp-4.8_4.8.4-1_amd64.deb https://download.falco.org/dependencies
 
 # debian:stable head contains binutils 2.31, which generates
 # binaries that are incompatible with kernels < 4.16. So manually
-# forcibly install binutils 2.30-22 instead.
-RUN curl -L -o binutils_2.30-22_amd64.deb https://download.falco.org/dependencies/binutils_2.30-22_amd64.deb \
-	&& curl -L -o libbinutils_2.30-22_amd64.deb https://download.falco.org/dependencies/libbinutils_2.30-22_amd64.deb \
-	&& curl -L -o binutils-x86-64-linux-gnu_2.30-22_amd64.deb https://download.falco.org/dependencies/binutils-x86-64-linux-gnu_2.30-22_amd64.deb \
-	&& curl -L -o binutils-common_2.30-22_amd64.deb https://download.falco.org/dependencies/binutils-common_2.30-22_amd64.deb \
+# forcibly install binutils 2.37-7 instead.
+RUN curl -L -o binutils_2.37-7_amd64.deb https://download.falco.org/dependencies/binutils_2.37-7_amd64.deb \
+	&& curl -L -o libbinutils_2.37-7_amd64.deb https://download.falco.org/dependencies/libbinutils_2.37-7_amd64.deb \
+	&& curl -L -o binutils-x86-64-linux-gnu_2.37-7_amd64.deb https://download.falco.org/dependencies/binutils-x86-64-linux-gnu_2.37-7_amd64.deb \
+	&& curl -L -o binutils-common_2.37-7_amd64.deb https://download.falco.org/dependencies/binutils-common_2.37-7_amd64.deb \
 	&& dpkg -i *binutils*.deb \
 	&& rm -f *binutils*.deb
+
+# zstd requires binutils >= 2.31.1 installed above.
+RUN apt-get install -y --no-install-recommends zstd \
+	&& rm -rf /var/lib/apt/lists/*
