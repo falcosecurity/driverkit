@@ -27,7 +27,7 @@ func (c rocky) Script(cfg Config) (string, error) {
 		return "", err
 	}
 
-	fmt.Sprintf("cfg.Build.KernelRelease=%s", cfg.Build.KernelRelease)
+	fmt.Printf("cfg.Build.KernelRelease=%s", cfg.Build.KernelRelease)
 	kr := kernelrelease.FromString(cfg.Build.KernelRelease)
 
 	// Check (and filter) existing kernels before continuing
