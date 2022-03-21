@@ -9,7 +9,7 @@ import (
 )
 
 // TargetTypeRocky identifies the Rocky target.
-const TargetTypeRocky Type = "centos"
+const TargetTypeRocky Type = "rocky"
 
 func init() {
 	BuilderByTarget[TargetTypeRocky] = &rocky{}
