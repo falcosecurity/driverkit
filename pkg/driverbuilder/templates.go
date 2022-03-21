@@ -87,6 +87,7 @@ cat << EOF > $DRIVER_CONFIG_FILE
 #pragma once
 
 #define DRIVER_VERSION "{{ .DriverVersion }}"
+#define PROBE_VERSION "{{ .ProbeVersion }}"
 
 #define DRIVER_COMMIT "{{ .DriverVersion }}"
 
