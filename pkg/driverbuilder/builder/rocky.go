@@ -63,7 +63,7 @@ func fetchRockyKernelURLS(kr kernelrelease.KernelRelease) []string {
 	urls := []string{}
 	for _, r := range rockyReleases {
 		urls = append(urls, fmt.Sprintf(
-			"https://download.rockylinux.org/pub/rocky/%s/BaseOS/x86_64/os/Packages/k/kernel-devel-%s%s.rpm"
+			"https://download.rockylinux.org/pub/rocky/%s/BaseOS/x86_64/os/Packages/k/kernel-devel-%s%s.rpm",
 			r,
 			kr.Fullversion,
 			kr.FullExtraversion,
