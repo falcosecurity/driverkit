@@ -30,9 +30,9 @@ func (c rocky) Script(cfg Config) (string, error) {
 	kr := kernelrelease.FromString(cfg.Build.KernelRelease)
 
 	// Check (and filter) existing kernels before continuing
-	fmt.Println("kr=%s", kr)
+	fmt.Printf("kr=%s\n", kr)
 	urls, err := getResolvingURLs(fetchRockyKernelURLS(kr))
-	fmt.Println("urls=%s", urls)
+	fmt.Printf("urls=%s\n", urls)
 	if err != nil {
 		return "", err
 	}
