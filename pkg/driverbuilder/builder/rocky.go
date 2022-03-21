@@ -31,6 +31,7 @@ func (c rocky) Script(cfg Config) (string, error) {
 
 	// Check (and filter) existing kernels before continuing
 	urls, err := getResolvingURLs(fetchRockyKernelURLS(kr))
+	fmt.Println("urls=%s", urls)
 	if err != nil {
 		return "", err
 	}
