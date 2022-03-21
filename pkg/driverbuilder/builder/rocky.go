@@ -69,6 +69,7 @@ func fetchRockyKernelURLS(kr kernelrelease.KernelRelease) []string {
 			kr.Fullversion,
 			kr.FullExtraversion,
 		))
+		fmt.Println("urls now contains %s", urls)
 	}
 	return urls
 }
