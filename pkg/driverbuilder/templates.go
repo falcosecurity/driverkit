@@ -70,6 +70,8 @@ type driverConfigData struct {
 	DriverVersion string
 	DriverName    string
 	DeviceName    string
+	ProbeVersion  string
+	ProbeName     string
 }
 
 // XXX both PROBE and DRIVER variables are kept for now so that Driverkit is compatible with older versions.
