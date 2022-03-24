@@ -2,6 +2,7 @@ amazonlinux
 amazonlinux2
 centos
 debian
+rocky
 ubuntu-aws
 ubuntu-generic
 vanilla
