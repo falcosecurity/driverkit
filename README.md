@@ -169,6 +169,19 @@ target: debian
 driverversion: master
 ```
 
+### flatcar
+Example configuration file to build both the Kernel module and eBPF probe for Flatcar.
+The Flatcar release version needs to be provided in the `kernelrelease` field and must be followed by `-flatcar`.
+
+```yaml
+kernelrelease: 3185.0.0-flatcar
+target: flatcar
+output:
+  module: /tmp/falco-flatcar-3185.0.0.ko
+  probe: /tmp/falco-flatcar-3185.0.0.o
+driverversion: master
+```
+
 ### vanilla
 
 In case of vanilla, you also need to pass the kernel config data in base64 format.
