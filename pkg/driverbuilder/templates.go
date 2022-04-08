@@ -86,6 +86,7 @@ DRIVER_CONFIG_FILE="$DRIVER_BUILD_DIR/driver_config.h"
 cat << EOF > $DRIVER_CONFIG_FILE
 #pragma once
 
+#define PROBE_VERSION "{{ .DriverVersion }}"
 #define DRIVER_VERSION "{{ .DriverVersion }}"
 
 #define DRIVER_COMMIT "{{ .DriverVersion }}"
