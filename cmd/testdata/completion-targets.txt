@@ -5,6 +5,7 @@ archlinux
 centos
 debian
 flatcar
+photon
 redhat
 rocky
 ubuntu
