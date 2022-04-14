@@ -141,6 +141,14 @@ func fetchCentosKernelURLS(kr kernelrelease.KernelRelease) []string {
 			kr.Fullversion,
 			kr.FullExtraversion,
 		))
+
+		urls = append(urls, fmt.Sprintf(
+			"https://mirror.centos.org/centos/%s/x86_64/os/Packages/kernel-devel-%s%s.rpm",
+			r,
+			kr.Fullversion,
+			kr.FullExtraversion,
+		))
+
 	}
 	for _, r := range vaultReleases {
 		urls = append(urls, fmt.Sprintf(
