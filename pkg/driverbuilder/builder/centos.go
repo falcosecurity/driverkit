@@ -122,6 +122,7 @@ func fetchCentosKernelURLS(kr kernelrelease.KernelRelease) []string {
 
 	streamReleases := []string{
 		"8/BaseOS",
+		"8-Stream/BaseOS",
 		"8-stream/BaseOS",
 	}
 
@@ -142,8 +143,9 @@ func fetchCentosKernelURLS(kr kernelrelease.KernelRelease) []string {
 			kr.FullExtraversion,
 		))
 
+		fmt.Println("kr=", kr)
 		urls = append(urls, fmt.Sprintf(
-			"https://mirror.centos.org/centos/%s/x86_64/os/Packages/kernel-devel-%s%s.rpm",
+			"http://mirror.centos.org/centos/%s/x86_64/os/Packages/kernel-devel-%s%s.rpm",
 			r,
 			kr.Fullversion,
 			kr.FullExtraversion,
