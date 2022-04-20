@@ -64,6 +64,8 @@ rm -rf kernel.rpm
 rm -Rf /tmp/kernel
 mkdir -p /tmp/kernel
 mv usr/src/kernels/*/* /tmp/kernel
+sed -i 's/PROBE_VERSION/DRIVER_VERSION/g' /tmp/driver/main.c
+sed -i 's/PPM_IOCTL_GET_DRIVER_VERSION/PPM_IOCTL_GET_PROBE_VERSION/g' /tmp/driver/main.c
 
 # Change current gcc
 ln -sf /usr/bin/gcc /usr/bin/gcc-{{ .GCCVersion }}
@@ -90,7 +92,7 @@ type amazonlinuxTemplateData struct {
 	DriverBuildDir     string
 	ModuleDownloadURL  string
 	KernelDownloadURLs []string
-	GCCVersion		   string
+	GCCVersion         string
 	ModuleDriverName   string
 	ModuleFullPath     string
 	BuildModule        bool
