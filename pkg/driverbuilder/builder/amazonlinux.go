@@ -147,6 +147,7 @@ var reposByTarget = map[Type][]string{
 		"core/2.0",
 		"core/latest",
 		"extras/kernel-5.4/latest",
+		"extras/kernel-5.10/latest",
 	},
 	TargetTypeAmazonLinux: []string{
 		"latest/updates",
