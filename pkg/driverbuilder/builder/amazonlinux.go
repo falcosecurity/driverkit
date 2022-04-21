@@ -81,7 +81,7 @@ modinfo {{ .ModuleFullPath }}
 {{ if .BuildProbe }}
 # Build the eBPF probe
 cd {{ .DriverBuildDir }}/bpf
-make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc KERNELDIR=/tmp/kernel
+make LLC=/usr/bin/llc-{{ .LLVMVersion }} CLANG=/usr/bin/clang-{{ .LLVMVersion }} CC=/usr/bin/gcc KERNELDIR=/tmp/kernel
 ls -l probe.o
 {{ end }}
 `
@@ -95,6 +95,7 @@ type amazonlinuxTemplateData struct {
 	ModuleFullPath     string
 	BuildModule        bool
 	BuildProbe         bool
+	LLVMVersion        string
 }
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
@@ -138,6 +139,7 @@ func script(c Config, targetType Type) (string, error) {
 		ModuleFullPath:     ModuleFullPath,
 		BuildModule:        len(c.Build.ModuleFilePath) > 0,
 		BuildProbe:         len(c.Build.ProbeFilePath) > 0,
+		LLVMVersion:        amazonLLVMVersionFromKernelRelease(kv),
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -325,9 +327,21 @@ func bunzip(data io.Reader) (res []byte, err error) {
 }
 
 func amazonGccVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
-    switch kr.Version {
+	switch kr.Version {
 	case "5":
 		return "10"
-    }
-    return "8"
+	}
+	return "8"
+}
+
+func amazonLLVMVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
+	switch kr.Version {
+	case "5":
+		switch kr.PatchLevel {
+		case "10":
+			return "12"
+		}
+		return "7"
+	}
+	return "7"
 }
