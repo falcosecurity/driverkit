@@ -66,7 +66,7 @@ mkdir -p /tmp/kernel
 mv usr/src/kernels/*/* /tmp/kernel
 
 # Change current gcc
-ln -sf /usr/bin/gcc /usr/bin/gcc-{{ .GCCVersion }}
+ln -sf /usr/bin/gcc-{{ .GCCVersion }} /usr/bin/gcc
 
 {{ if .BuildModule }}
 # Build the kernel module
@@ -327,21 +327,16 @@ func bunzip(data io.Reader) (res []byte, err error) {
 }
 
 func amazonGccVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
-	switch kr.Version {
-	case "5":
-		return "10"
-	}
 	return "8"
 }
 
 func amazonLLVMVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
 	switch kr.Version {
-	case "5":
-		switch kr.PatchLevel {
-		case "10":
-			return "12"
-		}
+	case "4":
 		return "7"
+	case "5":
+		return "12"
+	default:
+		return "12"
 	}
-	return "7"
 }
