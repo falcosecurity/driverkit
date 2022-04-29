@@ -130,7 +130,7 @@ func fetchCentosKernelURLS(kr kernelrelease.KernelRelease) []string {
 		urls = append(urls, fmt.Sprintf(
 			"https://mirrors.edge.kernel.org/centos/%s/%s/Packages/kernel-devel-%s%s.rpm",
 			r,
-			kr.Architecture.String(),
+			kr.Architecture.ToNonDeb(),
 			kr.Fullversion,
 			kr.FullExtraversion,
 		))
@@ -139,7 +139,7 @@ func fetchCentosKernelURLS(kr kernelrelease.KernelRelease) []string {
 		urls = append(urls, fmt.Sprintf(
 			"https://mirrors.edge.kernel.org/centos/%s/%s/os/Packages/kernel-devel-%s%s.rpm",
 			r,
-			kr.Architecture.String(),
+			kr.Architecture.ToNonDeb(),
 			kr.Fullversion,
 			kr.FullExtraversion,
 		))
@@ -148,7 +148,7 @@ func fetchCentosKernelURLS(kr kernelrelease.KernelRelease) []string {
 		urls = append(urls, fmt.Sprintf(
 			"http://vault.centos.org/%s/%s/Packages/kernel-devel-%s%s.rpm",
 			r,
-			kr.Architecture.String(),
+			kr.Architecture.ToNonDeb(),
 			kr.Fullversion,
 			kr.FullExtraversion,
 		))
@@ -157,7 +157,7 @@ func fetchCentosKernelURLS(kr kernelrelease.KernelRelease) []string {
 		urls = append(urls, fmt.Sprintf(
 			"http://vault.centos.org/%s/%s/os/Packages/kernel-devel-%s%s.rpm",
 			r,
-			kr.Architecture.String(),
+			kr.Architecture.ToNonDeb(),
 			kr.Fullversion,
 			kr.FullExtraversion,
 		))

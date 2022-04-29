@@ -11,13 +11,14 @@ var (
 
 type Architecture string
 
-func (a Architecture) ToDeb() string {
+func (a Architecture) ToNonDeb() string {
 	switch a {
-	case "aarch64":
-		return "arm64"
-	default:
-		return "amd64"
+	case "arm64":
+		return "aarch64"
+	case "amd64":
+		return "x86_64"
 	}
+	return ""
 }
 
 func (a Architecture) String() string {

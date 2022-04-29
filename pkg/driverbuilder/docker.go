@@ -7,10 +7,13 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -43,6 +46,51 @@ func NewDockerBuildProcessor(timeout int, proxy string) *DockerBuildProcessor {
 
 func (bp *DockerBuildProcessor) String() string {
 	return DockerBuildProcessorName
+}
+
+func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Client) {
+	var err error
+	if b.Architecture == runtime.GOARCH {
+		// Nothing to do
+		return
+	}
+
+	if _, _, err = cli.ImageInspectWithRaw(ctx, "multiarch/qemu-user-static"); client.IsErrNotFound(err) {
+		logger.WithField("image", "multiarch/qemu-user-static").Debug("pulling qemu static image")
+		pullRes, err := cli.ImagePull(ctx, "multiarch/qemu-user-static", types.ImagePullOptions{})
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer pullRes.Close()
+		_, err = io.Copy(ioutil.Discard, pullRes)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	qemuImage, err := cli.ContainerCreate(ctx,
+		&container.Config{
+			Cmd:   []string{"--reset -p yes"},
+			Image: "multiarch/qemu-user-static",
+		},
+		&container.HostConfig{
+			AutoRemove: true,
+		}, nil, nil, "")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := cli.ContainerStart(ctx, qemuImage.ID, types.ContainerStartOptions{}); err != nil {
+		panic(err)
+	}
+
+	statusCh, errCh := cli.ContainerWait(ctx, qemuImage.ID, container.WaitConditionNotRunning)
+	select {
+	case err := <-errCh:
+		if err != nil {
+			panic(err)
+		}
+	case <-statusCh:
+	}
 }
 
 // Start the docker processor
@@ -99,6 +147,8 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	ctx := context.Background()
 	ctx = signals.WithStandardSignals(ctx)
 
+	mustCheckArchUseQemu(ctx, b, cli)
+
 	if _, _, err = cli.ImageInspectWithRaw(ctx, builderImage); client.IsErrNotFound(err) {
 		logger.WithField("image", builderImage).Debug("pulling builder image")
 		pullRes, err := cli.ImagePull(ctx, builderImage, types.ImagePullOptions{})
@@ -124,7 +174,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	networkCfg := &network.NetworkingConfig{}
 	uid := uuid.NewUUID()
 	name := fmt.Sprintf("driverkit-%s", string(uid))
-	cdata, err := cli.ContainerCreate(ctx, containerCfg, hostCfg, networkCfg, name)
+	cdata, err := cli.ContainerCreate(ctx, containerCfg, hostCfg, networkCfg, &v1.Platform{Architecture: b.Architecture, OS: "linux"}, name)
 	if err != nil {
 		return err
 	}

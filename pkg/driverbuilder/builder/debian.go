@@ -29,7 +29,7 @@ func (v debian) Script(c Config) (string, error) {
 
 	kr := kernelReleaseFromBuildConfig(c.Build)
 
-	debTemplateStr := fmt.Sprintf(debianTemplate, kr.Architecture.ToDeb())
+	debTemplateStr := fmt.Sprintf(debianTemplate, kr.Architecture.String())
 	parsed, err := t.Parse(debTemplateStr)
 	if err != nil {
 		return "", err
@@ -167,8 +167,8 @@ func debianHeadersURLFromRelease(kr kernelrelease.KernelRelease) ([]string, erro
 }
 
 func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRelease) ([]string, error) {
-	extraVersionPartial := strings.TrimSuffix(kr.FullExtraversion, "-"+kr.Architecture.ToDeb())
-	matchExtraGroup := kr.Architecture.ToDeb()
+	extraVersionPartial := strings.TrimSuffix(kr.FullExtraversion, "-"+kr.Architecture.String())
+	matchExtraGroup := kr.Architecture.String()
 	rmatch := `href="(linux-headers-%s\.%s\.%s%s-(%s)_.*(%s|all)\.deb)"`
 
 	matchExtraGroupCommon := "common"
@@ -193,7 +193,7 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 
 	// look for kernel headers
 	fullregex := fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel, kr.Sublevel,
-		extraVersionPartial, matchExtraGroup, kr.Architecture.ToDeb())
+		extraVersionPartial, matchExtraGroup, kr.Architecture.String())
 	pattern := regexp.MustCompile(fullregex)
 	matches := pattern.FindStringSubmatch(bodyStr)
 	if len(matches) < 1 {
@@ -202,7 +202,7 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 
 	// look for kernel headers common
 	fullregexCommon := fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel, kr.Sublevel,
-		extraVersionPartial, matchExtraGroupCommon, kr.Architecture.ToDeb())
+		extraVersionPartial, matchExtraGroupCommon, kr.Architecture.String())
 	patternCommon := regexp.MustCompile(fullregexCommon)
 	matchesCommon := patternCommon.FindStringSubmatch(bodyStr)
 	if len(matchesCommon) < 1 {
@@ -218,7 +218,7 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 func debianKbuildURLFromRelease(kr kernelrelease.KernelRelease) (string, error) {
 	rmatch := `href="(linux-kbuild-%s\.%s.*%\.deb)"`
 
-	kbuildPattern := regexp.MustCompile(fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel, kr.Architecture.ToDeb()))
+	kbuildPattern := regexp.MustCompile(fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel, kr.Architecture.String()))
 	baseURL := "http://mirrors.kernel.org/debian/pool/main/l/linux/"
 	if kr.Version == "3" {
 		baseURL = "http://mirrors.kernel.org/debian/pool/main/l/linux-tools/"

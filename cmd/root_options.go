@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"runtime"
-
 	"github.com/creasty/defaults"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
@@ -47,15 +45,6 @@ func NewRootOptions() *RootOptions {
 	rootOpts := &RootOptions{}
 	if err := defaults.Set(rootOpts); err != nil {
 		logger.WithError(err).WithField("options", "RootOptions").Fatal("error setting driverkit options defaults")
-	}
-
-	switch runtime.GOARCH {
-	case "arm64":
-		rootOpts.Architecture = "aarch64"
-	case "amd64":
-		rootOpts.Architecture = "x86_64"
-	default:
-		rootOpts.Architecture = runtime.GOARCH
 	}
 	return rootOpts
 }

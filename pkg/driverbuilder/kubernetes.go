@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"github.com/falcosecurity/driverkit/pkg/signals"
 	"io"
 	"os"
 	"time"
@@ -201,11 +202,13 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 		},
 	}
 
-	_, err = configClient.Create(cm)
+	ctx := context.Background()
+	ctx = signals.WithStandardSignals(ctx)
+	_, err = configClient.Create(ctx, cm, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
-	_, err = podClient.Create(pod)
+	_, err = podClient.Create(ctx, pod, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
@@ -217,12 +220,12 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 	}
 	defer out.Close()
 
-	return bp.copyModuleFromPodWithUID(out, namespace, string(uid))
+	return bp.copyModuleFromPodWithUID(ctx, out, namespace, string(uid))
 }
 
-func (bp *KubernetesBuildProcessor) copyModuleFromPodWithUID(out io.Writer, namespace string, falcoBuilderUID string) error {
+func (bp *KubernetesBuildProcessor) copyModuleFromPodWithUID(ctx context.Context, out io.Writer, namespace string, falcoBuilderUID string) error {
 	namespacedClient := bp.coreV1Client.Pods(namespace)
-	watch, err := namespacedClient.Watch(metav1.ListOptions{
+	watch, err := namespacedClient.Watch(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", falcoBuilderUIDLabel, falcoBuilderUID),
 	})
 	if err != nil {

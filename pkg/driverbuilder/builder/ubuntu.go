@@ -172,7 +172,7 @@ func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease,
 				kr.Fullversion,
 				firstExtra,
 				kernelVersion,
-				kr.Architecture.ToDeb(),
+				kr.Architecture.String(),
 			),
 			fmt.Sprintf(
 				"%s/linux-headers-%s%s_%s-%s.%d_%s.deb",
@@ -182,7 +182,7 @@ func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease,
 				kr.Fullversion,
 				firstExtra,
 				kernelVersion,
-				kr.Architecture.ToDeb(),
+				kr.Architecture.String(),
 			),
 			// For 5.4 GKE kernels
 			fmt.Sprintf(
@@ -195,7 +195,7 @@ func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease,
 				kr.Fullversion,
 				firstExtra,
 				kernelVersion,
-				kr.Architecture.ToDeb(),
+				kr.Architecture.String(),
 			),
 			fmt.Sprintf(
 				"%s/linux-headers-%s%s_%s-%s.%d~18.04.1_%s.deb",
@@ -205,7 +205,7 @@ func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease,
 				kr.Fullversion,
 				firstExtra,
 				kernelVersion,
-				kr.Architecture.ToDeb(),
+				kr.Architecture.String(),
 			),
 		}
 	}
@@ -228,7 +228,7 @@ func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease,
 			kr.Fullversion,
 			firstExtra,
 			kernelVersion,
-			kr.Architecture.ToDeb(),
+			kr.Architecture.String(),
 		),
 	}
 }
@@ -253,7 +253,7 @@ func fetchUbuntuAWSKernelURLS(baseURL string, kr kernelrelease.KernelRelease, ke
 			kr.Fullversion,
 			firstExtra,
 			kernelVersion,
-			kr.Architecture.ToDeb(),
+			kr.Architecture.String(),
 		),
 	}
 }
@@ -272,7 +272,7 @@ func parseUbuntuAWSKernelURLS(baseURL string, kr kernelrelease.KernelRelease, ke
 	rmatch := `href="(linux(?:-aws-%s.%s)?-headers-%s-%s(?:-aws)?_%s-%s\.%d.*(?:%s|all)\.deb)"`
 	fullRegex := fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel,
 		kr.Fullversion, firstExtra, kr.Fullversion,
-		firstExtra, kernelVersion, kr.Architecture.ToDeb())
+		firstExtra, kernelVersion, kr.Architecture.String())
 	pattern := regexp.MustCompile(fullRegex)
 	matches := pattern.FindAllStringSubmatch(string(body), 2)
 	if len(matches) != 2 {

@@ -185,7 +185,7 @@ func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, targetType Typ
 		case TargetTypeAmazonLinux:
 			baseURL = fmt.Sprintf("http://repo.us-east-1.amazonaws.com/%s", v)
 		case TargetTypeAmazonLinux2:
-			baseURL = fmt.Sprintf("%s/2/%s/%s", amazonlinux2baseURL, v, kv.Architecture.String())
+			baseURL = fmt.Sprintf("%s/2/%s/%s", amazonlinux2baseURL, v, kv.Architecture.ToNonDeb())
 		default:
 			return nil, fmt.Errorf("unsupported target")
 		}
@@ -207,7 +207,7 @@ func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, targetType Typ
 		if repo == "" {
 			return nil, fmt.Errorf("repository not found")
 		}
-		repo = strings.ReplaceAll(strings.TrimSuffix(string(repo), "\n"), "$basearch", kv.Architecture.String())
+		repo = strings.ReplaceAll(strings.TrimSuffix(string(repo), "\n"), "$basearch", kv.Architecture.ToNonDeb())
 
 		ext := "gz"
 		if targetType == TargetTypeAmazonLinux {
@@ -253,7 +253,7 @@ func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, targetType Typ
 		defer db.Close()
 		logger.WithField("db", dbFile.Name()).Debug("connecting to database...")
 		// Query the database
-		rel := strings.TrimPrefix(strings.TrimSuffix(kv.FullExtraversion, fmt.Sprintf(".%s", kv.Architecture.String())), "-")
+		rel := strings.TrimPrefix(strings.TrimSuffix(kv.FullExtraversion, fmt.Sprintf(".%s", kv.Architecture.ToNonDeb())), "-")
 		q := fmt.Sprintf("SELECT location_href FROM packages WHERE name LIKE 'kernel%%' AND name NOT LIKE 'kernel-livepatch%%' AND name NOT LIKE '%%doc%%' AND name NOT LIKE '%%tools%%' AND name NOT LIKE '%%headers%%' AND version='%s' AND release='%s'", kv.Fullversion, rel)
 		stmt, err := db.Prepare(q)
 		if err != nil {
