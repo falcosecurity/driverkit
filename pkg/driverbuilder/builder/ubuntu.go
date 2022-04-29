@@ -35,7 +35,7 @@ func (v ubuntuGeneric) Script(c Config) (string, error) {
 		return "", err
 	}
 
-	kr := kernelrelease.FromString(c.Build.KernelRelease)
+	kr := kernelReleaseFromBuildConfig(c.Build)
 
 	urls, err := ubuntuGenericHeadersURLFromRelease(kr, c.Build.KernelVersion)
 	if len(urls) != 2 {
@@ -79,7 +79,7 @@ func (v ubuntuAWS) Script(c Config) (string, error) {
 		return "", err
 	}
 
-	kr := kernelrelease.FromString(c.Build.KernelRelease)
+	kr := kernelReleaseFromBuildConfig(c.Build)
 
 	urls, err := ubuntuAWSHeadersURLFromRelease(kr, c.Build.KernelVersion)
 	if len(urls) != 2 {
@@ -158,11 +158,12 @@ func ubuntuGenericHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint1
 
 func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernelVersion uint16) []string {
 	firstExtra := extractExtraNumber(kr.Extraversion)
+
 	if kr.IsGKE() {
 		return []string{
 			// For 4.15 GKE kernels
 			fmt.Sprintf(
-				"%s/linux-gke-%s.%s-headers-%s-%s_%s-%s.%d_amd64.deb",
+				"%s/linux-gke-%s.%s-headers-%s-%s_%s-%s.%d_%s.deb",
 				baseURL,
 				kr.Version,
 				kr.PatchLevel,
@@ -171,19 +172,21 @@ func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease,
 				kr.Fullversion,
 				firstExtra,
 				kernelVersion,
+				kr.Architecture.ToDeb(),
 			),
 			fmt.Sprintf(
-				"%s/linux-headers-%s%s_%s-%s.%d_amd64.deb",
+				"%s/linux-headers-%s%s_%s-%s.%d_%s.deb",
 				baseURL,
 				kr.Fullversion,
 				kr.FullExtraversion,
 				kr.Fullversion,
 				firstExtra,
 				kernelVersion,
+				kr.Architecture.ToDeb(),
 			),
 			// For 5.4 GKE kernels
 			fmt.Sprintf(
-				"%s/linux-gke-%s.%s-headers-%s-%s_%s-%s.%d~18.04.1_amd64.deb",
+				"%s/linux-gke-%s.%s-headers-%s-%s_%s-%s.%d~18.04.1_%s.deb",
 				baseURL,
 				kr.Version,
 				kr.PatchLevel,
@@ -192,15 +195,17 @@ func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease,
 				kr.Fullversion,
 				firstExtra,
 				kernelVersion,
+				kr.Architecture.ToDeb(),
 			),
 			fmt.Sprintf(
-				"%s/linux-headers-%s%s_%s-%s.%d~18.04.1_amd64.deb",
+				"%s/linux-headers-%s%s_%s-%s.%d~18.04.1_%s.deb",
 				baseURL,
 				kr.Fullversion,
 				kr.FullExtraversion,
 				kr.Fullversion,
 				firstExtra,
 				kernelVersion,
+				kr.Architecture.ToDeb(),
 			),
 		}
 	}
@@ -216,13 +221,14 @@ func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease,
 			kernelVersion,
 		),
 		fmt.Sprintf(
-			"%s/linux-headers-%s%s_%s-%s.%d_amd64.deb",
+			"%s/linux-headers-%s%s_%s-%s.%d_%s.deb",
 			baseURL,
 			kr.Fullversion,
 			kr.FullExtraversion,
 			kr.Fullversion,
 			firstExtra,
 			kernelVersion,
+			kr.Architecture.ToDeb(),
 		),
 	}
 }
@@ -240,13 +246,14 @@ func fetchUbuntuAWSKernelURLS(baseURL string, kr kernelrelease.KernelRelease, ke
 			kernelVersion,
 		),
 		fmt.Sprintf(
-			"%s/linux-headers-%s%s_%s-%s.%d_amd64.deb",
+			"%s/linux-headers-%s%s_%s-%s.%d_%s.deb",
 			baseURL,
 			kr.Fullversion,
 			kr.FullExtraversion,
 			kr.Fullversion,
 			firstExtra,
 			kernelVersion,
+			kr.Architecture.ToDeb(),
 		),
 	}
 }
@@ -262,8 +269,10 @@ func parseUbuntuAWSKernelURLS(baseURL string, kr kernelrelease.KernelRelease, ke
 		return nil, err
 	}
 	firstExtra := extractExtraNumber(kr.Extraversion)
-	rmatch := `href="(linux(?:-aws-%s.%s)?-headers-%s-%s(?:-aws)?_%s-%s\.%d.*(?:amd64|all)\.deb)"`
-	fullRegex := fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel, kr.Fullversion, firstExtra, kr.Fullversion, firstExtra, kernelVersion)
+	rmatch := `href="(linux(?:-aws-%s.%s)?-headers-%s-%s(?:-aws)?_%s-%s\.%d.*(?:%s|all)\.deb)"`
+	fullRegex := fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel,
+		kr.Fullversion, firstExtra, kr.Fullversion,
+		firstExtra, kernelVersion, kr.Architecture.ToDeb())
 	pattern := regexp.MustCompile(fullRegex)
 	matches := pattern.FindAllStringSubmatch(string(body), 2)
 	if len(matches) != 2 {

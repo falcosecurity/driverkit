@@ -91,7 +91,7 @@ func (v vanilla) Script(c Config) (string, error) {
 		return "", err
 	}
 
-	kv := kernelrelease.FromString(c.Build.KernelRelease)
+	kv := kernelReleaseFromBuildConfig(c.Build)
 
 	// Check (and filter) existing kernels before continuing
 	urls, err := getResolvingURLs([]string{fetchVanillaKernelURLFromKernelVersion(kv)})

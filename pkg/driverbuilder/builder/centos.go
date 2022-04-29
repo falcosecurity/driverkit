@@ -27,7 +27,7 @@ func (c centos) Script(cfg Config) (string, error) {
 		return "", err
 	}
 
-	kr := kernelrelease.FromString(cfg.Build.KernelRelease)
+	kr := kernelReleaseFromBuildConfig(cfg.Build)
 
 	// Check (and filter) existing kernels before continuing
 	urls, err := getResolvingURLs(fetchCentosKernelURLS(kr))
@@ -128,32 +128,36 @@ func fetchCentosKernelURLS(kr kernelrelease.KernelRelease) []string {
 	urls := []string{}
 	for _, r := range edgeReleases {
 		urls = append(urls, fmt.Sprintf(
-			"https://mirrors.edge.kernel.org/centos/%s/x86_64/Packages/kernel-devel-%s%s.rpm",
+			"https://mirrors.edge.kernel.org/centos/%s/%s/Packages/kernel-devel-%s%s.rpm",
 			r,
+			kr.Architecture.String(),
 			kr.Fullversion,
 			kr.FullExtraversion,
 		))
 	}
 	for _, r := range streamReleases {
 		urls = append(urls, fmt.Sprintf(
-			"https://mirrors.edge.kernel.org/centos/%s/x86_64/os/Packages/kernel-devel-%s%s.rpm",
+			"https://mirrors.edge.kernel.org/centos/%s/%s/os/Packages/kernel-devel-%s%s.rpm",
 			r,
+			kr.Architecture.String(),
 			kr.Fullversion,
 			kr.FullExtraversion,
 		))
 	}
 	for _, r := range vaultReleases {
 		urls = append(urls, fmt.Sprintf(
-			"http://vault.centos.org/%s/x86_64/Packages/kernel-devel-%s%s.rpm",
+			"http://vault.centos.org/%s/%s/Packages/kernel-devel-%s%s.rpm",
 			r,
+			kr.Architecture.String(),
 			kr.Fullversion,
 			kr.FullExtraversion,
 		))
 	}
 	for _, r := range centos8VaultReleases {
 		urls = append(urls, fmt.Sprintf(
-			"http://vault.centos.org/%s/x86_64/os/Packages/kernel-devel-%s%s.rpm",
+			"http://vault.centos.org/%s/%s/os/Packages/kernel-devel-%s%s.rpm",
 			r,
+			kr.Architecture.String(),
 			kr.Fullversion,
 			kr.FullExtraversion,
 		))

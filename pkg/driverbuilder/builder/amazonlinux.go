@@ -115,10 +115,10 @@ func script(c Config, targetType Type) (string, error) {
 		return "", err
 	}
 
-	kv := kernelrelease.FromString(c.Build.KernelRelease)
+	kv := kernelReleaseFromBuildConfig(c.Build)
 
 	// Check (and filter) existing kernels before continuing
-	packages, err := fetchAmazonLinuxPackagesURLs(kv, c.Build.Architecture, targetType)
+	packages, err := fetchAmazonLinuxPackagesURLs(kv, targetType)
 	if err != nil {
 		return "", err
 	}
@@ -174,7 +174,7 @@ var baseByTarget = map[Type]string{
 	TargetTypeAmazonLinux2: "http://amazonlinux.us-east-1.amazonaws.com/2/core/%s/%s",
 }
 
-func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, arch string, targetType Type) ([]string, error) {
+func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, targetType Type) ([]string, error) {
 	urls := []string{}
 	visited := map[string]bool{}
 	amazonlinux2baseURL := "http://amazonlinux.us-east-1.amazonaws.com"
@@ -185,7 +185,7 @@ func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, arch string, t
 		case TargetTypeAmazonLinux:
 			baseURL = fmt.Sprintf("http://repo.us-east-1.amazonaws.com/%s", v)
 		case TargetTypeAmazonLinux2:
-			baseURL = fmt.Sprintf("%s/2/%s/%s", amazonlinux2baseURL, v, arch)
+			baseURL = fmt.Sprintf("%s/2/%s/%s", amazonlinux2baseURL, v, kv.Architecture.String())
 		default:
 			return nil, fmt.Errorf("unsupported target")
 		}
@@ -207,7 +207,7 @@ func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, arch string, t
 		if repo == "" {
 			return nil, fmt.Errorf("repository not found")
 		}
-		repo = strings.ReplaceAll(strings.TrimSuffix(string(repo), "\n"), "$basearch", arch)
+		repo = strings.ReplaceAll(strings.TrimSuffix(string(repo), "\n"), "$basearch", kv.Architecture.String())
 
 		ext := "gz"
 		if targetType == TargetTypeAmazonLinux {
@@ -253,7 +253,7 @@ func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, arch string, t
 		defer db.Close()
 		logger.WithField("db", dbFile.Name()).Debug("connecting to database...")
 		// Query the database
-		rel := strings.TrimPrefix(strings.TrimSuffix(kv.FullExtraversion, fmt.Sprintf(".%s", arch)), "-")
+		rel := strings.TrimPrefix(strings.TrimSuffix(kv.FullExtraversion, fmt.Sprintf(".%s", kv.Architecture.String())), "-")
 		q := fmt.Sprintf("SELECT location_href FROM packages WHERE name LIKE 'kernel%%' AND name NOT LIKE 'kernel-livepatch%%' AND name NOT LIKE '%%doc%%' AND name NOT LIKE '%%tools%%' AND name NOT LIKE '%%headers%%' AND version='%s' AND release='%s'", kv.Fullversion, rel)
 		stmt, err := db.Prepare(q)
 		if err != nil {

@@ -1,16 +1,16 @@
 package kernelrelease
 
 import (
-	"testing"
 	"encoding/json"
+	"testing"
 
 	"gotest.tools/assert"
 )
 
 func TestFromKrToJson(t *testing.T) {
 	test := struct {
-		kernelRelease	KernelRelease
-		want			string
+		kernelRelease KernelRelease
+		want          string
 	}{
 		kernelRelease: KernelRelease{
 			Fullversion:      "5.16.5",
@@ -78,14 +78,14 @@ func TestFromString(t *testing.T) {
 			},
 		},
 		"centos version updates": {
-			kernelVersionStr: "3.10.0-957.12.2.el7.x86_64",
+			kernelVersionStr: "3.10.0-957.12.2.el7.aarch64",
 			want: KernelRelease{
 				Fullversion:      "3.10.0",
 				Version:          "3",
 				PatchLevel:       "10",
 				Sublevel:         "0",
 				Extraversion:     "957",
-				FullExtraversion: "-957.12.2.el7.x86_64",
+				FullExtraversion: "-957.12.2.el7.aarch64",
 			},
 		},
 		"centos version os": {
