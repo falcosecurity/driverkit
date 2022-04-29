@@ -216,7 +216,7 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 }
 
 func debianKbuildURLFromRelease(kr kernelrelease.KernelRelease) (string, error) {
-	rmatch := `href="(linux-kbuild-%s\.%s.*%\.deb)"`
+	rmatch := `href="(linux-kbuild-%s\.%s.*%s\.deb)"`
 
 	kbuildPattern := regexp.MustCompile(fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel, kr.Architecture.String()))
 	baseURL := "http://mirrors.kernel.org/debian/pool/main/l/linux/"
