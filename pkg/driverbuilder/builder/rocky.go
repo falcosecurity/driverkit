@@ -65,7 +65,7 @@ func fetchRockyKernelURLS(kr kernelrelease.KernelRelease) []string {
 		urls = append(urls, fmt.Sprintf(
 			"https://download.rockylinux.org/pub/rocky/%s/BaseOS/%s/os/Packages/k/kernel-devel-%s%s.rpm",
 			r,
-			kr.Architecture.String(),
+			kr.Architecture.ToNonDeb(),
 			kr.Fullversion,
 			kr.FullExtraversion,
 		))

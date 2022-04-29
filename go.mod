@@ -1,33 +1,33 @@
 module github.com/falcosecurity/driverkit
 
-go 1.13
+go 1.16
 
 require (
-	github.com/Masterminds/semver/v3 v3.0.3
-	github.com/Microsoft/go-winio v0.4.14 // indirect
+	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
+	github.com/containerd/containerd v1.6.3 // indirect
 	github.com/creasty/defaults v1.6.0
-	github.com/docker/docker v0.7.3-0.20190327010347-be7ac8be2ae0
-	github.com/docker/go-connections v0.4.0 // indirect
-	github.com/docker/go-units v0.4.0 // indirect
-	github.com/go-playground/locales v0.13.0
-	github.com/go-playground/universal-translator v0.17.0
-	github.com/go-playground/validator/v10 v10.2.0
-	github.com/gorilla/mux v1.7.4 // indirect
-	github.com/mattn/go-sqlite3 v2.0.3+incompatible
+	github.com/docker/distribution v2.8.1+incompatible // indirect
+	github.com/docker/docker v20.10.14+incompatible
+	github.com/go-playground/locales v0.14.0
+	github.com/go-playground/universal-translator v0.18.0
+	github.com/go-playground/validator/v10 v10.10.1
+	github.com/mattn/go-sqlite3 v1.14.12
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/morikuni/aec v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.0.1 // indirect
-	github.com/sirupsen/logrus v1.5.0
-	github.com/spf13/cobra v1.0.0
+	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
+	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
+	github.com/sirupsen/logrus v1.8.1
+	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.6.3
-	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150 // indirect
+	github.com/spf13/viper v1.11.0
+	golang.org/x/time v0.0.0-20220411224347-583f2d630306 // indirect
+	google.golang.org/grpc v1.46.0 // indirect
 	gotest.tools v2.2.0+incompatible
-	k8s.io/api v0.17.3
-	k8s.io/apimachinery v0.17.3
-	k8s.io/cli-runtime v0.17.3
-	k8s.io/client-go v0.17.3
-	k8s.io/kubectl v0.17.3
-	k8s.io/utils v0.0.0-20191114184206-e782cd3c129f
+	gotest.tools/v3 v3.2.0 // indirect
+	k8s.io/api v0.23.6
+	k8s.io/apimachinery v0.23.6
+	k8s.io/cli-runtime v0.23.6
+	k8s.io/client-go v0.23.6
+	k8s.io/kubectl v0.23.6
+	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
 )
