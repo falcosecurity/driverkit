@@ -18,7 +18,7 @@ type OutputOptions struct {
 
 // RootOptions ...
 type RootOptions struct {
-	Architecture     string `validate:"required,oneof=x86_64 aarch64" name:"architecture"`
+	Architecture     string `validate:"required,oneof=amd64 arm64" name:"architecture"`
 	DriverVersion    string `default:"master" validate:"eq=master|sha1|semver" name:"driver version"`
 	KernelVersion    uint16 `default:"1" validate:"omitempty,number" name:"kernel version"`
 	ModuleDriverName string `default:"falco" validate:"max=60" name:"kernel module driver name"`
@@ -87,6 +87,7 @@ func (ro *RootOptions) Log() {
 	if ro.Target != "" {
 		fields["target"] = ro.Target
 	}
+	fields["arch"] = ro.Architecture
 
 	logger.WithFields(fields).Debug("running with options")
 }

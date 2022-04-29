@@ -55,6 +55,7 @@ func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Cli
 		return
 	}
 
+	logger.Debug("using qemu for cross build")
 	if _, _, err = cli.ImageInspectWithRaw(ctx, "multiarch/qemu-user-static"); client.IsErrNotFound(err) {
 		logger.WithField("image", "multiarch/qemu-user-static").Debug("pulling qemu static image")
 		pullRes, err := cli.ImagePull(ctx, "multiarch/qemu-user-static", types.ImagePullOptions{})
