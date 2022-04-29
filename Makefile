@@ -40,6 +40,8 @@ endif
 
 GOTAGS := ${SQLITE_TAGS}
 
+ARCHS := "arm64,amd64"
+
 driverkit ?= _output/bin/driverkit
 driverkit_docgen ?= _output/bin/docgen
 
@@ -62,29 +64,21 @@ image/all: image/builder image/driverkit
 
 .PHONY: image/builder
 image/builder:
-	$(DOCKER) build \
-		-t "$(IMAGE_NAME_BUILDER_REF)" \
-		-t "$(IMAGE_NAME_BUILDER_COMMIT)" \
-		-f build/builder.Dockerfile .
+	$(DOCKER) buildx build --platform $(ARCHS) -o type=image,push="false" -f build/builder.Dockerfile .
 
 .PHONY: image/driverkit
 image/driverkit:
-	$(DOCKER) build \
-		-t "$(IMAGE_NAME_DRIVERKIT_REF)" \
-		-t "$(IMAGE_NAME_DRIVERKIT_COMMIT)" \
-		-f build/driverkit.Dockerfile .
+	$(DOCKER) buildx build --platform $(ARCHS) -o type=image,push="false" -f build/driverkit.Dockerfile .
 
 push/all: push/builder push/driverkit
 
 .PHONY: push/builder
 push/builder:
-	$(DOCKER) push $(IMAGE_NAME_BUILDER_REF)
-	$(DOCKER) push $(IMAGE_NAME_BUILDER_COMMIT)
+	$(DOCKER) buildx build --push --platform $(ARCHS) -t "$(IMAGE_NAME_BUILDER_REF)" -t "$(IMAGE_NAME_BUILDER_COMMIT)" -f build/builder.Dockerfile .
 
 .PHONY: push/driverkit
 push/driverkit:
-	$(DOCKER) push $(IMAGE_NAME_DRIVERKIT_REF)
-	$(DOCKER) push $(IMAGE_NAME_DRIVERKIT_COMMIT)
+	$(DOCKER) buildx build --push --platform $(ARCHS) -t "$(IMAGE_NAME_DRIVERKIT_REF)" -t "$(IMAGE_NAME_DRIVERKIT_COMMIT)" -f build/driverkit.Dockerfile .
 
 .PHONY: push/latest
 push/latest:
