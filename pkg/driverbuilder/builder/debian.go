@@ -26,14 +26,16 @@ type debian struct {
 // Script compiles the script to build the kernel module and/or the eBPF probe.
 func (v debian) Script(c Config) (string, error) {
 	t := template.New(string(TargetTypeDebian))
-	parsed, err := t.Parse(debianTemplate)
+
+	kr := kernelReleaseFromBuildConfig(c.Build)
+
+	debTemplateStr := fmt.Sprintf(debianTemplate, kr.Architecture.ToDeb())
+	parsed, err := t.Parse(debTemplateStr)
 	if err != nil {
 		return "", err
 	}
 
-	kr := kernelrelease.FromString(c.Build.KernelRelease)
-
-	kurls, err := fetchDebianKernelURLs(kr, c.Build.KernelVersion)
+	kurls, err := fetchDebianKernelURLs(kr)
 	if err != nil {
 		return "", err
 	}
@@ -66,7 +68,7 @@ func (v debian) Script(c Config) (string, error) {
 	return buf.String(), nil
 }
 
-func fetchDebianKernelURLs(kr kernelrelease.KernelRelease, kernelVersion uint16) ([]string, error) {
+func fetchDebianKernelURLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	kbuildURL, err := debianKbuildURLFromRelease(kr)
 	if err != nil {
 		return nil, err
@@ -124,7 +126,7 @@ cp -r usr/* /usr
 cp -r lib/* /lib
 
 cd /usr/src
-sourcedir=$(find . -type d -name "linux-headers-*amd64" | head -n 1 | xargs readlink -f)
+sourcedir=$(find . -type d -name "linux-headers-*%s" | head -n 1 | xargs readlink -f)
 
 ls -la $sourcedir
 
@@ -165,17 +167,16 @@ func debianHeadersURLFromRelease(kr kernelrelease.KernelRelease) ([]string, erro
 }
 
 func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRelease) ([]string, error) {
-	rmatch := `href="(linux-headers-%s\.%s\.%s%s-(%s)_.*(amd64|all)\.deb)"`
+	extraVersionPartial := strings.TrimSuffix(kr.FullExtraversion, "-"+kr.Architecture.ToDeb())
+	matchExtraGroup := kr.Architecture.ToDeb()
+	rmatch := `href="(linux-headers-%s\.%s\.%s%s-(%s)_.*(%s|all)\.deb)"`
 
-	// match for kernel versions like 4.19.0-6-amd64
-	extraVersionPartial := strings.TrimSuffix(kr.FullExtraversion, "-amd64")
-	matchExtraGroup := "amd64"
 	matchExtraGroupCommon := "common"
 
 	// match for kernel versions like 4.19.0-6-cloud-amd64
 	if strings.Contains(kr.FullExtraversion, "-cloud") {
 		extraVersionPartial = strings.TrimSuffix(extraVersionPartial, "-cloud")
-		matchExtraGroup = "cloud-amd64"
+		matchExtraGroup = "cloud-" + matchExtraGroup
 	}
 
 	// download index
@@ -191,7 +192,8 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 	bodyStr := string(body)
 
 	// look for kernel headers
-	fullregex := fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel, kr.Sublevel, extraVersionPartial, matchExtraGroup)
+	fullregex := fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel, kr.Sublevel,
+		extraVersionPartial, matchExtraGroup, kr.Architecture.ToDeb())
 	pattern := regexp.MustCompile(fullregex)
 	matches := pattern.FindStringSubmatch(bodyStr)
 	if len(matches) < 1 {
@@ -199,7 +201,8 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 	}
 
 	// look for kernel headers common
-	fullregexCommon := fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel, kr.Sublevel, extraVersionPartial, matchExtraGroupCommon)
+	fullregexCommon := fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel, kr.Sublevel,
+		extraVersionPartial, matchExtraGroupCommon, kr.Architecture.ToDeb())
 	patternCommon := regexp.MustCompile(fullregexCommon)
 	matchesCommon := patternCommon.FindStringSubmatch(bodyStr)
 	if len(matchesCommon) < 1 {
@@ -213,8 +216,9 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 }
 
 func debianKbuildURLFromRelease(kr kernelrelease.KernelRelease) (string, error) {
-	rmatch := `href="(linux-kbuild-%s\.%s.*amd64\.deb)"`
-	kbuildPattern := regexp.MustCompile(fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel))
+	rmatch := `href="(linux-kbuild-%s\.%s.*%\.deb)"`
+
+	kbuildPattern := regexp.MustCompile(fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel, kr.Architecture.ToDeb()))
 	baseURL := "http://mirrors.kernel.org/debian/pool/main/l/linux/"
 	if kr.Version == "3" {
 		baseURL = "http://mirrors.kernel.org/debian/pool/main/l/linux-tools/"

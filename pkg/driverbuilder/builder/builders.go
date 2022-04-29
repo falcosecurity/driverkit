@@ -2,6 +2,7 @@ package builder
 
 import (
 	"fmt"
+	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"net/http"
 	"path"
 
@@ -65,4 +66,11 @@ func getResolvingURLs(urls []string) ([]string, error) {
 		return nil, fmt.Errorf("kernel not found")
 	}
 	return results, nil
+}
+
+// KernelReleaseFromBuildConfig extracts a KernelRelease object from builder config.
+func kernelReleaseFromBuildConfig(build *Build) kernelrelease.KernelRelease {
+	kv := kernelrelease.FromString(build.KernelRelease)
+	kv.Architecture = kernelrelease.Architecture(build.Architecture)
+	return kv
 }

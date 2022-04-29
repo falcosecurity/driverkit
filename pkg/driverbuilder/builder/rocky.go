@@ -27,7 +27,7 @@ func (c rocky) Script(cfg Config) (string, error) {
 		return "", err
 	}
 
-	kr := kernelrelease.FromString(cfg.Build.KernelRelease)
+	kr := kernelReleaseFromBuildConfig(cfg.Build)
 
 	// Check (and filter) existing kernels before continuing
 	urls, err := getResolvingURLs(fetchRockyKernelURLS(kr))
@@ -63,8 +63,9 @@ func fetchRockyKernelURLS(kr kernelrelease.KernelRelease) []string {
 	urls := []string{}
 	for _, r := range rockyReleases {
 		urls = append(urls, fmt.Sprintf(
-			"https://download.rockylinux.org/pub/rocky/%s/BaseOS/x86_64/os/Packages/k/kernel-devel-%s%s.rpm",
+			"https://download.rockylinux.org/pub/rocky/%s/BaseOS/%s/os/Packages/k/kernel-devel-%s%s.rpm",
 			r,
+			kr.Architecture.String(),
 			kr.Fullversion,
 			kr.FullExtraversion,
 		))
