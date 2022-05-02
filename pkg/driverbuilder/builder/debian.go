@@ -171,6 +171,10 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 	matchExtraGroup := kr.Architecture.String()
 	rmatch := `href="(linux-headers-%s\.%s\.%s%s-(%s)_.*(%s|all)\.deb)"`
 
+	// For urls like: http://security.debian.org/pool/updates/main/l/linux/linux-headers-5.10.0-12-amd64_5.10.103-1_amd64.deb
+	// when 5.10.103-1 is passed as kernel version
+	rmatchNew := `href="(linux-headers-[0-9]+\.[0-9]+\.[0-9]+-[0-9]+-(%s)_%s\.%s\.%s%s_(%s|all)\.deb)"`
+
 	matchExtraGroupCommon := "common"
 
 	// match for kernel versions like 4.19.0-6-cloud-amd64
@@ -197,7 +201,14 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 	pattern := regexp.MustCompile(fullregex)
 	matches := pattern.FindStringSubmatch(bodyStr)
 	if len(matches) < 1 {
-		return nil, fmt.Errorf("kernel headers not found")
+		fullregex = fmt.Sprintf(rmatchNew, matchExtraGroup, kr.Version, kr.PatchLevel, kr.Sublevel,
+			extraVersionPartial, kr.Architecture.String())
+		fmt.Println("top", fullregex)
+		pattern = regexp.MustCompile(fullregex)
+		matches = pattern.FindStringSubmatch(bodyStr)
+		if len(matches) < 1 {
+			return nil, fmt.Errorf("kernel headers not found")
+		}
 	}
 
 	// look for kernel headers common
@@ -206,7 +217,13 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 	patternCommon := regexp.MustCompile(fullregexCommon)
 	matchesCommon := patternCommon.FindStringSubmatch(bodyStr)
 	if len(matchesCommon) < 1 {
-		return nil, fmt.Errorf("kernel headers common not found")
+		fullregexCommon = fmt.Sprintf(rmatchNew, matchExtraGroupCommon, kr.Version, kr.PatchLevel, kr.Sublevel,
+			extraVersionPartial, kr.Architecture.String())
+		patternCommon = regexp.MustCompile(fullregexCommon)
+		matchesCommon = patternCommon.FindStringSubmatch(bodyStr)
+		if len(matchesCommon) < 1 {
+			return nil, fmt.Errorf("kernel headers common not found")
+		}
 	}
 
 	foundURLs := []string{fmt.Sprintf("%s%s", baseURL, matches[1])}

@@ -111,11 +111,12 @@ func ubuntuAWSHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint16) (
 	baseURL := []string{
 		"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws",
 		"http://security.ubuntu.com/ubuntu/pool/main/l/linux-aws",
+		"http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws",
 	}
 
 	for _, u := range baseURL {
 		urls, err := getResolvingURLs(fetchUbuntuAWSKernelURLS(u, kr, kv))
-		if err == nil {
+		if err == nil && len(urls) == 2 {
 			return urls, err
 		}
 	}
@@ -142,13 +143,16 @@ func ubuntuGenericHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint1
 	baseURL := []string{
 		"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux",
 		"http://security.ubuntu.com/ubuntu/pool/main/l/linux",
+		"http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux",
 		"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-gke-5.4",
 		"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-gke-4.15",
 	}
 
 	for _, u := range baseURL {
 		urls, err := getResolvingURLs(fetchUbuntuGenericKernelURL(u, kr, kv))
-		if err == nil {
+		// We expect both a common "_all" package,
+		// and an arch dependent package.
+		if err == nil && len(urls) == 2 {
 			return urls, err
 		}
 	}
@@ -230,6 +234,16 @@ func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease,
 			kernelVersion,
 			kr.Architecture.String(),
 		),
+		fmt.Sprintf(
+			"%s/linux-headers-%s%s-generic_%s-%s.%d_%s.deb",
+			baseURL,
+			kr.Fullversion,
+			kr.FullExtraversion,
+			kr.Fullversion,
+			firstExtra,
+			kernelVersion,
+			kr.Architecture.String(),
+		),
 	}
 }
 
@@ -247,6 +261,16 @@ func fetchUbuntuAWSKernelURLS(baseURL string, kr kernelrelease.KernelRelease, ke
 		),
 		fmt.Sprintf(
 			"%s/linux-headers-%s%s_%s-%s.%d_%s.deb",
+			baseURL,
+			kr.Fullversion,
+			kr.FullExtraversion,
+			kr.Fullversion,
+			firstExtra,
+			kernelVersion,
+			kr.Architecture.String(),
+		),
+		fmt.Sprintf(
+			"%s/linux-headers-%s%s-aws_%s-%s.%d_%s.deb",
 			baseURL,
 			kr.Fullversion,
 			kr.FullExtraversion,
