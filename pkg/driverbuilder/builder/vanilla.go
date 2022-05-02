@@ -93,8 +93,13 @@ func (v vanilla) Script(c Config) (string, error) {
 
 	kv := kernelReleaseFromBuildConfig(c.Build)
 
-	// Check (and filter) existing kernels before continuing
-	urls, err := getResolvingURLs([]string{fetchVanillaKernelURLFromKernelVersion(kv)})
+	var urls []string
+	if c.KernelUrls == nil {
+		// Check (and filter) existing kernels before continuing
+		urls, err = getResolvingURLs([]string{fetchVanillaKernelURLFromKernelVersion(kv)})
+	} else {
+		urls, err = getResolvingURLs(c.KernelUrls)
+	}
 	if err != nil {
 		return "", err
 	}
