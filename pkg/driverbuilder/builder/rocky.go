@@ -29,8 +29,12 @@ func (c rocky) Script(cfg Config) (string, error) {
 
 	kr := kernelReleaseFromBuildConfig(cfg.Build)
 
-	// Check (and filter) existing kernels before continuing
-	urls, err := getResolvingURLs(fetchRockyKernelURLS(kr))
+	var urls []string
+	if cfg.KernelUrls == nil {
+		urls, err = getResolvingURLs(fetchRockyKernelURLS(kr))
+	} else {
+		urls, err = getResolvingURLs(cfg.KernelUrls)
+	}
 	if err != nil {
 		return "", err
 	}

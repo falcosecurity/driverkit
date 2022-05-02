@@ -35,12 +35,17 @@ func (v debian) Script(c Config) (string, error) {
 		return "", err
 	}
 
-	kurls, err := fetchDebianKernelURLs(kr)
-	if err != nil {
-		return "", err
+	var urls []string
+	if c.KernelUrls == nil {
+		var kurls []string
+		kurls, err = fetchDebianKernelURLs(kr)
+		if err != nil {
+			return "", err
+		}
+		urls, err = getResolvingURLs(kurls)
+	} else {
+		urls, err = getResolvingURLs(c.KernelUrls)
 	}
-
-	urls, err := getResolvingURLs(kurls)
 	if err != nil {
 		return "", err
 	}
