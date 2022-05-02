@@ -92,6 +92,9 @@ func (v ubuntuAWS) Script(c Config) (string, error) {
 	} else {
 		urls, err = getResolvingURLs(c.KernelUrls)
 	}
+	if err != nil {
+		return "", err
+	}
 	if len(urls) != 2 {
 		return "", fmt.Errorf("specific kernel headers not found")
 	}
