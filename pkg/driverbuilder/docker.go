@@ -80,6 +80,7 @@ func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Cli
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	if err := cli.ContainerStart(ctx, qemuImage.ID, types.ContainerStartOptions{}); err != nil {
 		panic(err)
 	}
@@ -150,9 +151,16 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 
 	mustCheckArchUseQemu(ctx, b, cli)
 
-	if _, _, err = cli.ImageInspectWithRaw(ctx, builderImage); client.IsErrNotFound(err) {
-		logger.WithField("image", builderImage).Debug("pulling builder image")
-		pullRes, err := cli.ImagePull(ctx, builderImage, types.ImagePullOptions{})
+	var inspect types.ImageInspect
+	if inspect, _, err = cli.ImageInspectWithRaw(ctx, builderImage); client.IsErrNotFound(err) ||
+		inspect.Architecture != b.Architecture {
+
+		logger.
+			WithField("image", builderImage).
+			WithField("arch", b.Architecture).
+			Debug("pulling builder image")
+
+		pullRes, err := cli.ImagePull(ctx, builderImage, types.ImagePullOptions{Platform: b.Architecture})
 		if err != nil {
 			return err
 		}
@@ -175,17 +183,18 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	networkCfg := &network.NetworkingConfig{}
 	uid := uuid.NewUUID()
 	name := fmt.Sprintf("driverkit-%s", string(uid))
+
 	cdata, err := cli.ContainerCreate(ctx, containerCfg, hostCfg, networkCfg, &v1.Platform{Architecture: b.Architecture, OS: "linux"}, name)
 	if err != nil {
 		return err
 	}
 
-	defer bp.cleanup(ctx, cli, cdata.ID)
+	defer bp.cleanup(cli, cdata.ID)
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
-				bp.cleanup(ctx, cli, cdata.ID)
+				bp.cleanup(cli, cdata.ID)
 				return
 			}
 		}
@@ -208,7 +217,6 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	if err != nil {
 		return err
 	}
-
 	// Copy the needed files to the container
 	err = cli.CopyToContainer(ctx, cdata.ID, "/", &buf, types.CopyToContainerOptions{})
 	if err != nil {
@@ -304,11 +312,11 @@ func copyFromContainer(ctx context.Context, cli *client.Client, ID, from, to str
 	return nil
 }
 
-func (bp *DockerBuildProcessor) cleanup(ctx context.Context, cli *client.Client, ID string) {
+func (bp *DockerBuildProcessor) cleanup(cli *client.Client, ID string) {
 	if !bp.clean {
 		bp.clean = true
 		logger.Debug("context canceled")
-		duration := time.Duration(time.Second)
+		duration := time.Second
 		if err := cli.ContainerStop(context.Background(), ID, &duration); err != nil {
 			logger.WithError(err).WithField("container_id", ID).Error("error stopping container")
 		}
