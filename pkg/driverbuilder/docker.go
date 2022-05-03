@@ -55,6 +55,10 @@ func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Cli
 		return
 	}
 
+	if runtime.GOARCH != "amd64" {
+		log.Fatal("qemu-user-static image is only available for x86_64 hosts: https://github.com/multiarch/qemu-user-static#supported-host-architectures")
+	}
+
 	logger.Debug("using qemu for cross build")
 	if _, _, err = cli.ImageInspectWithRaw(ctx, "multiarch/qemu-user-static"); client.IsErrNotFound(err) {
 		logger.WithField("image", "multiarch/qemu-user-static").Debug("pulling qemu static image")
@@ -76,6 +80,7 @@ func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Cli
 		},
 		&container.HostConfig{
 			AutoRemove: true,
+			Privileged: true,
 		}, nil, nil, "")
 	if err != nil {
 		log.Fatal(err)
