@@ -1,12 +1,15 @@
+//go:build !race
 // +build !race
 
 package cmd
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -15,8 +18,9 @@ import (
 )
 
 type expect struct {
-	err string
-	out string
+	err            string
+	out            string
+	fmtRuntimeArch bool
 }
 
 type testCase struct {
@@ -30,28 +34,32 @@ var tests = []testCase{
 	{
 		args: []string{"help"},
 		expect: expect{
-			out: "testdata/help.txt",
+			out:            "testdata/help.txt",
+			fmtRuntimeArch: true,
 		},
 	},
 	{
 		args: []string{"-h"},
 		expect: expect{
-			out: "testdata/help-flag.txt",
+			out:            "testdata/help-flag.txt",
+			fmtRuntimeArch: true,
 		},
 	},
 	{
 		descr: "empty",
 		args:  []string{},
 		expect: expect{
-			out: "testdata/autohelp.txt",
+			out:            "testdata/autohelp.txt",
+			fmtRuntimeArch: true,
 		},
 	},
 	{
 		descr: "invalid/processor",
 		args:  []string{"abc"},
 		expect: expect{
-			out: "testdata/non-existent-processor.txt",
-			err: `invalid argument "abc" for "driverkit"`,
+			out:            "testdata/non-existent-processor.txt",
+			err:            `invalid argument "abc" for "driverkit"`,
+			fmtRuntimeArch: true,
 		},
 	},
 	{
@@ -61,8 +69,9 @@ var tests = []testCase{
 			"wrong",
 		},
 		expect: expect{
-			out: "testdata/invalid-proxyconfig.txt",
-			err: "exiting for validation errors",
+			out:            "testdata/invalid-proxyconfig.txt",
+			err:            "exiting for validation errors",
+			fmtRuntimeArch: true,
 		},
 	},
 	{
@@ -86,8 +95,9 @@ var tests = []testCase{
 		descr: "docker/empty",
 		args:  []string{"docker"},
 		expect: expect{
-			err: "exiting for validation errors",
-			out: "testdata/dockernoopts.txt",
+			err:            "exiting for validation errors",
+			out:            "testdata/dockernoopts.txt",
+			fmtRuntimeArch: true,
 		},
 	},
 	{
@@ -106,7 +116,8 @@ var tests = []testCase{
 			"debug",
 		},
 		expect: expect{
-			out: "testdata/docker-with-flags-debug.txt",
+			out:            "testdata/docker-with-flags-debug.txt",
+			fmtRuntimeArch: true,
 		},
 	},
 	{
@@ -125,7 +136,8 @@ var tests = []testCase{
 			"debug",
 		},
 		expect: expect{
-			out: "testdata/docker-with-flags-debug.txt",
+			out:            "testdata/docker-with-flags-debug.txt",
+			fmtRuntimeArch: true,
 		},
 	},
 	{
@@ -138,7 +150,8 @@ var tests = []testCase{
 			"debug",
 		},
 		expect: expect{
-			out: "testdata/docker-from-config-debug.txt",
+			out:            "testdata/docker-from-config-debug.txt",
+			fmtRuntimeArch: true,
 		},
 	},
 	{
@@ -155,7 +168,8 @@ var tests = []testCase{
 			"debug",
 		},
 		expect: expect{
-			out: "testdata/docker-override-from-config-debug.txt",
+			out:            "testdata/docker-override-from-config-debug.txt",
+			fmtRuntimeArch: true,
 		},
 	},
 	{
@@ -276,7 +290,11 @@ func TestCLI(t *testing.T) {
 			if err != nil {
 				t.Fatalf("output fixture not found: %v", err)
 			}
-			test.expect.out = string(out)
+			if !test.expect.fmtRuntimeArch {
+				test.expect.out = string(out)
+			} else {
+				test.expect.out = fmt.Sprintf(string(out), runtime.GOARCH)
+			}
 		}
 
 		t.Run(test.descr, func(t *testing.T) {
