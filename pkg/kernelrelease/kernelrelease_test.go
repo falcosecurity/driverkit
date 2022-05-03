@@ -19,8 +19,9 @@ func TestFromKrToJson(t *testing.T) {
 			Sublevel:         "5",
 			Extraversion:     "arch1-1",
 			FullExtraversion: "-arch1-1",
+			Architecture:     "amd64",
 		},
-		want: `{"full_version":"5.16.5","version":"5","patch_level":"16","sublevel":"5","extra_version":"arch1-1","full_extra_version":"-arch1-1"}`,
+		want: `{"full_version":"5.16.5","version":"5","patch_level":"16","sublevel":"5","extra_version":"arch1-1","full_extra_version":"-arch1-1","architecture":"amd64"}`,
 	}
 	t.Run("version with local version", func(t *testing.T) {
 		got, _ := json.Marshal(test.kernelRelease)
