@@ -24,5 +24,5 @@ Flags:
       --output-probe string       filepath where to save the resulting eBPF probe
       --proxy string              the proxy to use to download data
   -t, --target string             the system to target the build for
-      --timeout int               timeout in seconds (default 60)
+      --timeout int               timeout in seconds (default 120)
 
