@@ -2,7 +2,7 @@ version: 2
 jobs:
   "test":
     docker:
-      - image: docker.io/golang:1.16.0
+      - image: docker.io/golang:1.17.0
     steps:
       - checkout
       - run:
@@ -45,7 +45,7 @@ jobs:
             fi
   "release":
     docker:
-      - image: circleci/golang:1.16
+      - image: circleci/golang:1.17
     steps:
       - checkout
       - run:
