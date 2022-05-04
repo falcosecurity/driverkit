@@ -13,12 +13,14 @@ driverkit
 ### Options
 
 ```
+      --architecture string       target architecture for the built driver (default "$runtime.GOARCH")
   -c, --config string             config file path (default $HOME/.driverkit.yaml if exists)
       --driverversion string      driver version as a git commit hash or as a git tag (default "master")
       --dryrun                    do not actually perform the action
   -h, --help                      help for driverkit
       --kernelconfigdata string   base64 encoded kernel config data: in some systems it can be found under the /boot directory, in other it is gzip compressed under /proc
       --kernelrelease string      kernel release to build the module for, it can be found by executing 'uname -v'
+      --kernelurls strings        kernel headers urls to be fetched for build
       --kernelversion uint16      kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v' (default 1)
   -l, --loglevel string           log level (default "info")
       --moduledevicename string   kernel module device name (the default is falco, so the device will be under /dev/falco*) (default "falco")
@@ -27,7 +29,7 @@ driverkit
       --output-probe string       filepath where to save the resulting eBPF probe
       --proxy string              the proxy to use to download data
   -t, --target string             the system to target the build for
-      --timeout int               timeout in seconds (default 60)
+      --timeout int               timeout in seconds (default 120)
 ```
 
 ### SEE ALSO
