@@ -208,7 +208,6 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 	if len(matches) < 1 {
 		fullregex = fmt.Sprintf(rmatchNew, matchExtraGroup, kr.Version, kr.PatchLevel, kr.Sublevel,
 			extraVersionPartial, kr.Architecture.String())
-		fmt.Println("top", fullregex)
 		pattern = regexp.MustCompile(fullregex)
 		matches = pattern.FindStringSubmatch(bodyStr)
 		if len(matches) < 1 {
