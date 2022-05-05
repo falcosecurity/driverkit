@@ -61,6 +61,17 @@ driverkit docker -c ubuntu-aws.yaml
 It is possible to customize the kernel module name that is produced by Driverkit with the `moduledevicename` and `moduledrivername` options.
 In this context, the _device name_ is the prefix used for the devices in `/dev/`, while the _driver name_ is the kernel module name as reported by `modinfo` or `lsmod` once the module is loaded.
 
+## Supported architectures
+
+At the moment, driverkit supports:
+* amd64 (x86_64)
+* arm64 (aarch64)
+
+The architecture is taken from runtime environment, but it can be overridden through `architecture` config.  
+Driverkit also supports cross building for arm64 using qemu from an x86_64 host.  
+
+Note: we could not automatically fetch correct architecture because some kernel names do not have the `-$arch`, namely Ubuntu ones.
+
 ## Supported targets
 
 ### ubuntu-generic
@@ -291,3 +302,23 @@ The `/tmp/driver` MUST be interpolated from the `DriverDirectory` constant from 
 
 If you look at the various builder implemented, you will see that the task of creating a new builder
 can be easy or difficult depending on how the distribution ships their artifacts.
+
+### 3. Customize GCC version
+
+Driverkit builder image supports 4 gcc versions:
+* GCC-8
+* GCC-6.3.0
+* GCC-5.5.0
+* GCC-4.8.4
+
+You can dynamically choose the one you prefer, likely switching on the kernel version.  
+For an example, you can check out Ubuntu builder, namely: `ubuntuGCCVersionFromKernelRelease`.  
+
+### 4. Customize llvm version
+
+Driverkit builder image supports 2 llvm versions:
+* llvm-7
+* llvm-12
+
+You can dynamically choose the one you prefer, likely switching on the kernel version.  
+For an example, you can check out Debian builder, namely: `debianLLVMVersionFromKernelRelease`.  
