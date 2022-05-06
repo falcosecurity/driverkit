@@ -10,7 +10,7 @@ jobs:
           command: make test
   "images":
     docker:
-      - image: docker:stable
+      - image: cimg/base:stable
     steps:
       - checkout
       - setup_remote_docker:
@@ -20,23 +20,14 @@ jobs:
           command: |
             echo ${DOCKERHUB_SECRET} | docker login -u ${DOCKERHUB_USER} --password-stdin
             apk update
-            apk add make bash git curl
+            apk add make bash git
       - run:
-          name: Install Docker Buildx
+          name: Build and Push all docker images
           command: |
-            mkdir -vp ~/.docker/cli-plugins/
-            curl --silent -L --output ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.3.1/buildx-v0.3.1.linux-amd64
-            chmod a+x ~/.docker/cli-plugins/docker-buildx
-            docker run -it --rm --privileged tonistiigi/binfmt --install all
-      - run:
-          name: Build and Push all the docker images
-          command: |
-            export DOCKER_CLI_EXPERIMENTAL=enabled
             GIT_BRANCH="$CIRCLE_BRANCH" GIT_TAG="$CIRCLE_TAG" make push/all
       - run:
           name: Push latest images
           command: |
-            export DOCKER_CLI_EXPERIMENTAL=enabled
             if [ -n "$CIRCLE_TAG" ]
             then
               GIT_BRANCH="$CIRCLE_BRANCH" GIT_TAG="$CIRCLE_TAG" make push/latest
