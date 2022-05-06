@@ -125,12 +125,12 @@ func script(c Config, targetType Type) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		if len(packages) != 2 {
-			return "", fmt.Errorf("target %s needs to find both kernel and kernel-devel packages", targetType)
-		}
 		urls, err = getResolvingURLs(packages)
 	} else {
 		urls, err = getResolvingURLs(c.KernelUrls)
+	}
+	if len(urls) != 2 {
+		return "", fmt.Errorf("target %s needs to find both kernel and kernel-devel packages", targetType)
 	}
 	if err != nil {
 		return "", err
