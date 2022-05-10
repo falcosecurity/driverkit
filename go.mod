@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.0.3
 	github.com/Microsoft/go-winio v0.4.14 // indirect
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
-	github.com/creasty/defaults v1.3.0
+	github.com/creasty/defaults v1.6.0
 	github.com/docker/docker v0.7.3-0.20190327010347-be7ac8be2ae0
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
