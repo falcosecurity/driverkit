@@ -38,6 +38,7 @@ func init() {
 	V.RegisterValidation("target", isTargetSupported)
 	V.RegisterValidation("semver", isSemVer)
 	V.RegisterValidation("proxy", isProxy)
+	V.RegisterValidation("imagename", isImageName)
 
 	eng := en.New()
 	uni := ut.New(eng, eng)
