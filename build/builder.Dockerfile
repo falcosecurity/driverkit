@@ -36,7 +36,8 @@ RUN apt-get update \
 	wget \
 	software-properties-common \
 	gpg \
-	&& rm -rf /var/lib/apt/lists/*
+	zstd \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN if [ "$TARGETARCH" = "amd64" ] ; then apt-get install -y --no-install-recommends libmpx2; fi
 
