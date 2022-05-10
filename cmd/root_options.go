@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"fmt"
-
 	"github.com/creasty/defaults"
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"github.com/falcosecurity/driverkit/validate"
 	"github.com/go-playground/validator/v10"
@@ -26,12 +26,18 @@ type RootOptions struct {
 	KernelRelease    string `validate:"required,ascii" name:"kernel release"`
 	Target           string `validate:"required,target" name:"target"`
 	KernelConfigData string `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level
-	BuilderImage     string `name:"builder image"`
+	BuilderImage     string `validate:"imagename" name:"builder image"`
 	Output           OutputOptions
 }
 
 func init() {
 	validate.V.RegisterStructValidation(RootOptionsLevelValidation, RootOptions{})
+}
+
+func (ro *RootOptions) SetDefaults() {
+	if defaults.CanUpdate(ro.BuilderImage) {
+		ro.BuilderImage = driverbuilder.BuilderBaseImage
+	}
 }
 
 // NewRootOptions ...
@@ -92,16 +98,16 @@ func (ro *RootOptions) toBuild() *builder.Build {
 	}
 
 	return &builder.Build{
-		TargetType:       builder.Type(ro.Target),
-		DriverVersion:    ro.DriverVersion,
-		KernelVersion:    ro.KernelVersion,
-		KernelRelease:    ro.KernelRelease,
-		Architecture:     ro.Architecture,
-		KernelConfigData: kernelConfigData,
-		ModuleFilePath:   ro.Output.Module,
-		ProbeFilePath:    ro.Output.Probe,
-		ModuleDriverName: ro.ModuleDriverName,
-		ModuleDeviceName: ro.ModuleDeviceName,
+		TargetType:         builder.Type(ro.Target),
+		DriverVersion:      ro.DriverVersion,
+		KernelVersion:      ro.KernelVersion,
+		KernelRelease:      ro.KernelRelease,
+		Architecture:       ro.Architecture,
+		KernelConfigData:   kernelConfigData,
+		ModuleFilePath:     ro.Output.Module,
+		ProbeFilePath:      ro.Output.Probe,
+		ModuleDriverName:   ro.ModuleDriverName,
+		ModuleDeviceName:   ro.ModuleDeviceName,
 		CustomBuilderImage: ro.BuilderImage,
 	}
 }
