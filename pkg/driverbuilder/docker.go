@@ -19,7 +19,6 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/client"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"github.com/falcosecurity/driverkit/pkg/signals"
@@ -72,10 +71,9 @@ func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Cli
 			log.Fatal(err)
 		}
 	}
-
 	qemuImage, err := cli.ContainerCreate(ctx,
 		&container.Config{
-			Cmd:   []string{"--reset -p yes"},
+			Cmd:   []string{"--reset", "-p", "yes"},
 			Image: "multiarch/qemu-user-static",
 		},
 		&container.HostConfig{
@@ -86,17 +84,22 @@ func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Cli
 		log.Fatal(err)
 	}
 
-	if err := cli.ContainerStart(ctx, qemuImage.ID, types.ContainerStartOptions{}); err != nil {
+	if err = cli.ContainerStart(ctx, qemuImage.ID, types.ContainerStartOptions{}); err != nil {
 		panic(err)
 	}
 
 	statusCh, errCh := cli.ContainerWait(ctx, qemuImage.ID, container.WaitConditionNotRunning)
 	select {
-	case err := <-errCh:
+	case err = <-errCh:
 		if err != nil {
 			panic(err)
 		}
 	case <-statusCh:
+	}
+
+	err = cli.ContainerStop(ctx, qemuImage.ID, nil)
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
@@ -185,11 +188,10 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	hostCfg := &container.HostConfig{
 		AutoRemove: true,
 	}
-	networkCfg := &network.NetworkingConfig{}
 	uid := uuid.NewUUID()
 	name := fmt.Sprintf("driverkit-%s", string(uid))
 
-	cdata, err := cli.ContainerCreate(ctx, containerCfg, hostCfg, networkCfg, &v1.Platform{Architecture: b.Architecture, OS: "linux"}, name)
+	cdata, err := cli.ContainerCreate(ctx, containerCfg, hostCfg, nil, &v1.Platform{Architecture: b.Architecture, OS: "linux"}, name)
 	if err != nil {
 		return err
 	}
