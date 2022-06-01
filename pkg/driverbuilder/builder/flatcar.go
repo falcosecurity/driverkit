@@ -198,6 +198,7 @@ ln -sf /usr/bin/gcc-{{ .GCCVersion }} /usr/bin/gcc
 curl --silent -o /tmp/kernel.config -SL {{ .KernelConfigURL }}
 
 cd /tmp/kernel
+sed -i -e 's|^\(EXTRAVERSION =\).*|\1 -flatcar|' Makefile
 make KCONFIG_CONFIG=/tmp/kernel.config oldconfig
 make KCONFIG_CONFIG=/tmp/kernel.config modules_prepare
 
