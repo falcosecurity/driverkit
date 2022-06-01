@@ -32,7 +32,7 @@ func (c flatcar) Script(cfg Config) (string, error) {
 	}
 
 	kr := kernelrelease.FromString(cfg.Build.KernelRelease)
-	if kr.Extraversion != "flatcar" {
+	if kr.Extraversion != "" {
 		return "", fmt.Errorf("unexpected extraversion: %s", kr.Extraversion)
 	}
 
