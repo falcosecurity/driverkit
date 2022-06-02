@@ -29,11 +29,16 @@ func (c centos) Script(cfg Config) (string, error) {
 
 	kr := kernelrelease.FromString(cfg.Build.KernelRelease)
 
-	// Check (and filter) existing kernels before continuing
-	urls, err := getResolvingURLs(fetchCentosKernelURLS(kr))
-	if err != nil {
-		return "", err
-	}
+	var urls []string
+    if cfg.KernelUrls == nil {
+        // Check (and filter) existing kernels before continuing
+        urls, err = getResolvingURLs(fetchCentosKernelURLS(kr))
+    } else {
+       urls, err = getResolvingURLs(cfg.KernelUrls)
+    }
+    if err != nil {
+        return "", err
+    }
 
 	td := centosTemplateData{
 		DriverBuildDir:    DriverDirectory,

@@ -37,8 +37,16 @@ func (v ubuntuGeneric) Script(c Config) (string, error) {
 
 	kr := kernelrelease.FromString(c.Build.KernelRelease)
 
-	urls, err := ubuntuGenericHeadersURLFromRelease(kr, c.Build.KernelVersion)
-	if len(urls) != 2 {
+    var urls []string
+    if c.KernelUrls == nil {
+        urls, err = ubuntuGenericHeadersURLFromRelease(kr, c.Build.KernelVersion)
+    } else {
+        urls, err = getResolvingURLs(c.KernelUrls)
+    }
+    if err != nil {
+        return "", err
+    }
+	if len(urls) < 2 {
 		return "", fmt.Errorf("specific kernel headers not found")
 	}
 
@@ -81,10 +89,18 @@ func (v ubuntuAWS) Script(c Config) (string, error) {
 
 	kr := kernelrelease.FromString(c.Build.KernelRelease)
 
-	urls, err := ubuntuAWSHeadersURLFromRelease(kr, c.Build.KernelVersion)
-	if len(urls) != 2 {
-		return "", fmt.Errorf("specific kernel headers not found")
-	}
+    var urls []string
+    if c.KernelUrls == nil {
+        urls, err = ubuntuAWSHeadersURLFromRelease(kr, c.Build.KernelVersion)
+    } else {
+        urls, err = getResolvingURLs(c.KernelUrls)
+    }
+    if err != nil {
+        return "", err
+    }
+    if len(urls) < 2 {
+    	return "", fmt.Errorf("specific kernel headers not found")
+    }
 
 	td := ubuntuTemplateData{
 		DriverBuildDir:       DriverDirectory,
@@ -269,7 +285,6 @@ func parseUbuntuAWSKernelURLS(baseURL string, kr kernelrelease.KernelRelease, ke
 	if len(matches) != 2 {
 		return nil, fmt.Errorf("kernel headers and kernel headers common not found")
 	}
-
 	foundURLs := []string{fmt.Sprintf("%s/%s", baseURL, matches[0][1])}
 	foundURLs = append(foundURLs, fmt.Sprintf("%s/%s", baseURL, matches[1][1]))
 	return foundURLs, nil

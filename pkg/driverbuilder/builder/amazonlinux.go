@@ -117,18 +117,24 @@ func script(c Config, targetType Type) (string, error) {
 
 	kv := kernelrelease.FromString(c.Build.KernelRelease)
 
-	// Check (and filter) existing kernels before continuing
-	packages, err := fetchAmazonLinuxPackagesURLs(kv, c.Build.Architecture, targetType)
-	if err != nil {
-		return "", err
-	}
-	if len(packages) != 2 {
-		return "", fmt.Errorf("target %s needs to find both kernel and kernel-devel packages", targetType)
-	}
-	urls, err := getResolvingURLs(packages)
-	if err != nil {
-		return "", err
-	}
+	var urls []string
+	if c.KernelUrls == nil {
+        // Check (and filter) existing kernels before continuing
+        var packages []string
+        packages, err = fetchAmazonLinuxPackagesURLs(kv, c.Build.Architecture, targetType)
+        if err != nil {
+        	return "", err
+        }
+        urls, err = getResolvingURLs(packages)
+    } else {
+        urls, err = getResolvingURLs(c.KernelUrls)
+    }
+    if err != nil {
+        return "", err
+    }
+    if len(urls) < 2 {
+        return "", fmt.Errorf("target %s needs to find both kernel and kernel-devel packages", targetType)
+    }
 
 	td := amazonlinuxTemplateData{
 		DriverBuildDir:     DriverDirectory,

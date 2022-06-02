@@ -73,6 +73,10 @@ var tests = []testCase{
 			"4.15.0-1057-aws",
 			"--kernelversion",
 			"59",
+			"--kernelurls",
+            "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws/linux-aws-headers-4.15.0-1057_4.15.0-1057.59_all.deb",
+            "--kernelurls",
+            "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws/linux-headers-4.15.0-1057-aws_4.15.0-1057.59_amd64.deb",
 			"--target",
 			"ubuntu-aws",
 			"--output-module",
@@ -98,6 +102,10 @@ var tests = []testCase{
 			"4.15.0-1057-aws",
 			"--kernelversion",
 			"59",
+			"--kernelurls",
+            "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws/linux-aws-headers-4.15.0-1057_4.15.0-1057.59_all.deb",
+            "--kernelurls",
+            "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws/linux-headers-4.15.0-1057-aws_4.15.0-1057.59_amd64.deb",
 			"--target",
 			"ubuntu-aws",
 			"--output-module",
@@ -158,6 +166,19 @@ var tests = []testCase{
 			out: "testdata/docker-override-from-config-debug.txt",
 		},
 	},
+	{
+    		descr: "docker/from-config-file-using-urls",
+    		args: []string{
+    			"docker",
+    			"-c",
+    			"testdata/configs/2.yaml",
+    			"--loglevel",
+    			"debug",
+    		},
+    		expect: expect{
+    			out: "testdata/docker-override-urls-from-config-debug.txt",
+    		},
+    	},
 	{
 		descr: "complete/docker/targets",
 		args: []string{

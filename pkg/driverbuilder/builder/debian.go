@@ -33,15 +33,20 @@ func (v debian) Script(c Config) (string, error) {
 
 	kr := kernelrelease.FromString(c.Build.KernelRelease)
 
-	kurls, err := fetchDebianKernelURLs(kr, c.Build.KernelVersion)
-	if err != nil {
-		return "", err
-	}
-
-	urls, err := getResolvingURLs(kurls)
-	if err != nil {
-		return "", err
-	}
+	var urls []string
+    if c.KernelUrls == nil {
+        var kurls []string
+        kurls, err = fetchDebianKernelURLs(kr, c.Build.KernelVersion)
+        if err != nil {
+            return "", err
+        }
+        urls, err = getResolvingURLs(kurls)
+    } else {
+        urls, err = getResolvingURLs(c.KernelUrls)
+    }
+    if err != nil {
+        return "", err
+    }
 	if len(urls) < 2 {
 		return "", fmt.Errorf("specific kernel headers not found")
 	}

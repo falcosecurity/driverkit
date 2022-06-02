@@ -37,17 +37,27 @@ func persistentValidateFunc(rootCommand *RootCmd, rootOpts *RootOptions) func(c 
 		}
 		rootCommand.c.Flags().VisitAll(func(f *pflag.Flag) {
 			if name := f.Name; !skip[name] {
-				value := viper.GetString(name)
-				if value == "" {
-					// fallback to nested options in config file, if any
-					if nestedName, ok := nested[name]; ok {
-						value = viper.GetString(nestedName)
-					}
-				}
-				// set the value, if any, otherwise let the default
-				if value != "" {
-					rootCommand.c.Flags().Set(name, value)
-				}
+			    if name == "kernelurls" {
+			        // Special case for Kernel crawler driverkit output
+			        // TODO, Change kernel crawler to use 'kernelurls' instead of its current 'headers' key
+			        value := viper.GetStringSlice("headers")
+			        if len(value) != 0 {
+			            strvalue := strings.Join(value, ",")
+                        rootCommand.c.Flags().Set(name, strvalue)
+			        }
+			    } else {
+                    value := viper.GetString(name)
+                    if value == "" {
+                        // fallback to nested options in config file, if any
+                        if nestedName, ok := nested[name]; ok {
+                            value = viper.GetString(nestedName)
+                        }
+                    }
+                    // set the value, if any, otherwise let the default
+                    if value != "" {
+                        rootCommand.c.Flags().Set(name, value)
+                    }
+                }
 			}
 		})
 
@@ -118,6 +128,8 @@ func NewRootCmd() *RootCmd {
 	flags.StringVar(&rootOpts.ModuleDeviceName, "moduledevicename", rootOpts.ModuleDeviceName, "kernel module device name (the default is falco, so the device will be under /dev/falco*)")
 	flags.StringVar(&rootOpts.ModuleDriverName, "moduledrivername", rootOpts.ModuleDriverName, "kernel module driver name, i.e. the name you see when you check installed modules via lsmod")
 	flags.StringVar(&rootOpts.BuilderImage, "builderimage", rootOpts.BuilderImage, "docker image to be used to build the kernel module and eBPF probe. If not provided, the default image will be used.")
+	flags.StringSliceVar(&rootOpts.KernelUrls, "kernelurls", nil, "list of kernel header urls (e.g. --kernelurls <URL1> --kernelurls <URL2> --kernelurls \"<URL3>,<URL4>\")")
+
 	viper.BindPFlags(flags)
 
 	// Flag annotations and custom completions

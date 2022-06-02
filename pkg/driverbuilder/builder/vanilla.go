@@ -93,11 +93,16 @@ func (v vanilla) Script(c Config) (string, error) {
 
 	kv := kernelrelease.FromString(c.Build.KernelRelease)
 
-	// Check (and filter) existing kernels before continuing
-	urls, err := getResolvingURLs([]string{fetchVanillaKernelURLFromKernelVersion(kv)})
-	if err != nil {
-		return "", err
-	}
+	var urls []string
+    if c.KernelUrls == nil {
+        // Check (and filter) existing kernels before continuing
+        urls, err = getResolvingURLs([]string{fetchVanillaKernelURLFromKernelVersion(kv)})
+    } else {
+        urls, err = getResolvingURLs(c.KernelUrls)
+    }
+    if err != nil {
+        return "", err
+    }
 
 	td := vanillaTemplateData{
 		DriverBuildDir:     DriverDirectory,
