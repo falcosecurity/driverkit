@@ -13,5 +13,4 @@ type Build struct {
 	ModuleDriverName   string
 	ModuleDeviceName   string
 	CustomBuilderImage string
-	KernelUrls         []string
 }

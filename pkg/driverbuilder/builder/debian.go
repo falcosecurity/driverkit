@@ -36,16 +36,12 @@ func (v debian) Script(c Config) (string, error) {
 	}
 
 	var urls []string
-	if c.KernelUrls == nil {
-		var kurls []string
-		kurls, err = fetchDebianKernelURLs(kr)
-		if err != nil {
-			return "", err
-		}
-		urls, err = getResolvingURLs(kurls)
-	} else {
-		urls, err = getResolvingURLs(c.KernelUrls)
+	var kurls []string
+	kurls, err = fetchDebianKernelURLs(kr)
+	if err != nil {
+		return "", err
 	}
+	urls, err = getResolvingURLs(kurls)
 	if err != nil {
 		return "", err
 	}

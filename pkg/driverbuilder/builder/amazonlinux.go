@@ -118,22 +118,18 @@ func script(c Config, targetType Type) (string, error) {
 	kv := kernelReleaseFromBuildConfig(c.Build)
 
 	var urls []string
-	if c.KernelUrls == nil {
-		var packages []string
-		// Check (and filter) existing kernels before continuing
-		packages, err = fetchAmazonLinuxPackagesURLs(kv, targetType)
-		if err != nil {
-			return "", err
-		}
-		urls, err = getResolvingURLs(packages)
-	} else {
-		urls, err = getResolvingURLs(c.KernelUrls)
+	var packages []string
+	// Check (and filter) existing kernels before continuing
+	packages, err = fetchAmazonLinuxPackagesURLs(kv, targetType)
+	if err != nil {
+		return "", err
+	}
+	urls, err = getResolvingURLs(packages)
+	if err != nil {
+		return "", err
 	}
 	if len(urls) != 2 {
 		return "", fmt.Errorf("target %s needs to find both kernel and kernel-devel packages", targetType)
-	}
-	if err != nil {
-		return "", err
 	}
 
 	td := amazonlinuxTemplateData{
