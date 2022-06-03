@@ -19,8 +19,8 @@ jobs:
           name: Prepare env
           command: |
             echo ${DOCKERHUB_SECRET} | docker login -u ${DOCKERHUB_USER} --password-stdin
-            apk update
-            apk add make bash git
+            sudo apt update
+            sudo apt install make bash git
       - run:
           name: Build and Push all docker images
           command: |
