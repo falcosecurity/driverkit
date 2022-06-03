@@ -18,6 +18,9 @@ jobs:
       - run:
           name: Prepare env
           command: |
+            docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+            docker context create dk-env
+            docker buildx create dk-env --driver docker-container --use
             echo ${DOCKERHUB_SECRET} | docker login -u ${DOCKERHUB_USER} --password-stdin
             sudo apt update
             sudo apt install make bash git
