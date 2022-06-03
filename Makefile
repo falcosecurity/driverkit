@@ -60,7 +60,13 @@ clean:
 	$(RM) -R dist
 	$(RM) -R _output
 
-image/all: image/builder image/driverkit
+create-builder:
+	# Workaround for buildx issue, see https://github.com/docker/buildx/issues/495#issuecomment-761562905
+	docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+	docker buildx create --name dkitbuilder --driver docker-container --use
+	docker buildx inspect --bootstrap
+
+image/all: create-builder image/builder image/driverkit
 
 .PHONY: image/builder
 image/builder:
@@ -70,7 +76,7 @@ image/builder:
 image/driverkit:
 	$(DOCKER) buildx build --platform $(ARCHS) -o type=image,push="false" -f build/driverkit.Dockerfile .
 
-push/all: push/builder push/driverkit
+push/all: create-builder push/builder push/driverkit
 
 .PHONY: push/builder
 push/builder:
