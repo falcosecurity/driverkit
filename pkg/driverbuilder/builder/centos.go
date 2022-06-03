@@ -30,11 +30,7 @@ func (c centos) Script(cfg Config) (string, error) {
 	kr := kernelReleaseFromBuildConfig(cfg.Build)
 
 	var urls []string
-	if cfg.KernelUrls == nil {
-		urls, err = getResolvingURLs(fetchCentosKernelURLS(kr))
-	} else {
-		urls, err = getResolvingURLs(cfg.KernelUrls)
-	}
+	urls, err = getResolvingURLs(fetchCentosKernelURLS(kr))
 	if err != nil {
 		return "", err
 	}

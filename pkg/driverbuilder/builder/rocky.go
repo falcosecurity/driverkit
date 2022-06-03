@@ -30,11 +30,7 @@ func (c rocky) Script(cfg Config) (string, error) {
 	kr := kernelReleaseFromBuildConfig(cfg.Build)
 
 	var urls []string
-	if cfg.KernelUrls == nil {
-		urls, err = getResolvingURLs(fetchRockyKernelURLS(kr))
-	} else {
-		urls, err = getResolvingURLs(cfg.KernelUrls)
-	}
+	urls, err = getResolvingURLs(fetchRockyKernelURLS(kr))
 	if err != nil {
 		return "", err
 	}

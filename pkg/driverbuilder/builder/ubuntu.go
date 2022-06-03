@@ -38,10 +38,9 @@ func (v ubuntuGeneric) Script(c Config) (string, error) {
 	kr := kernelReleaseFromBuildConfig(c.Build)
 
 	var urls []string
-	if c.KernelUrls == nil {
-		urls, err = ubuntuGenericHeadersURLFromRelease(kr, c.Build.KernelVersion)
-	} else {
-		urls, err = getResolvingURLs(c.KernelUrls)
+	urls, err = ubuntuGenericHeadersURLFromRelease(kr, c.Build.KernelVersion)
+	if err != nil {
+		return "", err
 	}
 	if len(urls) != 2 {
 		return "", fmt.Errorf("specific kernel headers not found")
@@ -87,11 +86,7 @@ func (v ubuntuAWS) Script(c Config) (string, error) {
 	kr := kernelReleaseFromBuildConfig(c.Build)
 
 	var urls []string
-	if c.KernelUrls == nil {
-		urls, err = ubuntuAWSHeadersURLFromRelease(kr, c.Build.KernelVersion)
-	} else {
-		urls, err = getResolvingURLs(c.KernelUrls)
-	}
+	urls, err = ubuntuAWSHeadersURLFromRelease(kr, c.Build.KernelVersion)
 	if err != nil {
 		return "", err
 	}
