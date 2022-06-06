@@ -9,6 +9,7 @@ builds:
     main: .
     flags:
       - -v 
+      - -buildmode=pie
       - "-tags={{ .Env.GOTAGS }}"
     ldflags: 
       - "{{.Env.LDFLAGS}}"
