@@ -11,6 +11,7 @@ jobs:
   "images":
     docker:
       - image: cimg/base:stable
+    resource_class: large
     steps:
       - checkout
       - setup_remote_docker:
