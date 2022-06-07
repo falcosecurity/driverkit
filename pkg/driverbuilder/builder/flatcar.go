@@ -31,7 +31,7 @@ func (c flatcar) Script(cfg Config) (string, error) {
 		return "", err
 	}
 
-	kr := kernelrelease.FromString(cfg.Build.KernelRelease)
+	kr :=  kernelReleaseFromBuildConfig(cfg.Build)
 	if kr.Extraversion != "" {
 		return "", fmt.Errorf("unexpected extraversion: %s", kr.Extraversion)
 	}
@@ -45,12 +45,12 @@ func (c flatcar) Script(cfg Config) (string, error) {
 		return "", fmt.Errorf("not a valid flatcar release version: %s", kr.Version)
 	}
 	flatcarVersion := kr.Fullversion
-	flatcarInfo, err := fetchFlatcarMetadata(flatcarVersion)
+	flatcarInfo, err := fetchFlatcarMetadata(kr)
 	if err != nil {
 		return "", err
 	}
 
-	kconfUrls, err := getResolvingURLs(fetchFlatcarKernelConfigURL(flatcarInfo.Channel, kr.Fullversion))
+	kconfUrls, err := getResolvingURLs(fetchFlatcarKernelConfigURL(kr.Architecture, flatcarInfo.Channel, kr.Fullversion))
 	if err != nil {
 		return "", err
 	}
@@ -83,9 +83,10 @@ func (c flatcar) Script(cfg Config) (string, error) {
 	return buf.String(), nil
 }
 
-func fetchFlatcarMetadata(flatcarVersion string) (*flatcarReleaseInfo, error) {
+func fetchFlatcarMetadata(kr kernelrelease.KernelRelease) (*flatcarReleaseInfo, error) {
 	flatcarInfo := flatcarReleaseInfo{}
-	packageIndexUrl, err := getResolvingURLs(fetchFlatcarPackageListURL(flatcarVersion))
+	flatcarVersion := kr.Fullversion
+	packageIndexUrl, err := getResolvingURLs(fetchFlatcarPackageListURL(kr.Architecture, flatcarVersion))
 	if err != nil {
 		return nil, err
 	}
@@ -126,8 +127,8 @@ func fetchFlatcarMetadata(flatcarVersion string) (*flatcarReleaseInfo, error) {
 	return &flatcarInfo, nil
 }
 
-func fetchFlatcarPackageListURL(flatcarVersion string) []string {
-	pattern := "https://%s.release.flatcar-linux.net/amd64-usr/%s/flatcar_production_image_packages.txt"
+func fetchFlatcarPackageListURL(architecture kernelrelease.Architecture, flatcarVersion string) []string {
+	pattern := "https://%s.release.flatcar-linux.net/%s-usr/%s/flatcar_production_image_packages.txt"
 	channels := []string{
 		"stable",
 		"beta",
@@ -135,13 +136,13 @@ func fetchFlatcarPackageListURL(flatcarVersion string) []string {
 	}
 	urls := []string{}
 	for _, channel := range channels {
-		urls = append(urls, fmt.Sprintf(pattern, channel, flatcarVersion))
+		urls = append(urls, fmt.Sprintf(pattern, channel, architecture.String(), flatcarVersion))
 	}
 	return urls
 }
 
-func fetchFlatcarKernelConfigURL(flatcarChannel, flatcarVersion string) []string {
-	return []string{fmt.Sprintf("https://%s.release.flatcar-linux.net/amd64-usr/%s/flatcar_production_image_kernel_config.txt", flatcarChannel, flatcarVersion)}
+func fetchFlatcarKernelConfigURL(architecture kernelrelease.Architecture, flatcarChannel, flatcarVersion string) []string {
+	return []string{fmt.Sprintf("https://%s.release.flatcar-linux.net/%s-usr/%s/flatcar_production_image_kernel_config.txt", flatcarChannel, architecture.String(), flatcarVersion)}
 }
 
 func fetchFlatcarKernelURLS(kernelVersion string) []string {
