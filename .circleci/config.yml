@@ -1,17 +1,64 @@
-version: 2
+version: 2.1
 jobs:
-  "test":
+  "build-test":
     docker:
-      - image: docker.io/golang:1.17.0
+      - image: alpine:3.16
     steps:
       - checkout
       - run:
+          name: Install deps
+          command: apk add gcc musl-dev make bash git go
+      - run:
+          name: Build
+          command: make build
+      - run:
           name: Test
           command: make test
+      - run:
+          name: Prepare Artifacts
+          command: |
+            mkdir -p /tmp/build-amd64
+            cp _output/bin/driverkit /tmp/build-amd64/
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - build-amd64/
+  "build-test-arm64":
+    machine:
+      enabled: true
+      image: ubuntu-2004:2022.04.1
+    resource_class: arm.medium
+    steps:
+      - checkout:
+          path: /tmp/source
+      - run:
+          name: Prepare project
+          command: |
+            docker run --rm -it -v /tmp/source:/source -w /source --name alpine_sh -d alpine:3.16 sh
+            docker exec alpine_sh apk add gcc musl-dev make bash git go
+            docker exec alpine_sh git config --global --add safe.directory /source
+      - run:
+          name: Build
+          command: docker exec alpine_sh make build
+      - run:
+          name: Test
+          command: docker exec alpine_sh make test
+      - run:
+          name: Prepare Artifacts
+          command: |
+            mkdir -p /tmp/build-arm64
+            cp /tmp/source/_output/bin/driverkit /tmp/build-arm64/     
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - build-arm64/
   "images":
     docker:
       - image: cimg/base:stable
+        user: root
     steps:
+      - attach_workspace:
+          at: /
       - checkout
       - setup_remote_docker:
           version: 20.10.12
@@ -24,6 +71,10 @@ jobs:
             echo ${DOCKERHUB_SECRET} | docker login -u ${DOCKERHUB_USER} --password-stdin
             sudo apt update
             sudo apt install make bash git
+      - run:
+          name: Copy binaries from workspace
+          command: |
+            cp -r /build-* .
       - run:
           name: Build and Push all docker images
           command: |
@@ -52,10 +103,14 @@ jobs:
           name: Release
           command: GIT_TAG="$CIRCLE_TAG" make release
 workflows:
-  version: 2
+  version: 2.1
   build:
     jobs:
-      - "test":
+      - "build-test":
+          filters:
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(-.*)*/
+      - "build-test-arm64":
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*(-.*)*/
@@ -68,7 +123,8 @@ workflows:
             tags:
               only: /v[0-9]+(\.[0-9]+)*(-.*)*/
           requires:
-            - "test"
+            - "build-test"
+            - "build-test-arm64"
       - "release":
           context: falco
           filters:
@@ -77,5 +133,4 @@ workflows:
             tags:
               only: /v[0-9]+(\.[0-9]+)*(-.*)*/
           requires:
-            - "test"
             - "images"

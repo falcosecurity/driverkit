@@ -90,7 +90,7 @@ push/latest:
 .PHONY: test
 test:
 	go test -v -race ./...
-	go test -v ./cmd
+	go test -v -buildmode=pie ./cmd
 
 .PHONY: ${driverkit_docgen}
 ${driverkit_docgen}: ${PWD}/docgen
