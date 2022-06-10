@@ -55,11 +55,16 @@ func (c flatcar) Script(cfg Config) (string, error) {
 		return "", err
 	}
 
-	// Check (and filter) existing kernels before continuing
-	urls, err := getResolvingURLs(fetchFlatcarKernelURLS(flatcarInfo.KernelVersion))
-	if err != nil {
-		return "", err
-	}
+	var urls []string
+    if cfg.KernelUrls == nil {
+        // Check (and filter) existing kernels before continuing
+        urls, err = getResolvingURLs(fetchFlatcarKernelURLS(flatcarInfo.KernelVersion))
+    } else {
+        urls, err = getResolvingURLs(cfg.KernelUrls)
+    }
+    if err != nil {
+        return "", err
+    }
 
 	td := flatcarTemplateData{
 		DriverBuildDir:    DriverDirectory,

@@ -38,13 +38,17 @@ func (v ubuntuGeneric) Script(c Config) (string, error) {
 	kr := kernelReleaseFromBuildConfig(c.Build)
 
 	var urls []string
-	urls, err = ubuntuGenericHeadersURLFromRelease(kr, c.Build.KernelVersion)
-	if err != nil {
-		return "", err
-	}
-	if len(urls) != 2 {
-		return "", fmt.Errorf("specific kernel headers not found")
-	}
+    if c.KernelUrls == nil {
+        urls, err = ubuntuGenericHeadersURLFromRelease(kr, c.Build.KernelVersion)
+    } else {
+        urls, err = getResolvingURLs(c.KernelUrls)
+    }
+    if err != nil {
+        return "", err
+    }
+    if len(urls) < 2 {
+        return "", fmt.Errorf("specific kernel headers not found")
+    }
 
 	td := ubuntuTemplateData{
 		DriverBuildDir:       DriverDirectory,
@@ -86,13 +90,17 @@ func (v ubuntuAWS) Script(c Config) (string, error) {
 	kr := kernelReleaseFromBuildConfig(c.Build)
 
 	var urls []string
-	urls, err = ubuntuAWSHeadersURLFromRelease(kr, c.Build.KernelVersion)
-	if err != nil {
-		return "", err
-	}
-	if len(urls) != 2 {
-		return "", fmt.Errorf("specific kernel headers not found")
-	}
+    if c.KernelUrls == nil {
+        urls, err = ubuntuAWSHeadersURLFromRelease(kr, c.KernelVersion)
+    } else {
+        urls, err = getResolvingURLs(c.KernelUrls)
+    }
+    if err != nil {
+        return "", err
+    }
+    if len(urls) < 2 {
+        return "", fmt.Errorf("specific kernel headers not found")
+    }
 
 	td := ubuntuTemplateData{
 		DriverBuildDir:       DriverDirectory,

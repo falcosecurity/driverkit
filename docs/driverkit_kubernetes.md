@@ -29,6 +29,7 @@ driverkit kubernetes [flags]
       --insecure-skip-tls-verify       if true, the server's certificate will not be checked for validity, this will make your HTTPS connections insecure
       --kernelconfigdata string        base64 encoded kernel config data: in some systems it can be found under the /boot directory, in other it is gzip compressed under /proc
       --kernelrelease string           kernel release to build the module for, it can be found by executing 'uname -v'
+      --kernelurls []string            list of kernel header urls (e.g. --kernelurls <URL1> --kernelurls <URL2> --kernelurls "<URL3>,<URL4>")
       --kernelversion uint16           kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v' (default 1)
       --kubeconfig string              path to the kubeconfig file to use for CLI requests
   -l, --loglevel string                log level (default "info")
