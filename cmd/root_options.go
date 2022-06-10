@@ -18,15 +18,16 @@ type OutputOptions struct {
 
 // RootOptions ...
 type RootOptions struct {
-	Architecture     string `validate:"required,oneof=amd64 arm64" name:"architecture"`
-	DriverVersion    string `default:"master" validate:"eq=master|sha1|semver" name:"driver version"`
-	KernelVersion    uint16 `default:"1" validate:"omitempty,number" name:"kernel version"`
-	ModuleDriverName string `default:"falco" validate:"max=60" name:"kernel module driver name"`
-	ModuleDeviceName string `default:"falco" validate:"excludes=/,max=255" name:"kernel module device name"`
-	KernelRelease    string `validate:"required,ascii" name:"kernel release"`
-	Target           string `validate:"required,target" name:"target"`
-	KernelConfigData string `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level
-	BuilderImage     string `validate:"imagename" name:"builder image"`
+	Architecture     string   `validate:"required,oneof=amd64 arm64" name:"architecture"`
+	DriverVersion    string   `default:"master" validate:"eq=master|sha1|semver" name:"driver version"`
+	KernelVersion    uint16   `default:"1" validate:"omitempty,number" name:"kernel version"`
+	ModuleDriverName string   `default:"falco" validate:"max=60" name:"kernel module driver name"`
+	ModuleDeviceName string   `default:"falco" validate:"excludes=/,max=255" name:"kernel module device name"`
+	KernelRelease    string   `validate:"required,ascii" name:"kernel release"`
+	Target           string   `validate:"required,target" name:"target"`
+	KernelConfigData string   `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level
+	BuilderImage     string   `validate:"imagename" name:"builder image"`
+	KernelUrls       []string `name:"kernel header urls"`
 	Output           OutputOptions
 }
 
@@ -88,6 +89,9 @@ func (ro *RootOptions) Log() {
 		fields["target"] = ro.Target
 	}
 	fields["arch"] = ro.Architecture
+	if len(ro.KernelUrls) > 0 {
+        fields["kernelurls"] = ro.KernelUrls
+    }
 
 	logger.WithFields(fields).Debug("running with options")
 }
@@ -110,6 +114,7 @@ func (ro *RootOptions) toBuild() *builder.Build {
 		ModuleDriverName:   ro.ModuleDriverName,
 		ModuleDeviceName:   ro.ModuleDeviceName,
 		CustomBuilderImage: ro.BuilderImage,
+		KernelUrls:         ro.KernelUrls,
 	}
 }
 

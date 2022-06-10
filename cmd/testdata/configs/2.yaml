@@ -1,0 +1,10 @@
+kernelrelease: 4.15.0-1057-aws
+kernelversion: 59
+kernelurls: [
+    "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws/linux-aws-headers-4.15.0-1057_4.15.0-1057.59_all.deb",
+    "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws/linux-headers-4.15.0-1057-aws_4.15.0-1057.59_amd64.deb",
+]
+target: ubuntu-aws
+output:
+    module: /tmp/falco-ubuntu-aws.ko
+driverversion: master

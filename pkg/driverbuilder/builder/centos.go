@@ -30,10 +30,15 @@ func (c centos) Script(cfg Config) (string, error) {
 	kr := kernelReleaseFromBuildConfig(cfg.Build)
 
 	var urls []string
-	urls, err = getResolvingURLs(fetchCentosKernelURLS(kr))
-	if err != nil {
-		return "", err
-	}
+    if cfg.KernelUrls == nil {
+        // Check (and filter) existing kernels before continuing
+        urls, err = getResolvingURLs(fetchCentosKernelURLS(kr))
+    } else {
+        urls, err = getResolvingURLs(cfg.KernelUrls)
+    }
+    if err != nil {
+        return "", err
+    }
 
 	td := centosTemplateData{
 		DriverBuildDir:    DriverDirectory,
