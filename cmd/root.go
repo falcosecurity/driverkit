@@ -47,11 +47,6 @@ func persistentValidateFunc(rootCommand *RootCmd, rootOpts *RootOptions) func(c 
                        return
                     }
                     value := viper.GetStringSlice(name)
-                    if len(value) == 0 {
-                        // Special case for Kernel crawler driverkit output
-                        // TODO, Change kernel crawler to use 'kernelurls' instead of its current 'headers' key
-                        value = viper.GetStringSlice("headers")
-                    }
                     if len(value) != 0 {
                         strValue := strings.Join(value, ",")
                         rootCommand.c.Flags().Set(name, strValue)
