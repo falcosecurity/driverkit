@@ -199,6 +199,30 @@ var tests = []testCase{
 		},
 	},
 	{
+	    descr: "docker/build-related-target-azure",
+	    args: []string{
+	        "docker",
+	        "--kernelrelease",
+	        "4.15.0-1057-azure",
+	        "--kernelversion",
+	        "62",
+	        "--kernelurls",
+	        "http://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-azure/linux-azure-headers-4.15.0-1057_4.15.0-1057.62_all.deb",
+	        "--kernelurls",
+	        "http://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-azure/linux-headers-4.15.0-1057-azure_4.15.0-1057.62_amd64.deb",
+	        "--target",
+	        "ubuntu-aws",
+	        "--output-module",
+	        "/tmp/falco-ubuntu-azure.ko",
+	        "--loglevel",
+	        "debug",
+        },
+        expect: expect{
+            out:            "testdata/docker-related-target-debug.txt",
+            fmtRuntimeArch: true,
+        },
+    },
+	{
 		descr: "complete/docker/targets",
 		args: []string{
 			"__complete",
