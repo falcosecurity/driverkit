@@ -49,11 +49,11 @@ driverkit_docgen ?= _output/bin/docgen
 build: clean ${driverkit}
 
 ${driverkit}:
-	CGO_ENABLED=1 go build -v -buildmode=pie -ldflags '${LDFLAGS}' -tags '${GOTAGS}' -o $@ .
+	CGO_ENABLED=0 go build -v -buildmode=pie -ldflags '${LDFLAGS}' -tags '${GOTAGS}' -o $@ .
 
 .PHONY: release
 release: clean
-	CGO_ENABLED=1 LDFLAGS="${LDFLAGS}" GOTAGS="${GOTAGS}" $(GORELEASER) release
+	CGO_ENABLED=0 LDFLAGS="${LDFLAGS}" GOTAGS="${GOTAGS}" $(GORELEASER) release
 
 .PHONY: clean
 clean:
