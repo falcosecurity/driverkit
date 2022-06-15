@@ -82,10 +82,8 @@ push/driverkit:
 
 .PHONY: push/latest
 push/latest:
-	$(DOCKER) tag $(IMAGE_NAME_BUILDER_COMMIT) $(IMAGE_NAME_BUILDER_LATEST)
-	$(DOCKER) push $(IMAGE_NAME_BUILDER_LATEST)
-	$(DOCKER) tag $(IMAGE_NAME_DRIVERKIT_COMMIT) $(IMAGE_NAME_DRIVERKIT_LATEST)
-	$(DOCKER) push $(IMAGE_NAME_DRIVERKIT_LATEST)
+	$(DOCKER) buildx build --push --platform $(ARCHS) -t "$(IMAGE_NAME_BUILDER_LATEST)" -f build/builder.Dockerfile .
+	$(DOCKER) buildx build --push --platform $(ARCHS) -t "$(IMAGE_NAME_DRIVERKIT_LATEST)" -f build/driverkit.Dockerfile .
 
 .PHONY: test
 test:
