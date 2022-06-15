@@ -12,7 +12,6 @@ require (
 	github.com/go-playground/locales v0.14.0
 	github.com/go-playground/universal-translator v0.18.0
 	github.com/go-playground/validator/v10 v10.10.1
-	github.com/mattn/go-sqlite3 v1.14.12
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
@@ -30,4 +29,5 @@ require (
 	k8s.io/client-go v0.23.6
 	k8s.io/kubectl v0.23.6
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
+	modernc.org/sqlite v1.17.3
 )

@@ -16,8 +16,9 @@ import (
 
 	"database/sql"
 
+	_ "modernc.org/sqlite"
+
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
-	_ "github.com/mattn/go-sqlite3" // Why do you want me to justify? Leave me alone :)
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -252,7 +253,7 @@ func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, targetType Typ
 			return nil, err
 		}
 		// Open the database
-		db, err := sql.Open("sqlite3", dbFile.Name())
+		db, err := sql.Open("sqlite", dbFile.Name())
 		if err != nil {
 			return nil, err
 		}
