@@ -4,8 +4,9 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"text/template"
@@ -23,6 +24,20 @@ func init() {
 // ubuntu is a driverkit target.
 type ubuntu struct{}
 
+// ubuntuTemplateData stores information to be templated into the shell script
+type ubuntuTemplateData struct {
+	DriverBuildDir       string
+	ModuleDownloadURL    string
+	KernelDownloadURLS   []string
+	KernelLocalVersion   string
+	KernelHeadersPattern string
+	ModuleDriverName     string
+	ModuleFullPath       string
+	BuildProbe           bool
+	BuildModule          bool
+	GCCVersion           string
+}
+
 // Script compiles the script to build the kernel module and/or the eBPF probe.
 func (v ubuntu) Script(c Config) (string, error) {
 
@@ -32,6 +47,11 @@ func (v ubuntu) Script(c Config) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	fmt.Printf("%+v\n", parsed)
+
+	// read in the build config
+	kr := kernelReleaseFromBuildConfig(c.Build)
+	fmt.Printf("%+v\n", kr)
 
 	var urls []string
 	if c.KernelUrls == nil {
@@ -45,6 +65,7 @@ func (v ubuntu) Script(c Config) (string, error) {
 	if len(urls) < 2 {
 		return "", fmt.Errorf("specific kernel headers not found")
 	}
+	fmt.Printf("%+v\n", urls)
 
 	td := ubuntuTemplateData{
 		DriverBuildDir:       DriverDirectory,
@@ -58,8 +79,6 @@ func (v ubuntu) Script(c Config) (string, error) {
 		BuildProbe:           len(c.Build.ProbeFilePath) > 0,
 		GCCVersion:           ubuntuGCCVersionFromKernelRelease(kr),
 	}
-
-	fmt.Println(td.KernelHeadersPattern)
 
 	buf := bytes.NewBuffer(nil)
 	err = parsed.Execute(buf, td)
@@ -80,23 +99,28 @@ func determineKernelHeadersPattern(kr kernelrelease.KernelRelease) string {
 }
 
 func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint16) ([]string, error) {
-	baseURL := []string{
-		// "http://archive.ubuntu.com/ubuntu/pool/main/l/",
-		// "http://ports.ubuntu.com/pool/main/l/",
+	baseURLs := []string{
+		"http://archive.ubuntu.com/ubuntu/pool/main/l",
+		"http://ports.ubuntu.com/pool/main/l",
 
-		"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux",
-		"http://security.ubuntu.com/ubuntu/pool/main/l/linux",
-		"http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux",
-		"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-gke-5.4",
-		"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-gke-4.15",
-		"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws",
-		"http://security.ubuntu.com/ubuntu/pool/main/l/linux-aws",
-		"http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws",
+		// "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux",
+		// "http://security.ubuntu.com/ubuntu/pool/main/l/linux",
+		// "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux",
+		// "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-gke-5.4",
+		// "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-gke-4.15",
+		// "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws",
+		// "http://security.ubuntu.com/ubuntu/pool/main/l/linux-aws",
+		// "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws",
 	}
 
-	for _, u := range baseURL {
-		urls, err := getResolvingURLs(fetchUbuntuKernelURL(u, kr, kv))
-		fmt.Println(urls)
+	for _, url := range baseURLs {
+		// get all possible URLs
+		possibleURLs, err := fetchUbuntuKernelURL(url, kr, kv)
+		if err != nil {
+			return nil, err
+		}
+		// try resolving the URLs
+		urls, err := getResolvingURLs(possibleURLs)
 		// We expect both a common "_all" package,
 		// and an arch dependent package.
 		if err == nil && len(urls) == 2 {
@@ -104,171 +128,107 @@ func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint16) ([]s
 		}
 	}
 
-	// If we can't find the AWS files in the main folders,
-	// try to proactively parse the subfolders to find what we need
-	if kr.IsAWS() {
-		for _, u := range baseURL {
-			// TODO: check if aws url
-			url := fmt.Sprintf("%s-%s.%s", u, kr.Version, kr.PatchLevel)
-			urls, err := parseUbuntuAWSKernelURLS(url, kr, kv)
-			if err != nil {
-				continue
-			}
-			urls, err = getResolvingURLs(urls)
-			if err == nil {
-				return urls, err
-			}
-		}
-	}
-
 	return nil, fmt.Errorf("kernel headers not found")
 }
 
-func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernelVersion uint16) []string {
+func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernelVersion uint16) ([]string, error) {
 	firstExtra := extractExtraNumber(kr.Extraversion)
+	ubuntuFlavor := extractUbuntuFlavor(kr.Extraversion)
 
-	if kr.IsGKE() {
-		return []string{
-			// For 4.15 GKE kernels
-			fmt.Sprintf(
-				"%s/linux-gke-%d.%d-headers-%s-%s_%s-%s.%d_%s.deb",
-				baseURL,
-				kr.Version,
-				kr.PatchLevel,
-				kr.Fullversion,
-				firstExtra,
-				kr.Fullversion,
-				firstExtra,
-				kernelVersion,
-				kr.Architecture.String(),
-			),
-			fmt.Sprintf(
-				"%s/linux-headers-%s%s_%s-%s.%d_%s.deb",
-				baseURL,
-				kr.Fullversion,
-				kr.FullExtraversion,
-				kr.Fullversion,
-				firstExtra,
-				kernelVersion,
-				kr.Architecture.String(),
-			),
-			// For 5.4 GKE kernels
-			fmt.Sprintf(
-				"%s/linux-gke-%d.%d-headers-%s-%s_%s-%s.%d~18.04.1_%s.deb",
-				baseURL,
-				kr.Version,
-				kr.PatchLevel,
-				kr.Fullversion,
-				firstExtra,
-				kr.Fullversion,
-				firstExtra,
-				kernelVersion,
-				kr.Architecture.String(),
-			),
-			fmt.Sprintf(
-				"%s/linux-headers-%s%s_%s-%s.%d~18.04.1_%s.deb",
-				baseURL,
-				kr.Fullversion,
-				kr.FullExtraversion,
-				kr.Fullversion,
-				firstExtra,
-				kernelVersion,
-				kr.Architecture.String(),
-			),
-		}
+	// discover all possible subdirs on Ubuntu URLs for a given flavor
+	subdirs, err := fetchAllFlavorSubdirs(baseURL, ubuntuFlavor)
+	if err != nil {
+		return nil, err
 	}
 
-	if kr.IsAWS() {
-		return []string{
-			fmt.Sprintf(
-				"%s/linux-aws-headers-%s-%s_%s-%s.%d_all.deb",
-				baseURL,
-				kr.Fullversion,
-				firstExtra,
-				kr.Fullversion,
-				firstExtra,
-				kernelVersion,
-			),
-			fmt.Sprintf(
-				"%s/linux-headers-%s%s_%s-%s.%d_%s.deb",
-				baseURL,
-				kr.Fullversion,
-				kr.FullExtraversion,
-				kr.Fullversion,
-				firstExtra,
-				kernelVersion,
-				kr.Architecture.String(),
-			),
-			fmt.Sprintf(
-				"%s/linux-headers-%s%s-aws_%s-%s.%d_%s.deb",
-				baseURL,
-				kr.Fullversion,
-				kr.FullExtraversion,
-				kr.Fullversion,
-				firstExtra,
-				kernelVersion,
-				kr.Architecture.String(),
-			),
-		}
+	// build all possible full URLs with the flavor subdirs
+	possibleFullURLs := []string{}
+	for _, subdir := range subdirs {
+		possibleFullURLs = append(
+			possibleFullURLs,
+			fmt.Sprintf("%s/%s", baseURL, subdir),
+		)
 	}
 
-	return []string{
+	// swap back from hwe to generic --
+	// the subdir on the archive is linux-hwe-*,
+	// but the actual package is linux-headers-*-generic-*
+	if ubuntuFlavor == "hwe" {
+		ubuntuFlavor = "generic"
+	}
+
+	// piece together all possible naming patterns for packages
+	// in general, there should be 2: an arch-specific package and an _all package
+	packageNamePatterns := []string{
 		fmt.Sprintf(
-			"%s/linux-headers-%s-%s_%s-%s.%d_all.deb",
-			baseURL,
+			"linux-headers-%s-%s-%s_%s-%s.%d_%s.deb",
 			kr.Fullversion,
 			firstExtra,
-			kr.Fullversion,
-			firstExtra,
-			kernelVersion,
-		),
-		fmt.Sprintf(
-			"%s/linux-headers-%s%s_%s-%s.%d_%s.deb",
-			baseURL,
-			kr.Fullversion,
-			kr.FullExtraversion,
+			ubuntuFlavor,
 			kr.Fullversion,
 			firstExtra,
 			kernelVersion,
 			kr.Architecture.String(),
 		),
 		fmt.Sprintf(
-			"%s/linux-headers-%s%s-generic_%s-%s.%d_%s.deb",
-			baseURL,
+			"linux-headers-%s-%s-%s_%s-%s.%d_all.deb",
 			kr.Fullversion,
-			kr.FullExtraversion,
+			firstExtra,
+			ubuntuFlavor,
 			kr.Fullversion,
 			firstExtra,
 			kernelVersion,
-			kr.Architecture.String(),
 		),
 	}
+
+	// combine it all together now
+	packageFullURLs := []string{}
+	for _, url := range possibleFullURLs {
+		for _, packageName := range packageNamePatterns {
+			packageFullURLs = append(
+				packageFullURLs,
+				fmt.Sprintf("%s/%s", url, packageName),
+			)
+		}
+	}
+
+	// testing
+	fmt.Println(packageFullURLs)
+	os.Exit(1)
+
+	return packageFullURLs, nil
+
 }
 
-func parseUbuntuAWSKernelURLS(baseURL string, kr kernelrelease.KernelRelease, kernelVersion uint16) ([]string, error) {
-	resp, err := http.Get(baseURL)
+// given a base URL and an Ubuntu flavor, query the URL and find all possible subdirs with that flavor
+// example for "generic": [linux-hwe-5.0 linux-hwe-5.4 linux-hwe-5.8 linux-hwe-5.11 linux-hwe-5.13 linux-hwe-5.15 linux-hwe-edge linux-hwe]
+func fetchAllFlavorSubdirs(baseURL string, flavor string) ([]string, error) {
+	// query base URL
+	res, err := http.Get(baseURL)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	firstExtra := extractExtraNumber(kr.Extraversion)
-	rmatch := `href="(linux(?:-aws-%d.%d)?-headers-%s-%s(?:-aws)?_%s-%s\.%d.*(?:%s|all)\.deb)"`
-	fullRegex := fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel,
-		kr.Fullversion, firstExtra, kr.Fullversion,
-		firstExtra, kernelVersion, kr.Architecture.String())
-	pattern := regexp.MustCompile(fullRegex)
-	matches := pattern.FindAllStringSubmatch(string(body), 2)
-	if len(matches) != 2 {
-		return nil, fmt.Errorf("kernel headers and kernel headers common not found")
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	// convert body to string
+	strBody := string(body)
+
+	// regex for grep'ing out the flavor
+	// capture group to get just the subdir name from the HTML
+	r := regexp.MustCompile(`.*(linux-` + flavor + `.*)/</a>.*`)
+	matches := r.FindAllStringSubmatch(strBody, -1)
+	if matches == nil { // present error to user if no matches
+		return nil, fmt.Errorf("No URLs found for specific Ubuntu flavor: %s", flavor)
 	}
 
-	foundURLs := []string{fmt.Sprintf("%s/%s", baseURL, matches[0][1])}
-	foundURLs = append(foundURLs, fmt.Sprintf("%s/%s", baseURL, matches[1][1]))
-	return foundURLs, nil
+	// loop over the matches, append to return
+	// capture groups are stored at 2nd index
+	flavorSubdirs := []string{}
+	for _, match := range matches {
+		flavorSubdirs = append(flavorSubdirs, match[1])
+	}
+	fmt.Printf("%+v\n", flavorSubdirs)
+	return flavorSubdirs, nil
 }
 
 func extractExtraNumber(extraversion string) string {
@@ -279,17 +239,17 @@ func extractExtraNumber(extraversion string) string {
 	return ""
 }
 
-type ubuntuTemplateData struct {
-	DriverBuildDir       string
-	ModuleDownloadURL    string
-	KernelDownloadURLS   []string
-	KernelLocalVersion   string
-	KernelHeadersPattern string
-	ModuleDriverName     string
-	ModuleFullPath       string
-	BuildProbe           bool
-	BuildModule          bool
-	GCCVersion           string
+func extractUbuntuFlavor(extraversion string) string {
+	firstExtraSplit := strings.Split(extraversion, "-")
+	if len(firstExtraSplit) > 0 {
+		flavor := firstExtraSplit[1]
+		// generic is stored as "hwe" on ubuntu archive
+		if flavor == "generic" {
+			flavor = "hwe"
+		}
+		return flavor
+	}
+	return ""
 }
 
 func ubuntuGCCVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
@@ -309,3 +269,66 @@ func ubuntuGCCVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
 
 	return "8"
 }
+
+const ubuntuTemplate = `
+#!/bin/bash
+set -xeuo pipefail
+
+rm -Rf {{ .DriverBuildDir }}
+mkdir {{ .DriverBuildDir }}
+rm -Rf /tmp/module-download
+mkdir -p /tmp/module-download
+
+curl --silent -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
+mv /tmp/module-download/*/driver/* {{ .DriverBuildDir }}
+
+cp /driverkit/module-Makefile {{ .DriverBuildDir }}/Makefile
+bash /driverkit/fill-driver-config.sh {{ .DriverBuildDir }}
+
+# Fetch the kernel
+mkdir /tmp/kernel-download
+cd /tmp/kernel-download
+{{range $url := .KernelDownloadURLS}}
+curl --silent -o kernel.deb -SL {{ $url }}
+ar x kernel.deb
+tar -xvf data.tar.*
+{{end}}
+ls -la /tmp/kernel-download
+
+cd /tmp/kernel-download/usr/src/
+sourcedir=$(find . -type d -name "{{ .KernelHeadersPattern }}" | head -n 1 | xargs readlink -f)
+
+ls -la $sourcedir
+
+# Change current gcc
+ln -sf /usr/bin/gcc-{{ .GCCVersion }} /usr/bin/gcc
+
+{{ if .BuildModule }}
+# Build the module
+cd {{ .DriverBuildDir }}
+make KERNELDIR=$sourcedir
+mv {{ .ModuleDriverName }}.ko {{ .ModuleFullPath }}
+strip -g {{ .ModuleFullPath }}
+# Print results
+modinfo {{ .ModuleFullPath }}
+{{ end }}
+
+{{ if .BuildProbe }}
+# Build the eBPF probe
+cd {{ .DriverBuildDir }}/bpf
+if [[ -x /usr/bin/llc ]]; then
+	LLC_BIN=/usr/bin/llc
+else
+	LLC_BIN=/usr/bin/llc-7
+fi
+
+if [[ -x /usr/bin/clang ]]; then
+	CLANG_BIN=/usr/bin/clang
+else
+	CLANG_BIN=/usr/bin/clang-7
+fi
+
+make LLC=$LLC_BIN CLANG=$CLANG_BIN CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
+ls -l probe.o
+{{ end }}
+`
