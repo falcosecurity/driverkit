@@ -51,7 +51,7 @@ func (v ubuntu) Script(c Config) (string, error) {
 		ModuleDownloadURL:    fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.Build.DriverVersion),
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
-		KernelHeadersPattern: "linux-headers*generic",
+		KernelHeadersPattern: determineKernelHeadersPattern(kr),
 		ModuleDriverName:     c.Build.ModuleDriverName,
 		ModuleFullPath:       ModuleFullPath,
 		BuildModule:          len(c.Build.ModuleFilePath) > 0,
@@ -59,9 +59,7 @@ func (v ubuntu) Script(c Config) (string, error) {
 		GCCVersion:           ubuntuGCCVersionFromKernelRelease(kr),
 	}
 
-	if kr.IsGKE() {
-		td.KernelHeadersPattern = "linux-headers*gke"
-	}
+	fmt.Println(td.KernelHeadersPattern)
 
 	buf := bytes.NewBuffer(nil)
 	err = parsed.Execute(buf, td)
@@ -71,8 +69,21 @@ func (v ubuntu) Script(c Config) (string, error) {
 	return buf.String(), nil
 }
 
+func determineKernelHeadersPattern(kr kernelrelease.KernelRelease) string {
+	if kr.IsGKE() {
+		return "linux-gke-headers"
+	} else if kr.IsAWS() {
+		return "linux-aws-headers"
+	} else {
+		return "linux-generic-headers"
+	}
+}
+
 func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint16) ([]string, error) {
 	baseURL := []string{
+		// "http://archive.ubuntu.com/ubuntu/pool/main/l/",
+		// "http://ports.ubuntu.com/pool/main/l/",
+
 		"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux",
 		"http://security.ubuntu.com/ubuntu/pool/main/l/linux",
 		"http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux",
@@ -85,6 +96,7 @@ func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint16) ([]s
 
 	for _, u := range baseURL {
 		urls, err := getResolvingURLs(fetchUbuntuKernelURL(u, kr, kv))
+		fmt.Println(urls)
 		// We expect both a common "_all" package,
 		// and an arch dependent package.
 		if err == nil && len(urls) == 2 {
