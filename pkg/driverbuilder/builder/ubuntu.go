@@ -13,27 +13,21 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
-//go:embed templates/ubuntu.sh
-var ubuntuTemplate string
-
-// TargetTypeUbuntuGeneric identifies the UbuntuGeneric target.
-const TargetTypeUbuntuGeneric Type = "ubuntu-generic"
-
-// TargetTypeUbuntuAWS identifies the UbuntuAWS target.
-const TargetTypeUbuntuAWS Type = "ubuntu-aws"
+// TargetTypeUbuntuGeneric identifies the Ubuntu target.
+const TargetTypeUbuntu Type = "ubuntu"
 
 func init() {
-	BuilderByTarget[TargetTypeUbuntuGeneric] = &ubuntuGeneric{}
-	BuilderByTarget[TargetTypeUbuntuAWS] = &ubuntuAWS{}
+	BuilderByTarget[TargetTypeUbuntu] = &ubuntu{}
 }
 
-// ubuntuGeneric is a driverkit target.
-type ubuntuGeneric struct {
-}
+// ubuntu is a driverkit target.
+type ubuntu struct{}
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
-func (v ubuntuGeneric) Script(c Config, kr kernelrelease.KernelRelease) (string, error) {
-	t := template.New(string(TargetTypeUbuntuGeneric))
+func (v ubuntu) Script(c Config) (string, error) {
+
+	t := template.New(string(TargetTypeUbuntu))
+
 	parsed, err := t.Parse(ubuntuTemplate)
 	if err != nil {
 		return "", err
@@ -41,7 +35,7 @@ func (v ubuntuGeneric) Script(c Config, kr kernelrelease.KernelRelease) (string,
 
 	var urls []string
 	if c.KernelUrls == nil {
-		urls, err = ubuntuGenericHeadersURLFromRelease(kr, c.Build.KernelVersion)
+		urls, err = ubuntuHeadersURLFromRelease(kr, c.Build.KernelVersion)
 	} else {
 		urls, err = getResolvingURLs(c.KernelUrls)
 	}
@@ -77,95 +71,20 @@ func (v ubuntuGeneric) Script(c Config, kr kernelrelease.KernelRelease) (string,
 	return buf.String(), nil
 }
 
-// ubuntuAWS is a driverkit target.
-type ubuntuAWS struct {
-}
-
-// Script compiles the script to build the kernel module and/or the eBPF probe.
-func (v ubuntuAWS) Script(c Config, kr kernelrelease.KernelRelease) (string, error) {
-	t := template.New(string(TargetTypeUbuntuGeneric))
-	parsed, err := t.Parse(ubuntuTemplate)
-	if err != nil {
-		return "", err
-	}
-
-	var urls []string
-	if c.KernelUrls == nil {
-		urls, err = ubuntuAWSHeadersURLFromRelease(kr, c.KernelVersion)
-	} else {
-		urls, err = getResolvingURLs(c.KernelUrls)
-	}
-	if err != nil {
-		return "", err
-	}
-	if len(urls) < 2 {
-		return "", fmt.Errorf("specific kernel headers not found")
-	}
-
-	td := ubuntuTemplateData{
-		DriverBuildDir:       DriverDirectory,
-		ModuleDownloadURL:    moduleDownloadURL(c),
-		KernelDownloadURLS:   urls,
-		KernelLocalVersion:   kr.FullExtraversion,
-		KernelHeadersPattern: "linux-headers*",
-		ModuleDriverName:     c.Build.ModuleDriverName,
-		ModuleFullPath:       ModuleFullPath,
-		BuildModule:          len(c.Build.ModuleFilePath) > 0,
-		BuildProbe:           len(c.Build.ProbeFilePath) > 0,
-		GCCVersion:           ubuntuGCCVersionFromKernelRelease(kr),
-	}
-
-	buf := bytes.NewBuffer(nil)
-	err = parsed.Execute(buf, td)
-	if err != nil {
-		return "", err
-	}
-	return buf.String(), nil
-}
-
-func ubuntuAWSHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint16) ([]string, error) {
-	baseURL := []string{
-		"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws",
-		"http://security.ubuntu.com/ubuntu/pool/main/l/linux-aws",
-		"http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws",
-	}
-
-	for _, u := range baseURL {
-		urls, err := getResolvingURLs(fetchUbuntuAWSKernelURLS(u, kr, kv))
-		if err == nil && len(urls) == 2 {
-			return urls, err
-		}
-	}
-
-	// If we can't find the AWS files in the main folders,
-	// try to proactively parse the subfolders to find what we need
-	for _, u := range baseURL {
-		url := fmt.Sprintf("%s-%d.%d", u, kr.Version, kr.PatchLevel)
-		urls, err := parseUbuntuAWSKernelURLS(url, kr, kv)
-		if err != nil {
-			continue
-		}
-		urls, err = getResolvingURLs(urls)
-		if err == nil {
-			return urls, err
-		}
-
-	}
-
-	return nil, fmt.Errorf("kernel headers not found")
-}
-
-func ubuntuGenericHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint16) ([]string, error) {
+func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint16) ([]string, error) {
 	baseURL := []string{
 		"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux",
 		"http://security.ubuntu.com/ubuntu/pool/main/l/linux",
 		"http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux",
 		"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-gke-5.4",
 		"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-gke-4.15",
+		"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws",
+		"http://security.ubuntu.com/ubuntu/pool/main/l/linux-aws",
+		"http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws",
 	}
 
 	for _, u := range baseURL {
-		urls, err := getResolvingURLs(fetchUbuntuGenericKernelURL(u, kr, kv))
+		urls, err := getResolvingURLs(fetchUbuntuKernelURL(u, kr, kv))
 		// We expect both a common "_all" package,
 		// and an arch dependent package.
 		if err == nil && len(urls) == 2 {
@@ -173,10 +92,27 @@ func ubuntuGenericHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint1
 		}
 	}
 
+	// If we can't find the AWS files in the main folders,
+	// try to proactively parse the subfolders to find what we need
+	if kr.IsAWS() {
+		for _, u := range baseURL {
+			// TODO: check if aws url
+			url := fmt.Sprintf("%s-%s.%s", u, kr.Version, kr.PatchLevel)
+			urls, err := parseUbuntuAWSKernelURLS(url, kr, kv)
+			if err != nil {
+				continue
+			}
+			urls, err = getResolvingURLs(urls)
+			if err == nil {
+				return urls, err
+			}
+		}
+	}
+
 	return nil, fmt.Errorf("kernel headers not found")
 }
 
-func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernelVersion uint16) []string {
+func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernelVersion uint16) []string {
 	firstExtra := extractExtraNumber(kr.Extraversion)
 
 	if kr.IsGKE() {
@@ -230,6 +166,40 @@ func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease,
 		}
 	}
 
+	if kr.IsAWS() {
+		return []string{
+			fmt.Sprintf(
+				"%s/linux-aws-headers-%s-%s_%s-%s.%d_all.deb",
+				baseURL,
+				kr.Fullversion,
+				firstExtra,
+				kr.Fullversion,
+				firstExtra,
+				kernelVersion,
+			),
+			fmt.Sprintf(
+				"%s/linux-headers-%s%s_%s-%s.%d_%s.deb",
+				baseURL,
+				kr.Fullversion,
+				kr.FullExtraversion,
+				kr.Fullversion,
+				firstExtra,
+				kernelVersion,
+				kr.Architecture.String(),
+			),
+			fmt.Sprintf(
+				"%s/linux-headers-%s%s-aws_%s-%s.%d_%s.deb",
+				baseURL,
+				kr.Fullversion,
+				kr.FullExtraversion,
+				kr.Fullversion,
+				firstExtra,
+				kernelVersion,
+				kr.Architecture.String(),
+			),
+		}
+	}
+
 	return []string{
 		fmt.Sprintf(
 			"%s/linux-headers-%s-%s_%s-%s.%d_all.deb",
@@ -252,41 +222,6 @@ func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease,
 		),
 		fmt.Sprintf(
 			"%s/linux-headers-%s%s-generic_%s-%s.%d_%s.deb",
-			baseURL,
-			kr.Fullversion,
-			kr.FullExtraversion,
-			kr.Fullversion,
-			firstExtra,
-			kernelVersion,
-			kr.Architecture.String(),
-		),
-	}
-}
-
-func fetchUbuntuAWSKernelURLS(baseURL string, kr kernelrelease.KernelRelease, kernelVersion uint16) []string {
-	firstExtra := extractExtraNumber(kr.Extraversion)
-	return []string{
-		fmt.Sprintf(
-			"%s/linux-aws-headers-%s-%s_%s-%s.%d_all.deb",
-			baseURL,
-			kr.Fullversion,
-			firstExtra,
-			kr.Fullversion,
-			firstExtra,
-			kernelVersion,
-		),
-		fmt.Sprintf(
-			"%s/linux-headers-%s%s_%s-%s.%d_%s.deb",
-			baseURL,
-			kr.Fullversion,
-			kr.FullExtraversion,
-			kr.Fullversion,
-			firstExtra,
-			kernelVersion,
-			kr.Architecture.String(),
-		),
-		fmt.Sprintf(
-			"%s/linux-headers-%s%s-aws_%s-%s.%d_%s.deb",
 			baseURL,
 			kr.Fullversion,
 			kr.FullExtraversion,
