@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/creasty/defaults"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
@@ -90,8 +91,8 @@ func (ro *RootOptions) Log() {
 	}
 	fields["arch"] = ro.Architecture
 	if len(ro.KernelUrls) > 0 {
-        fields["kernelurls"] = ro.KernelUrls
-    }
+		fields["kernelurls"] = ro.KernelUrls
+	}
 
 	logger.WithFields(fields).Debug("running with options")
 }
@@ -128,7 +129,7 @@ func RootOptionsLevelValidation(level validator.StructLevel) {
 		level.ReportError(opts.KernelConfigData, "kernelConfigData", "KernelConfigData", "required_kernelconfigdata_with_target_vanilla", "")
 	}
 
-	if opts.KernelVersion == 0 && (opts.Target == builder.TargetTypeUbuntuAWS.String() || opts.Target == builder.TargetTypeUbuntuGeneric.String()) {
+	if opts.KernelVersion == 0 && opts.Target == builder.TargetTypeUbuntu.String() {
 		level.ReportError(opts.KernelVersion, "kernelVersion", "KernelVersion", "required_kernelversion_with_target_ubuntu", "")
 	}
 

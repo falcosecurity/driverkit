@@ -47,6 +47,11 @@ func (kr *KernelRelease) IsGKE() bool {
 	return strings.HasSuffix(kr.Extraversion, "gke")
 }
 
+// IsAWS tells whether the current kernel release is for AWS by looking at its name.
+func (kr *KernelRelease) IsAWS() bool {
+	return strings.HasSuffix(kr.Extraversion, "aws")
+}
+
 // FromString extracts a KernelRelease object from string.
 func FromString(kernelVersionStr string) KernelRelease {
 	kv := KernelRelease{}
