@@ -1,0 +1,8 @@
+kernelversion: 1
+kernelrelease: 4.18.0-305.3.1.el8.x86_64
+target: centos
+kernelurls: [
+  "https://download.falco.org/fixtures/driverkit/x86_64_devel/kernel-devel-4.18.0-305.3.1.el8.x86_64.rpm",
+]
+output:
+  module: /tmp/centos_x86_64.ko

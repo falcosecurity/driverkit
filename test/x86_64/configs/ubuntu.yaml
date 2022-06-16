@@ -1,0 +1,10 @@
+kernelversion: 56
+kernelrelease: 5.4.0-51-generic
+target: ubuntu-generic
+kernelurls: [
+  "https://download.falco.org/fixtures/driverkit/x86_64_devel/linux-headers-5.4.0-51_5.4.0-51.56_all.deb",
+  "https://download.falco.org/fixtures/driverkit/x86_64_devel/linux-headers-5.4.0-51-generic_5.4.0-51.56_amd64.deb",
+]
+output:
+  module: /tmp/ubuntu_x86_64.ko
+  probe: /tmp/ubuntu_x86_64.o

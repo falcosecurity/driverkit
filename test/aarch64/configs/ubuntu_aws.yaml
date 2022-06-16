@@ -1,0 +1,11 @@
+kernelversion: 138
+kernelrelease: 4.15.0-1129-aws
+target: ubuntu-aws
+kernelurls: [
+  "https://download.falco.org/fixtures/driverkit/aarch64_devel/linux-headers-4.15.0-1129-aws_4.15.0-1129.138_arm64.deb",
+  "https://download.falco.org/fixtures/driverkit/aarch64_devel/linux-aws-headers-4.15.0-1129_4.15.0-1129.138_all.deb",
+]
+architecture: arm64
+output:
+  module: /tmp/ubuntu-aws_aarch64.ko
+  probe: /tmp/ubuntu-aws_aarch64.o

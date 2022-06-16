@@ -1,0 +1,12 @@
+kernelversion: 1
+kernelrelease: 4.19.235-1-arm64
+target: debian
+kernelurls: [
+  "https://download.falco.org/fixtures/driverkit/aarch64_devel/linux-headers-4.19.0-20-arm64_4.19.235-1_arm64.deb",
+  "https://download.falco.org/fixtures/driverkit/aarch64_devel/linux-headers-4.19.0-20-common_4.19.235-1_all.deb",
+  "https://download.falco.org/fixtures/driverkit/aarch64_devel/linux-kbuild-4.19_4.19.235-1_arm64.deb",
+]
+architecture: arm64
+output:
+  module: /tmp/debian_aarch64.ko
+  probe: /tmp/debian_aarch64.o

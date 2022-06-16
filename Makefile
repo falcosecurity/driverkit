@@ -32,6 +32,9 @@ LDFLAGS := -X github.com/falcosecurity/driverkit/pkg/version.buildTime=$(shell d
 
 ARCHS := "arm64,amd64"
 
+TARGET_TEST_ARCH ?= $(shell uname -m)
+test_configs := $(wildcard test/$(TARGET_TEST_ARCH)/configs/*.yaml)
+
 driverkit ?= _output/bin/driverkit
 driverkit_docgen ?= _output/bin/docgen
 
@@ -79,6 +82,13 @@ push/latest:
 test:
 	go test -v -race ./...
 	go test -v -buildmode=pie ./cmd
+
+.PHONY: integration_test
+integration_test: $(test_configs)
+
+.PHONY: $(test_configs)
+$(test_configs): ${driverkit}
+	${driverkit} docker -c $@ --builderimage falcosecurity/driverkit-builder:latest -l debug --timeout 300
 
 .PHONY: ${driverkit_docgen}
 ${driverkit_docgen}: ${PWD}/docgen

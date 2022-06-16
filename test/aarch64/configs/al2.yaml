@@ -1,0 +1,10 @@
+kernelversion: 1
+kernelrelease: 5.4.144-69.257.amzn2.aarch64
+target: amazonlinux2
+kernelurls: [
+  "https://download.falco.org/fixtures/driverkit/aarch64_devel/kernel-devel-5.4.144-69.257.amzn2.aarch64.rpm",
+]
+architecture: arm64
+output:
+  module: /tmp/amazonlinux2_aarch64.ko
+  probe: /tmp/amazonlinux2_aarch64.o

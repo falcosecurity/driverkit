@@ -1,0 +1,10 @@
+kernelversion: 1
+kernelrelease: 4.18.0-348.el8.aarch64
+target: centos
+kernelurls: [
+  "https://download.falco.org/fixtures/driverkit/aarch64_devel/kernel-devel-4.18.0-348.el8.aarch64.rpm",
+]
+architecture: arm64
+output:
+  module: /tmp/centos_aarch64.ko
+  probe: /tmp/centos_aarch64.o

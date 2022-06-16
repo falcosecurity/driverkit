@@ -1,0 +1,9 @@
+kernelversion: 1
+kernelrelease: 5.4.95-42.163.amzn2.x86_64
+target: amazonlinux2
+kernelurls: [
+  "https://download.falco.org/fixtures/driverkit/x86_64_devel/kernel-devel-5.4.95-42.163.amzn2.x86_64.rpm",
+]
+output:
+  module: /tmp/amazonlinux2_x86_64.ko
+  probe: /tmp/amazonlinux2_x86_64.o
