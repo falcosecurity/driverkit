@@ -4,9 +4,6 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
-	"io"
-	"net/http"
-	"regexp"
 	"strings"
 	"text/template"
 
@@ -122,15 +119,16 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 	firstExtra := extractExtraNumber(kr.Extraversion)
 	ubuntuFlavor := extractUbuntuFlavor(kr.Extraversion)
 
-	// discover all possible subdirs on Ubuntu URLs for a given flavor
-	subdirs, err := fetchAllFlavorSubdirs(baseURL, ubuntuFlavor)
-	if err != nil {
-		return nil, err
+	// piece together possible subdirs on Ubuntu URLs for a given flavor
+	// these include the base (such as 'linux-azure') and the base + version/path ('linux-azure-5.15')
+	possibleSubDirs := []string{
+		fmt.Sprintf("linux-%s", ubuntuFlavor),
+		fmt.Sprintf("linux-%s-%s.%s", ubuntuFlavor, kr.Version, kr.PatchLevel),
 	}
 
 	// build all possible full URLs with the flavor subdirs
 	possibleFullURLs := []string{}
-	for _, subdir := range subdirs {
+	for _, subdir := range possibleSubDirs {
 		possibleFullURLs = append(
 			possibleFullURLs,
 			fmt.Sprintf("%s/%s", baseURL, subdir),
@@ -192,37 +190,6 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 
 	return packageFullURLs, nil
 
-}
-
-// given a base URL and an Ubuntu flavor, query the URL and find all possible subdirs with that flavor
-// example for "generic": [linux-hwe-5.0 linux-hwe-5.4 linux-hwe-5.8 linux-hwe-5.11 linux-hwe-5.13 linux-hwe-5.15 linux-hwe-edge linux-hwe]
-func fetchAllFlavorSubdirs(baseURL string, flavor string) ([]string, error) {
-	// query base URL
-	res, err := http.Get(baseURL)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	// convert body to string
-	strBody := string(body)
-
-	// regex for grep'ing out the flavor
-	// capture group to get just the subdir name from the HTML
-	r := regexp.MustCompile(`.*(linux-` + flavor + `.*)/</a>.*`)
-	matches := r.FindAllStringSubmatch(strBody, -1)
-	if matches == nil { // present error to user if no matches
-		return nil, fmt.Errorf("No URLs found for specific Ubuntu flavor: %s", flavor)
-	}
-
-	// loop over the matches, append to return
-	// capture groups are stored at 2nd index
-	flavorSubdirs := []string{}
-	for _, match := range matches {
-		flavorSubdirs = append(flavorSubdirs, match[1])
-	}
-	fmt.Printf("%+v\n", flavorSubdirs)
-	return flavorSubdirs, nil
 }
 
 func extractExtraNumber(extraversion string) string {
