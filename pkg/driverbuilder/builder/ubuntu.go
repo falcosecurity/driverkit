@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"regexp"
 	"strings"
 	"text/template"
@@ -47,7 +46,6 @@ func (v ubuntu) Script(c Config) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fmt.Printf("%+v\n", parsed)
 
 	// read in the build config
 	kr := kernelReleaseFromBuildConfig(c.Build)
@@ -59,20 +57,21 @@ func (v ubuntu) Script(c Config) (string, error) {
 	} else {
 		urls, err = getResolvingURLs(c.KernelUrls)
 	}
+	// if there was an error
 	if err != nil {
 		return "", err
 	}
-	if len(urls) < 2 {
+	// if no results
+	if len(urls) == 0 {
 		return "", fmt.Errorf("specific kernel headers not found")
 	}
-	fmt.Printf("%+v\n", urls)
 
 	td := ubuntuTemplateData{
 		DriverBuildDir:       DriverDirectory,
 		ModuleDownloadURL:    fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.Build.DriverVersion),
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
-		KernelHeadersPattern: determineKernelHeadersPattern(kr),
+		KernelHeadersPattern: "linux*headers*",
 		ModuleDriverName:     c.Build.ModuleDriverName,
 		ModuleFullPath:       ModuleFullPath,
 		BuildModule:          len(c.Build.ModuleFilePath) > 0,
@@ -88,17 +87,7 @@ func (v ubuntu) Script(c Config) (string, error) {
 	return buf.String(), nil
 }
 
-func determineKernelHeadersPattern(kr kernelrelease.KernelRelease) string {
-	if kr.IsGKE() {
-		return "linux-gke-headers"
-	} else if kr.IsAWS() {
-		return "linux-aws-headers"
-	} else {
-		return "linux-generic-headers"
-	}
-}
-
-func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint16) ([]string, error) {
+func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv string) ([]string, error) {
 	baseURLs := []string{
 		"http://archive.ubuntu.com/ubuntu/pool/main/l",
 		"http://ports.ubuntu.com/pool/main/l",
@@ -121,9 +110,8 @@ func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint16) ([]s
 		}
 		// try resolving the URLs
 		urls, err := getResolvingURLs(possibleURLs)
-		// We expect both a common "_all" package,
-		// and an arch dependent package.
-		if err == nil && len(urls) == 2 {
+		// there should be 2 urls returned - the _all package and the arch-specific package
+		if err == nil && len(urls) < 2 {
 			return urls, err
 		}
 	}
@@ -131,7 +119,7 @@ func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint16) ([]s
 	return nil, fmt.Errorf("kernel headers not found")
 }
 
-func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernelVersion uint16) ([]string, error) {
+func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernelVersion string) ([]string, error) {
 	firstExtra := extractExtraNumber(kr.Extraversion)
 	ubuntuFlavor := extractUbuntuFlavor(kr.Extraversion)
 
@@ -150,31 +138,38 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 		)
 	}
 
-	// swap back from hwe to generic --
-	// the subdir on the archive is linux-hwe-*,
-	// but the actual package is linux-headers-*-generic-*
+	// this jank is to specifically handle hwe/generic kernels,
+	// they are named differently whether in an arch-specific package or _all package
+	var ubuntuArchFlavor string
+	var ubuntuAllFlavor string
 	if ubuntuFlavor == "hwe" {
-		ubuntuFlavor = "generic"
+		ubuntuArchFlavor = "generic"
+		ubuntuAllFlavor = "hwe"
+	} else {
+		ubuntuArchFlavor = ubuntuFlavor
+		ubuntuAllFlavor = ubuntuFlavor
 	}
 
 	// piece together all possible naming patterns for packages
 	// in general, there should be 2: an arch-specific package and an _all package
 	packageNamePatterns := []string{
 		fmt.Sprintf(
-			"linux-headers-%s-%s-%s_%s-%s.%d_%s.deb",
+			"linux-headers-%s-%s-%s_%s-%s.%s_%s.deb",
 			kr.Fullversion,
 			firstExtra,
-			ubuntuFlavor,
+			ubuntuArchFlavor,
 			kr.Fullversion,
 			firstExtra,
 			kernelVersion,
 			kr.Architecture.String(),
 		),
 		fmt.Sprintf(
-			"linux-headers-%s-%s-%s_%s-%s.%d_all.deb",
+			"linux-%s-%s.%s-headers-%s-%s_%s-%s.%s_all.deb",
+			ubuntuAllFlavor,
+			kr.Version,
+			kr.PatchLevel,
 			kr.Fullversion,
 			firstExtra,
-			ubuntuFlavor,
 			kr.Fullversion,
 			firstExtra,
 			kernelVersion,
@@ -194,7 +189,7 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 
 	// testing
 	fmt.Println(packageFullURLs)
-	os.Exit(1)
+	// os.Exit(1)
 
 	return packageFullURLs, nil
 

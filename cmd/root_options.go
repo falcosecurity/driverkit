@@ -21,7 +21,7 @@ type OutputOptions struct {
 type RootOptions struct {
 	Architecture     string   `validate:"required,oneof=amd64 arm64" name:"architecture"`
 	DriverVersion    string   `default:"master" validate:"eq=master|sha1|semver" name:"driver version"`
-	KernelVersion    uint16   `default:"1" validate:"omitempty,number" name:"kernel version"`
+	KernelVersion    string   `default:"1" validate:"required" name:"kernel version"`
 	ModuleDriverName string   `default:"falco" validate:"max=60" name:"kernel module driver name"`
 	ModuleDeviceName string   `default:"falco" validate:"excludes=/,max=255" name:"kernel module device name"`
 	KernelRelease    string   `validate:"required,ascii" name:"kernel release"`
@@ -83,7 +83,7 @@ func (ro *RootOptions) Log() {
 	if ro.KernelRelease != "" {
 		fields["kernelrelease"] = ro.KernelRelease
 	}
-	if ro.KernelVersion > 0 {
+	if ro.KernelVersion != "" {
 		fields["kernelversion"] = ro.KernelVersion
 	}
 	if ro.Target != "" {
@@ -129,7 +129,7 @@ func RootOptionsLevelValidation(level validator.StructLevel) {
 		level.ReportError(opts.KernelConfigData, "kernelConfigData", "KernelConfigData", "required_kernelconfigdata_with_target_vanilla", "")
 	}
 
-	if opts.KernelVersion == 0 && opts.Target == builder.TargetTypeUbuntu.String() {
+	if opts.KernelVersion == "" && opts.Target == builder.TargetTypeUbuntu.String() {
 		level.ReportError(opts.KernelVersion, "kernelVersion", "KernelVersion", "required_kernelversion_with_target_ubuntu", "")
 	}
 
