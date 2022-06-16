@@ -61,7 +61,7 @@ func (c archlinux) Script(cfg Config, kr kernelrelease.KernelRelease) (string, e
 	return buf.String(), nil
 }
 
-func fetchArchlinuxKernelURLS(kr kernelrelease.KernelRelease, kv uint16) []string {
+func fetchArchlinuxKernelURLS(kr kernelrelease.KernelRelease, kv string) []string {
 	urls := []string{}
 
 	if kr.Architecture == "amd64" {
