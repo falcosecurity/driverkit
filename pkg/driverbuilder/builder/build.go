@@ -7,7 +7,7 @@ type Build struct {
 	TargetType         Type
 	KernelConfigData   string
 	KernelRelease      string
-	KernelVersion      uint16
+	KernelVersion      string
 	DriverVersion      string
 	Architecture       string
 	ModuleFilePath     string
