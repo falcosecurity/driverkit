@@ -4,7 +4,6 @@ import (
 	"log"
 	"regexp"
 	"strconv"
-	"strings"
 )
 
 var (
@@ -40,16 +39,6 @@ type KernelRelease struct {
 	Extraversion     string       `json:"extra_version"`
 	FullExtraversion string       `json:"full_extra_version"`
 	Architecture     Architecture `json:"architecture"`
-}
-
-// IsGKE tells whether the current kernel release is for GKE by looking at its name.
-func (kr *KernelRelease) IsGKE() bool {
-	return strings.HasSuffix(kr.Extraversion, "gke")
-}
-
-// IsAWS tells whether the current kernel release is for AWS by looking at its name.
-func (kr *KernelRelease) IsAWS() bool {
-	return strings.HasSuffix(kr.Extraversion, "aws")
 }
 
 // FromString extracts a KernelRelease object from string.

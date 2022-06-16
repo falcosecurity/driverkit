@@ -38,7 +38,7 @@ type ubuntuTemplateData struct {
 }
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
-func (v ubuntu) Script(c Config) (string, error) {
+func (v ubuntu) Script(c Config, kr kernelrelease.KernelRelease) (string, error) {
 
 	t := template.New(string(TargetTypeUbuntu))
 
@@ -47,8 +47,7 @@ func (v ubuntu) Script(c Config) (string, error) {
 		return "", err
 	}
 
-	// read in the build config
-	kr := kernelReleaseFromBuildConfig(c.Build)
+	// debugging
 	fmt.Printf("%+v\n", kr)
 
 	var urls []string
