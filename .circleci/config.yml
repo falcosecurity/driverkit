@@ -5,6 +5,8 @@ jobs:
       - image: alpine:3.16
     steps:
       - checkout
+      - setup_remote_docker:
+          version: 20.10.12
       - run:
           name: Install deps
           command: apk add gcc musl-dev make bash git go
@@ -14,6 +16,9 @@ jobs:
       - run:
           name: Test
           command: make test
+      - run:
+          name: Integration tests # test cross build too!
+          command: make -e TARGET_TEST_ARCH=* integration_test
       - run:
           name: Prepare Artifacts
           command: |
@@ -34,8 +39,8 @@ jobs:
       - run:
           name: Prepare project
           command: |
-            docker run --rm -it -v /tmp/source:/source -w /source --name alpine_sh -d alpine:3.16 sh
-            docker exec alpine_sh apk add gcc musl-dev make bash git go
+            docker run --rm -it -v /tmp/source:/source -v /var/run/docker.sock:/var/run/docker.sock -w /source --name alpine_sh -d alpine:3.16 sh
+            docker exec alpine_sh apk add gcc musl-dev make bash git go docker
             docker exec alpine_sh git config --global --add safe.directory /source
       - run:
           name: Build
@@ -43,6 +48,9 @@ jobs:
       - run:
           name: Test
           command: docker exec alpine_sh make test
+      - run:
+          name: Integration tests
+          command: docker exec alpine_sh make integration_test
       - run:
           name: Prepare Artifacts
           command: |

@@ -1,0 +1,10 @@
+kernelversion: 119
+kernelrelease: 4.15.0-1112-aws
+target: ubuntu-aws
+kernelurls: [
+  "https://download.falco.org/fixtures/driverkit/x86_64_devel/linux-headers-4.15.0-1112-aws_4.15.0-1112.119_amd64.deb",
+  "https://download.falco.org/fixtures/driverkit/x86_64_devel/linux-aws-headers-4.15.0-1112_4.15.0-1112.119_all.deb",
+]
+output:
+  module: /tmp/ubuntu-aws_x86_64.ko
+  probe: /tmp/ubuntu-aws_x86_64.o

@@ -1,0 +1,11 @@
+kernelversion: 1
+kernelrelease: 5.10.0-10-amd64
+target: debian
+kernelurls: [
+  "https://download.falco.org/fixtures/driverkit/x86_64_devel/linux-headers-5.10.0-10-amd64_5.10.84-1_amd64.deb",
+  "https://download.falco.org/fixtures/driverkit/x86_64_devel/linux-headers-5.10.0-10-common_5.10.84-1_all.deb",
+  "https://download.falco.org/fixtures/driverkit/x86_64_devel/linux-kbuild-5.10_5.10.103-1_bpo10%2B1_amd64.deb",
+]
+output:
+  module: /tmp/debian_x86_64.ko
+  probe: /tmp/debian_x86_64.o

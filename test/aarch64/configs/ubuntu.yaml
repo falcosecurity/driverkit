@@ -1,0 +1,11 @@
+kernelversion: 199
+kernelrelease: 4.15.0-188
+target: ubuntu-generic
+kernelurls: [
+  "https://download.falco.org/fixtures/driverkit/aarch64_devel/linux-headers-4.15.0-188_4.15.0-188.199_all.deb",
+  "https://download.falco.org/fixtures/driverkit/aarch64_devel/linux-headers-4.15.0-188-generic_4.15.0-188.199_arm64.deb",
+]
+architecture: arm64
+output:
+  module: /tmp/ubuntu_aarch64.ko
+  probe: /tmp/ubuntu_aarch64.o

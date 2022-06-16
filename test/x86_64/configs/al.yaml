@@ -1,0 +1,8 @@
+kernelversion: 1
+kernelrelease: 4.14.128-87.105.amzn1.x86_64
+target: amazonlinux
+kernelurls: [
+  "https://download.falco.org/fixtures/driverkit/x86_64_devel/kernel-devel-4.14.128-87.105.amzn1.x86_64.rpm",
+]
+output:
+  module: /tmp/amazonlinux_x86_64.ko
