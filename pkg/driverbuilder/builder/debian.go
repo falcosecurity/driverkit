@@ -2,6 +2,7 @@ package builder
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +12,9 @@ import (
 
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
+
+//go:embed templates/debian.sh
+var debianTemplate string
 
 // TargetTypeDebian identifies the Debian target.
 const TargetTypeDebian Type = "debian"
@@ -101,59 +105,6 @@ type debianTemplateData struct {
 	BuildProbe         bool
 	LLVMVersion        string
 }
-
-const debianTemplate = `
-#!/bin/bash
-set -xeuo pipefail
-
-rm -Rf {{ .DriverBuildDir }}
-mkdir {{ .DriverBuildDir }}
-rm -Rf /tmp/module-download
-mkdir -p /tmp/module-download
-
-curl --silent -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
-mv /tmp/module-download/*/driver/* {{ .DriverBuildDir }}
-
-cp /driverkit/module-Makefile {{ .DriverBuildDir }}/Makefile
-bash /driverkit/fill-driver-config.sh {{ .DriverBuildDir }}
-
-# Fetch the kernel
-mkdir /tmp/kernel-download
-cd /tmp/kernel-download
-{{ range $url := .KernelDownloadURLS }}
-curl --silent -o kernel.deb -SL {{ $url }}
-ar x kernel.deb
-tar -xvf data.tar.xz
-{{ end }}
-ls -la /tmp/kernel-download
-
-cd /tmp/kernel-download/
-
-cp -r usr/* /usr
-cp -r lib/* /lib
-
-cd /usr/src
-sourcedir=$(find . -type d -name "linux-headers-*%s" | head -n 1 | xargs readlink -f)
-
-ls -la $sourcedir
-
-{{ if .BuildModule }}
-# Build the module
-cd {{ .DriverBuildDir }}
-make CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
-mv {{ .ModuleDriverName }}.ko {{ .ModuleFullPath }}
-strip -g {{ .ModuleFullPath }}
-# Print results
-modinfo {{ .ModuleFullPath }}
-{{ end }}
-
-{{ if .BuildProbe }}
-# Build the eBPF probe
-cd {{ .DriverBuildDir }}/bpf
-make LLC=/usr/bin/llc-{{ .LLVMVersion }} CLANG=/usr/bin/clang-{{ .LLVMVersion }} CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
-ls -l probe.o
-{{ end }}
-`
 
 func debianHeadersURLFromRelease(kr kernelrelease.KernelRelease) ([]string, error) {
 	baseURLS := []string{
