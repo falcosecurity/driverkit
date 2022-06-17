@@ -30,16 +30,6 @@ IMAGE_NAME_DRIVERKIT_LATEST := $(IMAGE_NAME_DRIVERKIT):latest
 
 LDFLAGS := -X github.com/falcosecurity/driverkit/pkg/version.buildTime=$(shell date +%s) -X github.com/falcosecurity/driverkit/pkg/version.gitCommit=${GIT_COMMIT} -X github.com/falcosecurity/driverkit/pkg/version.gitTag=$(if ${GIT_TAG},${GIT_TAG},v0.0.0) -X github.com/falcosecurity/driverkit/pkg/version.commitsFromGitTag=${COMMITS_FROM_GIT_TAG} -X github.com/falcosecurity/driverkit/pkg/driverbuilder.BuilderBaseImage=${IMAGE_NAME_BUILDER_COMMIT}
 
-OS_NAME := $(shell uname -s | tr A-Z a-z)
-SQLITE_TAGS :=
-ifeq ($(OS_NAME),darwin)
-	SQLITE_TAGS +=sqlite_omit_load_extension libsqlite3 darwin
-else ifeq ($(OS_NAME),linux)
-	SQLITE_TAGS +=sqlite_omit_load_extension linux
-endif
-
-GOTAGS := ${SQLITE_TAGS}
-
 ARCHS := "arm64,amd64"
 
 driverkit ?= _output/bin/driverkit
@@ -49,11 +39,11 @@ driverkit_docgen ?= _output/bin/docgen
 build: clean ${driverkit}
 
 ${driverkit}:
-	CGO_ENABLED=0 go build -v -buildmode=pie -ldflags '${LDFLAGS}' -tags '${GOTAGS}' -o $@ .
+	CGO_ENABLED=0 go build -v -buildmode=pie -ldflags '${LDFLAGS}' -o $@ .
 
 .PHONY: release
 release: clean
-	CGO_ENABLED=0 LDFLAGS="${LDFLAGS}" GOTAGS="${GOTAGS}" $(GORELEASER) release
+	CGO_ENABLED=0 LDFLAGS="${LDFLAGS}" $(GORELEASER) release
 
 .PHONY: clean
 clean:
