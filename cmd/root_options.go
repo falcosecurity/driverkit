@@ -131,4 +131,9 @@ func RootOptionsLevelValidation(level validator.StructLevel) {
 	if opts.KernelVersion == 0 && (opts.Target == builder.TargetTypeUbuntuAWS.String() || opts.Target == builder.TargetTypeUbuntuGeneric.String()) {
 		level.ReportError(opts.KernelVersion, "kernelVersion", "KernelVersion", "required_kernelversion_with_target_ubuntu", "")
 	}
+
+	// Target redhat requires a valid build image (has to be registered in order to download packages)
+	if opts.Target == builder.TargetTypeRedhat.String() && opts.BuilderImage == driverbuilder.BuilderBaseImage {
+	    level.ReportError(opts.BuilderImage, "builderimage", "builderimage", "required_builderimage_with_target_redhat", "")
+	}
 }

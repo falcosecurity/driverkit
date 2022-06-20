@@ -183,6 +183,29 @@ output:
 driverversion: master
 ```
 
+### redhat 7
+
+```yaml
+kernelrelease: 3.10.0-1160.66.1.el7.x86_64
+target: redhat
+output:
+  module: /tmp/falco-redhat7.ko
+driverversion: master
+builderimage: registry.redhat.io/rhel7:rhel7_driverkit
+```
+
+### redhat 8
+
+```yaml
+kernelrelease: 4.18.0-372.9.1.el8.x86_64
+target: redhat
+output:
+  module: /tmp/falco-redhat8.ko
+  probe: /tmp/falco-redhat8.o
+driverversion: master
+builderimage: redhat/ubi8:rhel8_driverkit
+```
+
 ### vanilla
 
 In case of vanilla, you also need to pass the kernel config data in base64 format.

@@ -222,6 +222,24 @@ var tests = []testCase{
             fmtRuntimeArch: true,
         },
     },
+    {
+        descr: "docker/build-target-check-validation-redhat",
+        args: []string{
+            "docker",
+            "--kernelrelease",
+            "4.18.0-348.el8.x86_64",
+            "--target",
+            "redhat",
+            "--output-module",
+            "/tmp/falco-redhat.ko",
+            "--loglevel",
+            "debug",
+        },
+        expect: expect{
+            out:            "testdata/docker-target-redhat-validation-error-debug.txt",
+            err:            "exiting for validation errors",
+        },
+    },
 	{
 		descr: "complete/docker/targets",
 		args: []string{
