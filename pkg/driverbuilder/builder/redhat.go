@@ -71,7 +71,7 @@ ls -l probe.o
 `
 
 func (v redhat) Script(cfg Config) (string, error) {
-  t := template.New(string(TargetTypeRedhat))
+    t := template.New(string(TargetTypeRedhat))
   	parsed, err := t.Parse(redhatTemplate)
   	if err != nil {
   		return "", err
