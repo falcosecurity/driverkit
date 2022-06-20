@@ -238,6 +238,7 @@ var tests = []testCase{
         expect: expect{
             out:            "testdata/docker-target-redhat-validation-error-debug.txt",
             err:            "exiting for validation errors",
+            fmtRuntimeArch: true,
         },
     },
 	{
