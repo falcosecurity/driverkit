@@ -206,6 +206,18 @@ driverversion: master
 builderimage: redhat/ubi8:rhel8_driverkit
 ```
 
+### redhat 9
+
+```yaml
+kernelrelease: 5.14.0-70.13.1.el9_0.x86_64
+target: redhat
+output:
+  module: /tmp/falco-redhat9.ko
+  probe: /tmp/falco-redhat9.o
+driverversion: master
+builderimage: docker.io/redhat/ubi9:rhel9_driverkit
+```
+
 ### vanilla
 
 In case of vanilla, you also need to pass the kernel config data in base64 format.
