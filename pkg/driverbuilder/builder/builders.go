@@ -3,7 +3,9 @@ package builder
 import (
 	"fmt"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
+	"log"
 	"net/http"
+	"net/url"
 	"path"
 
 	logger "github.com/sirupsen/logrus"
@@ -50,9 +52,27 @@ func moduleDownloadURL(c Config) string {
 	return fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.DriverVersion)
 }
 
+func resolveURLReference(u string) string {
+	uu, err := url.Parse(u)
+	if err != nil {
+		log.Fatal(err)
+	}
+	base, err := url.Parse(uu.Host)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return base.ResolveReference(uu).String()
+}
+
 func getResolvingURLs(urls []string) ([]string, error) {
 	results := []string{}
 	for _, u := range urls {
+		// in case url has some relative paths
+		// (kernel-crawler does not resolve them for us,
+		// neither it is expected, because they are effectively valid urls),
+		// resolve the absolute one.
+		// HEAD would fail otherwise.
+		u = resolveURLReference(u)
 		res, err := http.Head(u)
 		if err != nil {
 			continue
