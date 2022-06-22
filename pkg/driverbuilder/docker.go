@@ -98,7 +98,7 @@ func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Cli
 	}
 
 	err = cli.ContainerStop(ctx, qemuImage.ID, nil)
-	if err != nil {
+	if err != nil && !client.IsErrNotFound(err) {
 		log.Fatal(err)
 	}
 }
