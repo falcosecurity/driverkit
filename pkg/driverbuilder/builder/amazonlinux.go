@@ -119,23 +119,20 @@ func script(c Config, targetType Type) (string, error) {
 	kv := kernelReleaseFromBuildConfig(c.Build)
 
 	var urls []string
-    if c.KernelUrls == nil {
-        // Check (and filter) existing kernels before continuing
-        var packages []string
-        packages, err = fetchAmazonLinuxPackagesURLs(kv, targetType)
-        if err != nil {
-            return "", err
-        }
-        urls, err = getResolvingURLs(packages)
-    } else {
-        urls, err = getResolvingURLs(c.KernelUrls)
-    }
-    if err != nil {
-        return "", err
-    }
-    if len(urls) < 2 {
-        return "", fmt.Errorf("target %s needs to find both kernel and kernel-devel packages", targetType)
-    }
+	if c.KernelUrls == nil {
+		// Check (and filter) existing kernels before continuing
+		var packages []string
+		packages, err = fetchAmazonLinuxPackagesURLs(kv, targetType)
+		if err != nil {
+			return "", err
+		}
+		urls, err = getResolvingURLs(packages)
+	} else {
+		urls, err = getResolvingURLs(c.KernelUrls)
+	}
+	if err != nil {
+		return "", err
+	}
 
 	td := amazonlinuxTemplateData{
 		DriverBuildDir:     DriverDirectory,
@@ -291,8 +288,7 @@ func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, targetType Typ
 		}
 
 		// Found, do not continue
-		// todo > verify amazonlinux always needs 2 packages (kernel and kernel-devel) too
-		if len(urls) == 2 {
+		if len(urls) > 0 {
 			break
 		}
 	}
