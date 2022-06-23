@@ -258,7 +258,7 @@ func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, targetType Typ
 		logger.WithField("db", dbFile.Name()).Debug("connecting to database...")
 		// Query the database
 		rel := strings.TrimPrefix(strings.TrimSuffix(kv.FullExtraversion, fmt.Sprintf(".%s", kv.Architecture.ToNonDeb())), "-")
-		q := fmt.Sprintf("SELECT location_href FROM packages WHERE name LIKE 'kernel%%' AND name NOT LIKE 'kernel-livepatch%%' AND name NOT LIKE '%%doc%%' AND name NOT LIKE '%%tools%%' AND name NOT LIKE '%%headers%%' AND version='%s' AND release='%s'", kv.Fullversion, rel)
+		q := fmt.Sprintf("SELECT location_href FROM packages WHERE name LIKE 'kernel-devel%%' AND version='%s' AND release='%s'", kv.Fullversion, rel)
 		stmt, err := db.Prepare(q)
 		if err != nil {
 			return nil, err
