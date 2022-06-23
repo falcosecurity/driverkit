@@ -399,7 +399,17 @@ func (v archLinux) Script(c Config) (string, error) {
 ```
 
 Essentially, the `Script` function that you are implementing will need to return a string containing
-a `bash` script that will be executed by driverkit at build time.
+a `bash` script that will be executed by driverkit at build time.  
+
+Under `pkg/driverbuilder/builder/templates` folder, you can find all the template scripts for the supported builders.  
+Adding a new template there and using `go:embed` to include it in your builder, allows leaner code 
+without mixing up templates and builder logic.  
+For example:
+
+```go
+//go:embed templates/archlinux.sh
+var archlinuxTemplate string
+```
 
 Depending on how the distro works, the script will need to fetch the kernel headers for it at the specific kernel version specified
 in the `Config` struct at `c.Build.KernelVersion`.
