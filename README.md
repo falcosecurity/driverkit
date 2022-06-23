@@ -193,7 +193,27 @@ output:
 driverversion: master
 builderimage: registry.redhat.io/rhel7:rhel7_driverkit
 ```
+The image used for this build was created with the following command:
 
+```bash
+docker build --build-arg rh_username=<username> --build-arg rh_password=<password> -t registry.redhat.io/rhel7:rhel7_driverkit -f Dockerfile.rhel7 .
+````
+| :warning: **Passing user credentials via command line**: Consider using `--secret` option! |
+|--------------------------------------------------------------------------------------------|
+
+and Dockerfile.rhel7:
+```bash
+FROM registry.redhat.io/rhel7
+
+ARG rh_username
+ARG rh_password
+
+RUN subscription-manager register --username $rh_username --password $rh_password --auto-attach
+
+RUN yum install gcc elfutils-libelf-devel make -y
+```
+| :warning: **Base image requires Redhat subscription to pull**:```docker login registry.redhat.io``` |
+|-----------------------------------------------------------------------------------------------------|
 ### redhat 8
 
 ```yaml
@@ -204,6 +224,27 @@ output:
   probe: /tmp/falco-redhat8.o
 driverversion: master
 builderimage: redhat/ubi8:rhel8_driverkit
+```
+
+The image used for this build was created with the following command:
+
+```bash
+docker build --build-arg rh_username=<username> --build-arg rh_password=<password> -t redhat/ubi8:rhel8_driverkit -f Dockerfile.rhel8 .
+````
+| :warning: **Passing user credentials via command line**: Consider using `--secret` option! |
+|--------------------------------------------------------------------------------------------|
+
+and Dockerfile.rhel8:
+```bash
+FROM redhat/ubi8
+
+ARG rh_username
+ARG rh_password
+
+RUN subscription-manager register --username $rh_username --password $rh_password --auto-attach
+
+RUN yum install gcc curl elfutils-libelf-devel kmod make \
+                llvm-toolset-0:12.0.1-1.module+el8.5.0+11871+08d0eab5.x86_64 cpio -y
 ```
 
 ### redhat 9
@@ -217,6 +258,20 @@ output:
 driverversion: master
 builderimage: docker.io/redhat/ubi9:rhel9_driverkit
 ```
+The image used for this build was created with the following command:
+
+```bash
+docker build -t docker.io/redhat/ubi9:rhel9_driverkit -f Dockerfile.rhel9 .
+````
+
+and Dockerfile.rhel9:
+```bash
+FROM docker.io/redhat/ubi9
+
+RUN yum install gcc elfutils-libelf-devel kmod make cpio llvm-toolset -y
+```
+| :exclamation: **subscription-manager does not work on RHEL9 containers**: Host must have a valid RHEL subscription |
+|--------------------------------------------------------------------------------------------------------------------|
 
 ### vanilla
 
