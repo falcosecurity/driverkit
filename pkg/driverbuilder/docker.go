@@ -324,7 +324,7 @@ func (bp *DockerBuildProcessor) cleanup(cli *client.Client, ID string) {
 		bp.clean = true
 		logger.Debug("context canceled")
 		duration := time.Second
-		if err := cli.ContainerStop(context.Background(), ID, &duration); err != nil {
+		if err := cli.ContainerStop(context.Background(), ID, &duration); err != nil && !client.IsErrNotFound(err) {
 			logger.WithError(err).WithField("container_id", ID).Error("error stopping container")
 		}
 	}
