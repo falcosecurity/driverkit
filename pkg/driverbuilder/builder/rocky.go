@@ -30,15 +30,15 @@ func (c rocky) Script(cfg Config) (string, error) {
 	kr := kernelReleaseFromBuildConfig(cfg.Build)
 
 	var urls []string
-    if cfg.KernelUrls == nil {
-        // Check (and filter) existing kernels before continuing
-        urls, err = getResolvingURLs(fetchRockyKernelURLS(kr))
-    } else {
-        urls, err = getResolvingURLs(cfg.KernelUrls)
-    }
-    if err != nil {
-        return "", err
-    }
+	if cfg.KernelUrls == nil {
+		// Check (and filter) existing kernels before continuing
+		urls, err = getResolvingURLs(fetchRockyKernelURLS(kr))
+	} else {
+		urls, err = getResolvingURLs(cfg.KernelUrls)
+	}
+	if err != nil {
+		return "", err
+	}
 
 	td := rockyTemplateData{
 		DriverBuildDir:    DriverDirectory,
@@ -136,9 +136,9 @@ ls -l probe.o
 
 func rockyGccVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
 	switch kr.Version {
-	case "3":
+	case 3:
 		return "5"
-	case "2":
+	case 2:
 		return "4.8"
 	}
 	return "8"

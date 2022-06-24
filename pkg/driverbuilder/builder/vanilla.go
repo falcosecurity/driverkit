@@ -94,15 +94,15 @@ func (v vanilla) Script(c Config) (string, error) {
 	kv := kernelReleaseFromBuildConfig(c.Build)
 
 	var urls []string
-    if c.KernelUrls == nil {
-        // Check (and filter) existing kernels before continuing
-        urls, err = getResolvingURLs([]string{fetchVanillaKernelURLFromKernelVersion(kv)})
-    } else {
-        urls, err = getResolvingURLs(c.KernelUrls)
-    }
-    if err != nil {
-        return "", err
-    }
+	if c.KernelUrls == nil {
+		// Check (and filter) existing kernels before continuing
+		urls, err = getResolvingURLs([]string{fetchVanillaKernelURLFromKernelVersion(kv)})
+	} else {
+		urls, err = getResolvingURLs(c.KernelUrls)
+	}
+	if err != nil {
+		return "", err
+	}
 
 	td := vanillaTemplateData{
 		DriverBuildDir:     DriverDirectory,
@@ -124,5 +124,5 @@ func (v vanilla) Script(c Config) (string, error) {
 }
 
 func fetchVanillaKernelURLFromKernelVersion(kv kernelrelease.KernelRelease) string {
-	return fmt.Sprintf("https://cdn.kernel.org/pub/linux/kernel/v%s.x/linux-%s.tar.xz", kv.Version, kv.Fullversion)
+	return fmt.Sprintf("https://cdn.kernel.org/pub/linux/kernel/v%d.x/linux-%s.tar.xz", kv.Version, kv.Fullversion)
 }

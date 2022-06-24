@@ -1,7 +1,9 @@
 package kernelrelease
 
 import (
+	"log"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -32,9 +34,9 @@ func (a Architecture) String() string {
 // (it it set for builders in kernelReleaseFromBuildConfig())
 type KernelRelease struct {
 	Fullversion      string       `json:"full_version"`
-	Version          string       `json:"version"`
-	PatchLevel       string       `json:"patch_level"`
-	Sublevel         string       `json:"sublevel"`
+	Version          int          `json:"version"`
+	PatchLevel       int          `json:"patch_level"`
+	Sublevel         int          `json:"sublevel"`
 	Extraversion     string       `json:"extra_version"`
 	FullExtraversion string       `json:"full_extra_version"`
 	Architecture     Architecture `json:"architecture"`
@@ -52,20 +54,25 @@ func FromString(kernelVersionStr string) KernelRelease {
 	identifiers := make(map[string]string)
 	for i, name := range kernelVersionPattern.SubexpNames() {
 		if i > 0 && i <= len(match) {
+			var err error
 			identifiers[name] = match[i]
 			switch name {
 			case "fullversion":
 				kv.Fullversion = match[i]
 			case "version":
-				kv.Version = match[i]
+				kv.Version, err = strconv.Atoi(match[i])
 			case "patchlevel":
-				kv.PatchLevel = match[i]
+				kv.PatchLevel, err = strconv.Atoi(match[i])
 			case "sublevel":
-				kv.Sublevel = match[i]
+				kv.Sublevel, err = strconv.Atoi(match[i])
 			case "extraversion":
 				kv.Extraversion = match[i]
 			case "fullextraversion":
 				kv.FullExtraversion = match[i]
+			}
+
+			if err != nil {
+				log.Fatal(err)
 			}
 		}
 	}
