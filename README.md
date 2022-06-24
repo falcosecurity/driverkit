@@ -425,4 +425,11 @@ Driverkit builder image supports 2 llvm versions:
 * llvm-12
 
 You can dynamically choose the one you prefer, likely switching on the kernel version.  
-For an example, you can check out Debian builder, namely: `debianLLVMVersionFromKernelRelease`.  
+For an example, you can check out Debian builder, namely: `debianLLVMVersionFromKernelRelease`.
+
+### 5. kernel-crawler
+
+When creating a new builder, it is recommended to check that [kernel-crawler](https://github.com/falcosecurity/kernel-crawler) 
+can also support collecting the new builders kernel versions and header package URLs. This will make sure that the latest drivers 
+for the new builder are automatically built by [test-infra](https://github.com/falcosecurity/test-infra). If required, add a feature request
+for support for the new builder on the [kernel-crawler](https://github.com/falcosecurity/kernel-crawler) repository.
