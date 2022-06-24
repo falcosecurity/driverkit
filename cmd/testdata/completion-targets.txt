@@ -3,6 +3,7 @@ amazonlinux2
 centos
 debian
 flatcar
+redhat
 rocky
 ubuntu-aws
 ubuntu-generic

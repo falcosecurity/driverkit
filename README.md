@@ -183,6 +183,96 @@ output:
 driverversion: master
 ```
 
+### redhat 7
+
+```yaml
+kernelrelease: 3.10.0-1160.66.1.el7.x86_64
+target: redhat
+output:
+  module: /tmp/falco-redhat7.ko
+driverversion: master
+builderimage: registry.redhat.io/rhel7:rhel7_driverkit
+```
+The image used for this build was created with the following command:
+
+```bash
+docker build --build-arg rh_username=<username> --build-arg rh_password=<password> -t registry.redhat.io/rhel7:rhel7_driverkit -f Dockerfile.rhel7 .
+````
+| :warning: **Passing user credentials via command line**: Consider using `--secret` option! |
+|--------------------------------------------------------------------------------------------|
+
+and Dockerfile.rhel7:
+```bash
+FROM registry.redhat.io/rhel7
+
+ARG rh_username
+ARG rh_password
+
+RUN subscription-manager register --username $rh_username --password $rh_password --auto-attach
+
+RUN yum install gcc elfutils-libelf-devel make -y
+```
+| :warning: **Base image requires Redhat subscription to pull**:```docker login registry.redhat.io``` |
+|-----------------------------------------------------------------------------------------------------|
+### redhat 8
+
+```yaml
+kernelrelease: 4.18.0-372.9.1.el8.x86_64
+target: redhat
+output:
+  module: /tmp/falco-redhat8.ko
+  probe: /tmp/falco-redhat8.o
+driverversion: master
+builderimage: redhat/ubi8:rhel8_driverkit
+```
+
+The image used for this build was created with the following command:
+
+```bash
+docker build --build-arg rh_username=<username> --build-arg rh_password=<password> -t redhat/ubi8:rhel8_driverkit -f Dockerfile.rhel8 .
+````
+| :warning: **Passing user credentials via command line**: Consider using `--secret` option! |
+|--------------------------------------------------------------------------------------------|
+
+and Dockerfile.rhel8:
+```bash
+FROM redhat/ubi8
+
+ARG rh_username
+ARG rh_password
+
+RUN subscription-manager register --username $rh_username --password $rh_password --auto-attach
+
+RUN yum install gcc curl elfutils-libelf-devel kmod make \
+                llvm-toolset-0:12.0.1-1.module+el8.5.0+11871+08d0eab5.x86_64 cpio -y
+```
+
+### redhat 9
+
+```yaml
+kernelrelease: 5.14.0-70.13.1.el9_0.x86_64
+target: redhat
+output:
+  module: /tmp/falco-redhat9.ko
+  probe: /tmp/falco-redhat9.o
+driverversion: master
+builderimage: docker.io/redhat/ubi9:rhel9_driverkit
+```
+The image used for this build was created with the following command:
+
+```bash
+docker build -t docker.io/redhat/ubi9:rhel9_driverkit -f Dockerfile.rhel9 .
+````
+
+and Dockerfile.rhel9:
+```bash
+FROM docker.io/redhat/ubi9
+
+RUN yum install gcc elfutils-libelf-devel kmod make cpio llvm-toolset -y
+```
+| :exclamation: **subscription-manager does not work on RHEL9 containers**: Host must have a valid RHEL subscription |
+|--------------------------------------------------------------------------------------------------------------------|
+
 ### vanilla
 
 In case of vanilla, you also need to pass the kernel config data in base64 format.
@@ -335,4 +425,11 @@ Driverkit builder image supports 2 llvm versions:
 * llvm-12
 
 You can dynamically choose the one you prefer, likely switching on the kernel version.  
-For an example, you can check out Debian builder, namely: `debianLLVMVersionFromKernelRelease`.  
+For an example, you can check out Debian builder, namely: `debianLLVMVersionFromKernelRelease`.
+
+### 5. kernel-crawler
+
+When creating a new builder, it is recommended to check that [kernel-crawler](https://github.com/falcosecurity/kernel-crawler) 
+can also support collecting the new builders kernel versions and header package URLs. This will make sure that the latest drivers 
+for the new builder are automatically built by [test-infra](https://github.com/falcosecurity/test-infra). If required, add a feature request
+for support for the new builder on the [kernel-crawler](https://github.com/falcosecurity/kernel-crawler) repository.

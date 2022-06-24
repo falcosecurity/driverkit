@@ -98,6 +98,19 @@ func init() {
 	)
 
 	V.RegisterTranslation(
+	    "required_builderimage_with_target_redhat",
+	    T,
+	    func(ut ut.Translator) error {
+	        return ut.Add("required_builderimage_with_target_redhat", "{0} is a required field when target is redhat", true)
+	    },
+	    func(ut ut.Translator, fe validator.FieldError) string {
+	        t, _ := ut.T("required_builderimage_with_target_redhat", "builder image") // fixme ? tag "name" does not work when used at struct level
+
+    		return t
+    	},
+    )
+
+	V.RegisterTranslation(
 		"logrus",
 		T,
 		func(ut ut.Translator) error {
