@@ -66,14 +66,11 @@ rm -Rf /tmp/kernel
 mkdir -p /tmp/kernel
 mv usr/src/kernels/*/* /tmp/kernel
 
-# Change current gcc
-ln -sf /usr/bin/gcc-{{ .GCCVersion }} /usr/bin/gcc
-
 {{ if .BuildModule }}
 # Build the kernel module
 cd {{ .DriverBuildDir }}
 
-make KERNELDIR=/tmp/kernel CC=/usr/bin/gcc-{{ .GCCVersion }} LD=/usr/bin/ld.bfd CROSS_COMPILE=""
+make KERNELDIR=/tmp/kernel CC=/usr/bin/gcc LD=/usr/bin/ld.bfd CROSS_COMPILE=""
 mv {{ .ModuleDriverName }}.ko {{ .ModuleFullPath }}
 # Print results
 modinfo {{ .ModuleFullPath }}
@@ -91,7 +88,6 @@ type amazonlinuxTemplateData struct {
 	DriverBuildDir     string
 	ModuleDownloadURL  string
 	KernelDownloadURLs []string
-	GCCVersion         string
 	ModuleDriverName   string
 	ModuleFullPath     string
 	BuildModule        bool
@@ -138,7 +134,6 @@ func script(c Config, targetType Type) (string, error) {
 		DriverBuildDir:     DriverDirectory,
 		ModuleDownloadURL:  moduleDownloadURL(c),
 		KernelDownloadURLs: urls,
-		GCCVersion:         amazonGccVersionFromKernelRelease(kv),
 		ModuleDriverName:   c.DriverName,
 		ModuleFullPath:     ModuleFullPath,
 		BuildModule:        len(c.Build.ModuleFilePath) > 0,
@@ -329,15 +324,11 @@ func bunzip(data io.Reader) (res []byte, err error) {
 	return
 }
 
-func amazonGccVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
-	return "8"
-}
-
 func amazonLLVMVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
 	switch kr.Version {
-	case "4":
+	case 4:
 		return "7"
-	case "5":
+	case 5:
 		return "12"
 	default:
 		return "12"

@@ -38,17 +38,17 @@ func (v ubuntuGeneric) Script(c Config) (string, error) {
 	kr := kernelReleaseFromBuildConfig(c.Build)
 
 	var urls []string
-    if c.KernelUrls == nil {
-        urls, err = ubuntuGenericHeadersURLFromRelease(kr, c.Build.KernelVersion)
-    } else {
-        urls, err = getResolvingURLs(c.KernelUrls)
-    }
-    if err != nil {
-        return "", err
-    }
-    if len(urls) < 2 {
-        return "", fmt.Errorf("specific kernel headers not found")
-    }
+	if c.KernelUrls == nil {
+		urls, err = ubuntuGenericHeadersURLFromRelease(kr, c.Build.KernelVersion)
+	} else {
+		urls, err = getResolvingURLs(c.KernelUrls)
+	}
+	if err != nil {
+		return "", err
+	}
+	if len(urls) < 2 {
+		return "", fmt.Errorf("specific kernel headers not found")
+	}
 
 	td := ubuntuTemplateData{
 		DriverBuildDir:       DriverDirectory,
@@ -90,17 +90,17 @@ func (v ubuntuAWS) Script(c Config) (string, error) {
 	kr := kernelReleaseFromBuildConfig(c.Build)
 
 	var urls []string
-    if c.KernelUrls == nil {
-        urls, err = ubuntuAWSHeadersURLFromRelease(kr, c.KernelVersion)
-    } else {
-        urls, err = getResolvingURLs(c.KernelUrls)
-    }
-    if err != nil {
-        return "", err
-    }
-    if len(urls) < 2 {
-        return "", fmt.Errorf("specific kernel headers not found")
-    }
+	if c.KernelUrls == nil {
+		urls, err = ubuntuAWSHeadersURLFromRelease(kr, c.KernelVersion)
+	} else {
+		urls, err = getResolvingURLs(c.KernelUrls)
+	}
+	if err != nil {
+		return "", err
+	}
+	if len(urls) < 2 {
+		return "", fmt.Errorf("specific kernel headers not found")
+	}
 
 	td := ubuntuTemplateData{
 		DriverBuildDir:       DriverDirectory,
@@ -140,7 +140,7 @@ func ubuntuAWSHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv uint16) (
 	// If we can't find the AWS files in the main folders,
 	// try to proactively parse the subfolders to find what we need
 	for _, u := range baseURL {
-		url := fmt.Sprintf("%s-%s.%s", u, kr.Version, kr.PatchLevel)
+		url := fmt.Sprintf("%s-%d.%d", u, kr.Version, kr.PatchLevel)
 		urls, err := parseUbuntuAWSKernelURLS(url, kr, kv)
 		if err != nil {
 			continue
@@ -183,7 +183,7 @@ func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease,
 		return []string{
 			// For 4.15 GKE kernels
 			fmt.Sprintf(
-				"%s/linux-gke-%s.%s-headers-%s-%s_%s-%s.%d_%s.deb",
+				"%s/linux-gke-%d.%d-headers-%s-%s_%s-%s.%d_%s.deb",
 				baseURL,
 				kr.Version,
 				kr.PatchLevel,
@@ -206,7 +206,7 @@ func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease,
 			),
 			// For 5.4 GKE kernels
 			fmt.Sprintf(
-				"%s/linux-gke-%s.%s-headers-%s-%s_%s-%s.%d~18.04.1_%s.deb",
+				"%s/linux-gke-%d.%d-headers-%s-%s_%s-%s.%d~18.04.1_%s.deb",
 				baseURL,
 				kr.Version,
 				kr.PatchLevel,
@@ -309,7 +309,7 @@ func parseUbuntuAWSKernelURLS(baseURL string, kr kernelrelease.KernelRelease, ke
 		return nil, err
 	}
 	firstExtra := extractExtraNumber(kr.Extraversion)
-	rmatch := `href="(linux(?:-aws-%s.%s)?-headers-%s-%s(?:-aws)?_%s-%s\.%d.*(?:%s|all)\.deb)"`
+	rmatch := `href="(linux(?:-aws-%d.%d)?-headers-%s-%s(?:-aws)?_%s-%s\.%d.*(?:%s|all)\.deb)"`
 	fullRegex := fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel,
 		kr.Fullversion, firstExtra, kr.Fullversion,
 		firstExtra, kernelVersion, kr.Architecture.String())
@@ -410,13 +410,13 @@ ls -l probe.o
 
 func ubuntuGCCVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
 	switch kr.Version {
-	case "3":
-		if kr.PatchLevel == "13" || kr.PatchLevel == "2" {
+	case 3:
+		if kr.PatchLevel == 13 || kr.PatchLevel == 2 {
 			return "4.8"
 		}
 		return "6"
-	case "5":
-		if kr.PatchLevel == "13" {
+	case 5:
+		if kr.PatchLevel >= 13 {
 			return "10"
 		}
 	}

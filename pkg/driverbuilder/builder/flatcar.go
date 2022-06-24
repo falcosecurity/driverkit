@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 	"text/template"
 
@@ -31,18 +30,14 @@ func (c flatcar) Script(cfg Config) (string, error) {
 		return "", err
 	}
 
-	kr :=  kernelReleaseFromBuildConfig(cfg.Build)
+	kr := kernelReleaseFromBuildConfig(cfg.Build)
 	if kr.Extraversion != "" {
 		return "", fmt.Errorf("unexpected extraversion: %s", kr.Extraversion)
 	}
 
 	// convert string to int
-	version, err := strconv.Atoi(kr.Version)
-	if err != nil {
-		return "", err
-	}
-	if version < 1500 {
-		return "", fmt.Errorf("not a valid flatcar release version: %s", kr.Version)
+	if kr.Version < 1500 {
+		return "", fmt.Errorf("not a valid flatcar release version: %d", kr.Version)
 	}
 	flatcarVersion := kr.Fullversion
 	flatcarInfo, err := fetchFlatcarMetadata(kr)
@@ -56,15 +51,15 @@ func (c flatcar) Script(cfg Config) (string, error) {
 	}
 
 	var urls []string
-    if cfg.KernelUrls == nil {
-        // Check (and filter) existing kernels before continuing
-        urls, err = getResolvingURLs(fetchFlatcarKernelURLS(flatcarInfo.KernelVersion))
-    } else {
-        urls, err = getResolvingURLs(cfg.KernelUrls)
-    }
-    if err != nil {
-        return "", err
-    }
+	if cfg.KernelUrls == nil {
+		// Check (and filter) existing kernels before continuing
+		urls, err = getResolvingURLs(fetchFlatcarKernelURLS(flatcarInfo.KernelVersion))
+	} else {
+		urls, err = getResolvingURLs(cfg.KernelUrls)
+	}
+	if err != nil {
+		return "", err
+	}
 
 	td := flatcarTemplateData{
 		DriverBuildDir:    DriverDirectory,
@@ -152,7 +147,7 @@ func fetchFlatcarKernelConfigURL(architecture kernelrelease.Architecture, flatca
 
 func fetchFlatcarKernelURLS(kernelVersion string) []string {
 	kv := kernelrelease.FromString(kernelVersion)
-	return []string{fmt.Sprintf("https://cdn.kernel.org/pub/linux/kernel/v%s.x/linux-%s.tar.xz", kv.Version, kv.Fullversion)}
+	return []string{fmt.Sprintf("https://cdn.kernel.org/pub/linux/kernel/v%d.x/linux-%s.tar.xz", kv.Version, kv.Fullversion)}
 }
 
 type flatcarReleaseInfo struct {
@@ -230,7 +225,7 @@ func flatcarGccVersion(gccVersion string) string {
 	// reuse kernelrelease version parsing for gcc
 	gv := kernelrelease.FromString(gccVersion)
 	switch gv.Version {
-	case "7":
+	case 7:
 		return "6"
 	default:
 		// builder doesn't support anything newer than 8 right now
