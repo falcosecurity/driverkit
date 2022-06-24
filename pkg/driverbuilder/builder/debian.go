@@ -24,10 +24,8 @@ type debian struct {
 }
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
-func (v debian) Script(c Config) (string, error) {
+func (v debian) Script(c Config, kr kernelrelease.KernelRelease) (string, error) {
 	t := template.New(string(TargetTypeDebian))
-
-	kr := kernelReleaseFromBuildConfig(c.Build)
 
 	debTemplateStr := fmt.Sprintf(debianTemplate, kr.Architecture.String())
 	parsed, err := t.Parse(debTemplateStr)

@@ -2,6 +2,7 @@ package builder
 
 import (
 	"bytes"
+	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"text/template"
 )
 
@@ -70,29 +71,27 @@ ls -l probe.o
 {{ end }}
 `
 
-func (v redhat) Script(cfg Config) (string, error) {
-    t := template.New(string(TargetTypeRedhat))
-  	parsed, err := t.Parse(redhatTemplate)
-  	if err != nil {
-  		return "", err
-  	}
+func (v redhat) Script(cfg Config, kr kernelrelease.KernelRelease) (string, error) {
+	t := template.New(string(TargetTypeRedhat))
+	parsed, err := t.Parse(redhatTemplate)
+	if err != nil {
+		return "", err
+	}
+	
+	td := redhatTemplateData{
+		DriverBuildDir:    DriverDirectory,
+		KernelPackage:     kr.Fullversion + kr.FullExtraversion,
+		ModuleDownloadURL: moduleDownloadURL(cfg),
+		ModuleDriverName:  cfg.DriverName,
+		ModuleFullPath:    ModuleFullPath,
+		BuildModule:       len(cfg.Build.ModuleFilePath) > 0,
+		BuildProbe:        len(cfg.Build.ProbeFilePath) > 0,
+	}
 
-    kr := kernelReleaseFromBuildConfig(cfg.Build)
-
-  	td := redhatTemplateData{
-  	    DriverBuildDir:    DriverDirectory,
-  	    KernelPackage:     kr.Fullversion + kr.FullExtraversion,
-  	    ModuleDownloadURL: moduleDownloadURL(cfg),
-  	    ModuleDriverName:  cfg.DriverName,
-  	    ModuleFullPath:    ModuleFullPath,
-  	    BuildModule:       len(cfg.Build.ModuleFilePath) > 0,
-  	    BuildProbe:        len(cfg.Build.ProbeFilePath) > 0,
-  	}
-
-  	buf := bytes.NewBuffer(nil)
-  	err = parsed.Execute(buf, td)
-  	if err != nil {
-  	    return "", err
-  	}
-  	return buf.String(), nil
+	buf := bytes.NewBuffer(nil)
+	err = parsed.Execute(buf, td)
+	if err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }

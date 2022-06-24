@@ -36,7 +36,7 @@ type Config struct {
 
 // Builder represents a builder capable of generating a script for a driverkit target.
 type Builder interface {
-	Script(c Config) (string, error)
+	Script(c Config, kr kernelrelease.KernelRelease) (string, error)
 }
 
 // Factory returns a builder for the given target.
@@ -86,11 +86,4 @@ func getResolvingURLs(urls []string) ([]string, error) {
 		return nil, fmt.Errorf("kernel not found")
 	}
 	return results, nil
-}
-
-// KernelReleaseFromBuildConfig extracts a KernelRelease object from builder config.
-func kernelReleaseFromBuildConfig(build *Build) kernelrelease.KernelRelease {
-	kv := kernelrelease.FromString(build.KernelRelease)
-	kv.Architecture = kernelrelease.Architecture(build.Architecture)
-	return kv
 }

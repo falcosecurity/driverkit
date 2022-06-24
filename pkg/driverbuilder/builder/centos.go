@@ -20,14 +20,12 @@ type centos struct {
 }
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
-func (c centos) Script(cfg Config) (string, error) {
+func (c centos) Script(cfg Config, kr kernelrelease.KernelRelease) (string, error) {
 	t := template.New(string(TargetTypeCentos))
 	parsed, err := t.Parse(centosTemplate)
 	if err != nil {
 		return "", err
 	}
-
-	kr := kernelReleaseFromBuildConfig(cfg.Build)
 
 	var urls []string
 	if cfg.KernelUrls == nil {

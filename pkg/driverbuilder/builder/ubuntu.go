@@ -28,14 +28,12 @@ type ubuntuGeneric struct {
 }
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
-func (v ubuntuGeneric) Script(c Config) (string, error) {
+func (v ubuntuGeneric) Script(c Config, kr kernelrelease.KernelRelease) (string, error) {
 	t := template.New(string(TargetTypeUbuntuGeneric))
 	parsed, err := t.Parse(ubuntuTemplate)
 	if err != nil {
 		return "", err
 	}
-
-	kr := kernelReleaseFromBuildConfig(c.Build)
 
 	var urls []string
 	if c.KernelUrls == nil {
@@ -80,14 +78,12 @@ type ubuntuAWS struct {
 }
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
-func (v ubuntuAWS) Script(c Config) (string, error) {
+func (v ubuntuAWS) Script(c Config, kr kernelrelease.KernelRelease) (string, error) {
 	t := template.New(string(TargetTypeUbuntuGeneric))
 	parsed, err := t.Parse(ubuntuTemplate)
 	if err != nil {
 		return "", err
 	}
-
-	kr := kernelReleaseFromBuildConfig(c.Build)
 
 	var urls []string
 	if c.KernelUrls == nil {
