@@ -20,14 +20,12 @@ type rocky struct {
 }
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
-func (c rocky) Script(cfg Config) (string, error) {
+func (c rocky) Script(cfg Config, kr kernelrelease.KernelRelease) (string, error) {
 	t := template.New(string(TargetTypeRocky))
 	parsed, err := t.Parse(rockyTemplate)
 	if err != nil {
 		return "", err
 	}
-
-	kr := kernelReleaseFromBuildConfig(cfg.Build)
 
 	var urls []string
 	if cfg.KernelUrls == nil {

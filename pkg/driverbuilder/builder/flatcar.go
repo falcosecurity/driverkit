@@ -23,14 +23,13 @@ type flatcar struct {
 }
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
-func (c flatcar) Script(cfg Config) (string, error) {
+func (c flatcar) Script(cfg Config, kr kernelrelease.KernelRelease) (string, error) {
 	t := template.New(string(TargetTypeFlatcar))
 	parsed, err := t.Parse(flatcarTemplate)
 	if err != nil {
 		return "", err
 	}
 
-	kr := kernelReleaseFromBuildConfig(cfg.Build)
 	if kr.Extraversion != "" {
 		return "", fmt.Errorf("unexpected extraversion: %s", kr.Extraversion)
 	}

@@ -84,14 +84,12 @@ type vanillaTemplateData struct {
 }
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
-func (v vanilla) Script(c Config) (string, error) {
+func (v vanilla) Script(c Config, kv kernelrelease.KernelRelease) (string, error) {
 	t := template.New(string(TargetTypeVanilla))
 	parsed, err := t.Parse(vanillaTemplate)
 	if err != nil {
 		return "", err
 	}
-
-	kv := kernelReleaseFromBuildConfig(c.Build)
 
 	var urls []string
 	if c.KernelUrls == nil {

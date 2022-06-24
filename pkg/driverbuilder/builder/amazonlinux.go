@@ -96,23 +96,21 @@ type amazonlinuxTemplateData struct {
 }
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
-func (a amazonlinux2) Script(c Config) (string, error) {
-	return script(c, TargetTypeAmazonLinux2)
+func (a amazonlinux2) Script(c Config, kr kernelrelease.KernelRelease) (string, error) {
+	return script(c, kr, TargetTypeAmazonLinux2)
 }
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
-func (a amazonlinux) Script(c Config) (string, error) {
-	return script(c, TargetTypeAmazonLinux)
+func (a amazonlinux) Script(c Config, kr kernelrelease.KernelRelease) (string, error) {
+	return script(c, kr, TargetTypeAmazonLinux)
 }
 
-func script(c Config, targetType Type) (string, error) {
+func script(c Config, kv kernelrelease.KernelRelease, targetType Type) (string, error) {
 	t := template.New(string(targetType))
 	parsed, err := t.Parse(amazonlinuxTemplate)
 	if err != nil {
 		return "", err
 	}
-
-	kv := kernelReleaseFromBuildConfig(c.Build)
 
 	var urls []string
 	if c.KernelUrls == nil {

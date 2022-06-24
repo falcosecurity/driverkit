@@ -123,7 +123,8 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	}
 
 	// Generate the build script from the builder
-	driverkitScript, err := v.Script(c)
+	kr := c.Build.KernelReleaseFromBuildConfig()
+	driverkitScript, err := v.Script(c, kr)
 	if err != nil {
 		return err
 	}

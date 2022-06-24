@@ -1,5 +1,7 @@
 package builder
 
+import "github.com/falcosecurity/driverkit/pkg/kernelrelease"
+
 // Build contains the info about the on-going build.
 type Build struct {
 	TargetType         Type
@@ -14,4 +16,10 @@ type Build struct {
 	ModuleDeviceName   string
 	CustomBuilderImage string
 	KernelUrls         []string
+}
+
+func (b *Build) KernelReleaseFromBuildConfig() kernelrelease.KernelRelease {
+	kv := kernelrelease.FromString(b.KernelRelease)
+	kv.Architecture = kernelrelease.Architecture(b.Architecture)
+	return kv
 }
