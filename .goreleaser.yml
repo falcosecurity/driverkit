@@ -10,7 +10,6 @@ builds:
     flags:
       - -v 
       - -buildmode=pie
-      - "-tags={{ .Env.GOTAGS }}"
     ldflags: 
       - "{{.Env.LDFLAGS}}"
     binary: driverkit
