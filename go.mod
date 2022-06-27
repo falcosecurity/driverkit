@@ -13,6 +13,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.0
 	github.com/go-playground/validator/v10 v10.10.1
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/moby/sys/mount v0.3.3 // indirect
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
 	github.com/sirupsen/logrus v1.8.1
