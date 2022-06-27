@@ -24,6 +24,9 @@ jobs:
           command: |
             mkdir -p /tmp/build-amd64
             cp _output/bin/driverkit /tmp/build-amd64/
+      - store_artifacts:
+          path: /tmp/build-amd64/driverkit
+          destination: driverkit_amd64      
       - persist_to_workspace:
           root: /tmp
           paths:
@@ -55,7 +58,10 @@ jobs:
           name: Prepare Artifacts
           command: |
             mkdir -p /tmp/build-arm64
-            cp /tmp/source/_output/bin/driverkit /tmp/build-arm64/     
+            cp /tmp/source/_output/bin/driverkit /tmp/build-arm64/
+      - store_artifacts:
+          path: /tmp/build-arm64/driverkit
+          destination: driverkit_arm64      
       - persist_to_workspace:
           root: /tmp
           paths:
