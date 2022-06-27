@@ -7,12 +7,11 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"github.com/docker/docker/pkg/archive"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"io"
 	"io/ioutil"
 	"log"
-	"os"
-	"path/filepath"
 	"runtime"
 	"strconv"
 	"time"
@@ -284,39 +283,19 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 }
 
 func copyFromContainer(ctx context.Context, cli *client.Client, ID, from, to string) error {
-	rc, _, err := cli.CopyFromContainer(ctx, ID, from)
+	content, stat, err := cli.CopyFromContainer(ctx, ID, from)
 	if err != nil {
 		return err
 	}
-	defer rc.Close()
+	defer content.Close()
 
-	tr := tar.NewReader(rc)
-
-	for {
-		hdr, err := tr.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			logger.WithError(err).Error("error expanding tar")
-		}
-
-		if hdr.Name == filepath.Base(from) {
-			out, err := os.Create(to)
-
-			if err != nil {
-				return err
-			}
-			defer out.Close()
-
-			_, err = io.Copy(out, tr)
-			if err != nil {
-				return err
-			}
-		}
+	srcInfo := archive.CopyInfo{
+		Path:   from,
+		Exists: true,
+		IsDir:  stat.Mode.IsDir(),
 	}
-
-	return nil
+	preArchive := content
+	return archive.CopyTo(preArchive, srcInfo, to)
 }
 
 func (bp *DockerBuildProcessor) cleanup(cli *client.Client, ID string) {
