@@ -8,4 +8,3 @@ kernelurls: [
 architecture: arm64
 output:
   module: /tmp/ubuntu-aws_aarch64.ko
-  probe: /tmp/ubuntu-aws_aarch64.o
