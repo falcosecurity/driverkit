@@ -141,7 +141,7 @@ kernelrelease: 4.14.26-46.32.amzn1.x86_64
 target: amazonlinux
 output:
     module: /tmp/falco_amazonlinux_4.14.26-46.32.amzn1.x86_64.ko
-driverversion: be1ea2d9482d0e6e2cb14a0fd7e08cbecf517f94
+driverversion: master
 ```
 
 ### amazonlinux 2
@@ -152,7 +152,18 @@ target: amazonlinux2
 output:
     module: /tmp/falco_amazonlinux2_4.14.171-136.231.amzn2.x86_64.ko
     probe: /tmp/falco_amazonlinux2_4.14.171-136.231.amzn2.x86_64.o
-driverversion: be1ea2d9482d0e6e2cb14a0fd7e08cbecf517f94
+driverversion: master
+```
+
+### amazonlinux 2022
+
+```yaml
+kernelrelease: 5.10.96-90.460.amzn2022.x86_64
+target: amazonlinux2022
+output:
+    module: /tmp/falco_amazonlinux2022_5.10.96-90.460.amzn2022.x86_64.ko
+    probe: /tmp/falco_amazonlinux2022_5.10.96-90.460.amzn2022.x86_64.o
+driverversion: master
 ```
 
 ### debian

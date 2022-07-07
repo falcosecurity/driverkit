@@ -22,11 +22,25 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
+type amazonBuilder interface {
+	Builder
+	repos() []string
+	baseUrl() string
+	ext() string
+	target() Type
+}
+
+type amazonlinux2022 struct {
+}
+
 type amazonlinux2 struct {
 }
 
 type amazonlinux struct {
 }
+
+// TargetTypeAmazonLinux2022 identifies the AmazonLinux2022 target.
+const TargetTypeAmazonLinux2022 Type = "amazonlinux2022"
 
 // TargetTypeAmazonLinux2 identifies the AmazonLinux2 target.
 const TargetTypeAmazonLinux2 Type = "amazonlinux2"
@@ -35,6 +49,7 @@ const TargetTypeAmazonLinux2 Type = "amazonlinux2"
 const TargetTypeAmazonLinux Type = "amazonlinux"
 
 func init() {
+	BuilderByTarget[TargetTypeAmazonLinux2022] = &amazonlinux2022{}
 	BuilderByTarget[TargetTypeAmazonLinux2] = &amazonlinux2{}
 	BuilderByTarget[TargetTypeAmazonLinux] = &amazonlinux{}
 }
@@ -96,17 +111,87 @@ type amazonlinuxTemplateData struct {
 }
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
+func (a amazonlinux2022) Script(c Config, kr kernelrelease.KernelRelease) (string, error) {
+	return script(a, c, kr)
+}
+
+func (a amazonlinux2022) repos() []string {
+	return []string{
+		"2022.0.20220202",
+		"2022.0.20220315",
+	}
+}
+
+func (a amazonlinux2022) baseUrl() string {
+	return "https://al2022-repos-us-east-1-9761ab97.s3.dualstack.us-east-1.amazonaws.com/core/mirrors"
+}
+
+func (a amazonlinux2022) ext() string {
+	return "gz"
+}
+
+func (a amazonlinux2022) target() Type {
+	return TargetTypeAmazonLinux2022
+}
+
+// Script compiles the script to build the kernel module and/or the eBPF probe.
 func (a amazonlinux2) Script(c Config, kr kernelrelease.KernelRelease) (string, error) {
-	return script(c, kr, TargetTypeAmazonLinux2)
+	return script(a, c, kr)
+}
+
+func (a amazonlinux2) repos() []string {
+	return []string{
+		"core/2.0",
+		"core/latest",
+		"extras/kernel-5.4/latest",
+		"extras/kernel-5.10/latest",
+	}
+}
+
+func (a amazonlinux2) baseUrl() string {
+	return "http://amazonlinux.us-east-1.amazonaws.com/2"
+}
+
+func (a amazonlinux2) ext() string {
+	return "gz"
+}
+
+func (a amazonlinux2) target() Type {
+	return TargetTypeAmazonLinux2
 }
 
 // Script compiles the script to build the kernel module and/or the eBPF probe.
 func (a amazonlinux) Script(c Config, kr kernelrelease.KernelRelease) (string, error) {
-	return script(c, kr, TargetTypeAmazonLinux)
+	return script(a, c, kr)
 }
 
-func script(c Config, kv kernelrelease.KernelRelease, targetType Type) (string, error) {
-	t := template.New(string(targetType))
+func (a amazonlinux) repos() []string {
+	return []string{
+		"latest/updates",
+		"latest/main",
+		"2017.03/updates",
+		"2017.03/main",
+		"2017.09/updates",
+		"2017.09/main",
+		"2018.03/updates",
+		"2018.03/main",
+	}
+}
+
+func (a amazonlinux) baseUrl() string {
+	return "http://repo.us-east-1.amazonaws.com"
+}
+
+func (a amazonlinux) ext() string {
+	return "bz2"
+}
+
+func (a amazonlinux) target() Type {
+	return TargetTypeAmazonLinux
+}
+
+func script(a amazonBuilder, c Config, kr kernelrelease.KernelRelease) (string, error) {
+	t := template.New(string(a.target()))
 	parsed, err := t.Parse(amazonlinuxTemplate)
 	if err != nil {
 		return "", err
@@ -116,7 +201,7 @@ func script(c Config, kv kernelrelease.KernelRelease, targetType Type) (string, 
 	if c.KernelUrls == nil {
 		// Check (and filter) existing kernels before continuing
 		var packages []string
-		packages, err = fetchAmazonLinuxPackagesURLs(kv, targetType)
+		packages, err = fetchAmazonLinuxPackagesURLs(a, kr)
 		if err != nil {
 			return "", err
 		}
@@ -136,7 +221,7 @@ func script(c Config, kv kernelrelease.KernelRelease, targetType Type) (string, 
 		ModuleFullPath:     ModuleFullPath,
 		BuildModule:        len(c.Build.ModuleFilePath) > 0,
 		BuildProbe:         len(c.Build.ProbeFilePath) > 0,
-		LLVMVersion:        amazonLLVMVersionFromKernelRelease(kv),
+		LLVMVersion:        amazonLLVMVersionFromKernelRelease(kr),
 	}
 
 	buf := bytes.NewBuffer(nil)
@@ -147,48 +232,46 @@ func script(c Config, kv kernelrelease.KernelRelease, targetType Type) (string, 
 	return buf.String(), nil
 }
 
-var reposByTarget = map[Type][]string{
-	TargetTypeAmazonLinux2: []string{
-		"core/2.0",
-		"core/latest",
-		"extras/kernel-5.4/latest",
-		"extras/kernel-5.10/latest",
-	},
-	TargetTypeAmazonLinux: []string{
-		"latest/updates",
-		"latest/main",
-		"2017.03/updates",
-		"2017.03/main",
-		"2017.09/updates",
-		"2017.09/main",
-		"2018.03/updates",
-		"2018.03/main",
-	},
+func buildMirror(a amazonBuilder, r string, kv kernelrelease.KernelRelease) (string, error) {
+	var baseURL string
+	switch a.target() {
+	case TargetTypeAmazonLinux:
+		baseURL = fmt.Sprintf("%s/%s", a.baseUrl(), r)
+	case TargetTypeAmazonLinux2:
+		baseURL = fmt.Sprintf("%s/%s/%s", a.baseUrl(), r, kv.Architecture.ToNonDeb())
+	case TargetTypeAmazonLinux2022:
+		baseURL = fmt.Sprintf("%s/%s/%s", a.baseUrl(), r, kv.Architecture.ToNonDeb())
+	default:
+		return "", fmt.Errorf("unsupported target")
+	}
+
+	mirror := fmt.Sprintf("%s/%s", baseURL, "mirror.list")
+	logger.WithField("url", mirror).WithField("version", r).Debug("looking for repo...")
+	return mirror, nil
 }
 
-var baseByTarget = map[Type]string{
-	TargetTypeAmazonLinux:  "http://repo.us-east-1.amazonaws.com/%s",
-	TargetTypeAmazonLinux2: "http://amazonlinux.us-east-1.amazonaws.com/2/core/%s/%s",
+type unzipFunc func(io.Reader) ([]byte, error)
+
+func unzipFuncFromBuilder(a amazonBuilder) (unzipFunc, error) {
+	switch a.ext() {
+	case "gz":
+		return gunzip, nil
+	case "bz2":
+		return bunzip, nil
+	}
+	return nil, fmt.Errorf("unsupported extension: %s", a.ext())
 }
 
-func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, targetType Type) ([]string, error) {
+func fetchAmazonLinuxPackagesURLs(a amazonBuilder, kv kernelrelease.KernelRelease) ([]string, error) {
 	urls := []string{}
-	visited := map[string]bool{}
-	amazonlinux2baseURL := "http://amazonlinux.us-east-1.amazonaws.com"
+	visited := make(map[string]struct{})
 
-	for _, v := range reposByTarget[targetType] {
-		var baseURL string
-		switch targetType {
-		case TargetTypeAmazonLinux:
-			baseURL = fmt.Sprintf("http://repo.us-east-1.amazonaws.com/%s", v)
-		case TargetTypeAmazonLinux2:
-			baseURL = fmt.Sprintf("%s/2/%s/%s", amazonlinux2baseURL, v, kv.Architecture.ToNonDeb())
-		default:
-			return nil, fmt.Errorf("unsupported target")
+	for _, v := range a.repos() {
+		mirror, err := buildMirror(a, v, kv)
+		if err != nil {
+			return nil, err
 		}
 
-		mirror := fmt.Sprintf("%s/%s", baseURL, "mirror.list")
-		logger.WithField("url", mirror).WithField("version", v).Debug("looking for repo...")
 		// Obtain the repo URL by getting mirror URL content
 		mirrorRes, err := http.Get(mirror)
 		if err != nil {
@@ -204,13 +287,9 @@ func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, targetType Typ
 		if repo == "" {
 			return nil, fmt.Errorf("repository not found")
 		}
-		repo = strings.ReplaceAll(strings.TrimSuffix(string(repo), "\n"), "$basearch", kv.Architecture.ToNonDeb())
-
-		ext := "gz"
-		if targetType == TargetTypeAmazonLinux {
-			ext = "bz2"
-		}
-		repoDatabaseURL := fmt.Sprintf("%s/repodata/primary.sqlite.%s", repo, ext)
+		repo = strings.ReplaceAll(strings.TrimSuffix(repo, "\n"), "$basearch", kv.Architecture.ToNonDeb())
+		repo = strings.TrimSuffix(repo, "/")
+		repoDatabaseURL := fmt.Sprintf("%s/repodata/primary.sqlite.%s", repo, a.ext())
 		if _, ok := visited[repoDatabaseURL]; ok {
 			continue
 		}
@@ -221,20 +300,19 @@ func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, targetType Typ
 			return nil, err
 		}
 		defer repoRes.Body.Close()
-		visited[repoDatabaseURL] = true
-		// Decompress the database
-		var unzipFunc func(io.Reader) ([]byte, error)
-		if targetType == TargetTypeAmazonLinux {
-			unzipFunc = bunzip
-		} else {
-			unzipFunc = gunzip
+		visited[repoDatabaseURL] = struct{}{}
+
+		unzip, err := unzipFuncFromBuilder(a)
+		if err != nil {
+			return nil, err
 		}
-		dbBytes, err := unzipFunc(repoRes.Body)
+
+		dbBytes, err := unzip(repoRes.Body)
 		if err != nil {
 			return nil, err
 		}
 		// Create the temporary database file
-		dbFile, err := ioutil.TempFile(os.TempDir(), fmt.Sprintf("%s-*.sqlite", targetType))
+		dbFile, err := ioutil.TempFile(os.TempDir(), fmt.Sprintf("%s-*.sqlite", string(a.target())))
 		if err != nil {
 			return nil, err
 		}
@@ -268,12 +346,7 @@ func fetchAmazonLinuxPackagesURLs(kv kernelrelease.KernelRelease, targetType Typ
 			if err != nil {
 				log.Fatal(err)
 			}
-			base := repo
-			if targetType == TargetTypeAmazonLinux2 {
-				base = amazonlinux2baseURL
-			}
-			href = strings.ReplaceAll(href, "../", "")
-			urls = append(urls, fmt.Sprintf("%s/%s", base, href))
+			urls = append(urls, fmt.Sprintf("%s/%s", repo, href))
 		}
 
 		if err := dbFile.Close(); err != nil {
