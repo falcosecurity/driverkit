@@ -2,11 +2,15 @@ package builder
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"text/template"
 
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
+
+//go:embed templates/centos.sh
+var centosTemplate string
 
 // TargetTypeCentos identifies the Centos target.
 const TargetTypeCentos Type = "centos"
@@ -178,51 +182,6 @@ type centosTemplateData struct {
 	BuildModule       bool
 	BuildProbe        bool
 }
-
-const centosTemplate = `
-#!/bin/bash
-set -xeuo pipefail
-
-rm -Rf {{ .DriverBuildDir }}
-mkdir {{ .DriverBuildDir }}
-rm -Rf /tmp/module-download
-mkdir -p /tmp/module-download
-
-curl --silent -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
-mv /tmp/module-download/*/driver/* {{ .DriverBuildDir }}
-
-cp /driverkit/module-Makefile {{ .DriverBuildDir }}/Makefile
-bash /driverkit/fill-driver-config.sh {{ .DriverBuildDir }}
-
-# Fetch the kernel
-mkdir /tmp/kernel-download
-cd /tmp/kernel-download
-curl --silent -o kernel-devel.rpm -SL {{ .KernelDownloadURL }}
-rpm2cpio kernel-devel.rpm | cpio --extract --make-directories
-rm -Rf /tmp/kernel
-mkdir -p /tmp/kernel
-mv usr/src/kernels/*/* /tmp/kernel
-
-# Change current gcc
-ln -sf /usr/bin/gcc-{{ .GCCVersion }} /usr/bin/gcc
-
-{{ if .BuildModule }}
-# Build the module
-cd {{ .DriverBuildDir }}
-make KERNELDIR=/tmp/kernel
-mv {{ .ModuleDriverName }}.ko {{ .ModuleFullPath }}
-strip -g {{ .ModuleFullPath }}
-# Print results
-modinfo {{ .ModuleFullPath }}
-{{ end }}
-
-{{ if .BuildProbe }}
-# Build the eBPF probe
-cd {{ .DriverBuildDir }}/bpf
-make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc KERNELDIR=/tmp/kernel
-ls -l probe.o
-{{ end }}
-`
 
 func centosGccVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
 	switch kr.Version {
