@@ -1,6 +1,7 @@
 amazonlinux
 amazonlinux2
 amazonlinux2022
+archlinux
 centos
 debian
 flatcar
