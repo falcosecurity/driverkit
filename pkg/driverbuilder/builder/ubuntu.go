@@ -54,6 +54,12 @@ func (v ubuntu) URLs(c Config, kr kernelrelease.KernelRelease) ([]string, error)
 	return ubuntuHeadersURLFromRelease(kr, c.Build.KernelVersion)
 }
 
+func (v ubuntu) MinimumURLs() int {
+	// We expect both a common "_all" package,
+	// and an arch dependent package.
+	return 2
+}
+
 func (v ubuntu) TemplateData(_ Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
 	// parse the flavor out of the kernelrelease extraversion
 	_, flavor := parseUbuntuExtraVersion(kr.Extraversion)

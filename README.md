@@ -409,8 +409,7 @@ func init() {
 Now, you can implement the `builder.Builder` interface for the `archlinux` struct
 you just registered.
 
-Here's a very minimalistic example.
-
+Here's a very minimalistic example:
 
 ```go
 func (c archlinux) Name() string {
