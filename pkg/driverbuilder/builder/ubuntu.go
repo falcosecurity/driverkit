@@ -358,7 +358,7 @@ func ubuntuGCCVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
         } else if kr.PatchLevel >= 11 {
             return "10"
         }
-	}
+    }
 
 	return "8"
 }
