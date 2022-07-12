@@ -25,6 +25,7 @@ type debianTemplateData struct {
 	KernelDownloadURLS []string
 	KernelLocalVersion string
 	LLVMVersion        string
+	KernelArch         string
 }
 
 // debian is a driverkit target.
@@ -56,6 +57,7 @@ func (v debian) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []st
 		KernelDownloadURLS: urls,
 		KernelLocalVersion: kr.FullExtraversion,
 		LLVMVersion:        debianLLVMVersionFromKernelRelease(kr),
+		KernelArch:         kr.Architecture.String(),
 	}
 }
 
