@@ -216,8 +216,7 @@ func fetchUbuntuGenericKernelURL(baseURL string, kr kernelrelease.KernelRelease,
 				firstExtra,
 				kernelVersion,
 				kr.Architecture.String(),
-			),
-			fmt.Sprintf(
+			), fmt.Sprintf(
 				"%s/linux-headers-%s%s_%s-%s.%d~18.04.1_%s.deb",
 				baseURL,
 				kr.Fullversion,
@@ -353,9 +352,11 @@ func ubuntuGCCVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
 		}
 		return "6"
 	case 5:
-		if kr.PatchLevel >= 13 {
-			return "10"
-		}
+        if kr.PatchLevel >= 11 {
+            return "10"
+        } else if kr.PatchLevel >= 19 {
+            return "11"
+        }
 	}
 
 	return "8"
