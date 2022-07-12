@@ -41,14 +41,7 @@ func (v debian) TemplateScript() string {
 }
 
 func (v debian) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
-	kurls, err := fetchDebianKernelURLs(kr)
-	if err != nil {
-		return nil, err
-	}
-	if len(kurls) < 3 {
-		return nil, fmt.Errorf(HeadersTooFewFoundErrFmt, 3, len(kurls))
-	}
-	return kurls, nil
+	return fetchDebianKernelURLs(kr)
 }
 
 func (v debian) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
@@ -59,6 +52,14 @@ func (v debian) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []st
 		LLVMVersion:        debianLLVMVersionFromKernelRelease(kr),
 		KernelArch:         kr.Architecture.String(),
 	}
+}
+
+func (v debian) MinimumURLs() int {
+	// We need:
+	// kernel devel
+	// kernel devel common
+	// kbuild package
+	return 3
 }
 
 func fetchDebianKernelURLs(kr kernelrelease.KernelRelease) ([]string, error) {

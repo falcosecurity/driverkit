@@ -31,8 +31,6 @@ var ProbeFullPath = path.Join(DriverDirectory, "bpf", ProbeFileName)
 
 var HeadersNotFoundErr = errors.New("kernel headers not found")
 
-var HeadersTooFewFoundErrFmt = "not enough headers packages found; expected %d, found %d"
-
 // Config contains all the configurations needed to build the kernel module or the eBPF probe.
 type Config struct {
 	DriverName      string
@@ -58,11 +56,22 @@ type Builder interface {
 	TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{}
 }
 
+// MinimumURLsBuilder is an optional interface
+// to specify minimum number of requested headers urls
+type MinimumURLsBuilder interface {
+	MinimumURLs() int
+}
+
 func Script(b Builder, c Config, kr kernelrelease.KernelRelease) (string, error) {
 	t := template.New(b.Name())
 	parsed, err := t.Parse(b.TemplateScript())
 	if err != nil {
 		return "", err
+	}
+
+	minimumURLs := 1
+	if bb, ok := b.(MinimumURLsBuilder); ok {
+		minimumURLs = bb.MinimumURLs()
 	}
 
 	var urls []string
@@ -82,6 +91,10 @@ func Script(b Builder, c Config, kr kernelrelease.KernelRelease) (string, error)
 	}
 	if err != nil {
 		return "", err
+	}
+
+	if len(urls) < minimumURLs {
+		return "", fmt.Errorf("not enough headers packages found; expected %d, found %d", minimumURLs, len(urls))
 	}
 
 	td := b.TemplateData(c, kr, urls)

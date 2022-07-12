@@ -36,6 +36,11 @@ func (v redhat) URLs(_ Config, _ kernelrelease.KernelRelease) ([]string, error) 
 	return nil, nil
 }
 
+func (v redhat) MinimumURLs() int {
+	// We don't need any url
+	return 0
+}
+
 func (v redhat) TemplateData(c Config, kr kernelrelease.KernelRelease, _ []string) interface{} {
 	return redhatTemplateData{
 		commonTemplateData: c.toTemplateData(),
