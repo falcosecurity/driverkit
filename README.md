@@ -1,9 +1,11 @@
 # driverkit
 
+[![Latest](https://img.shields.io/github/v/release/falcosecurity/driverkit?style=for-the-badge)](https://github.com/falcosecurity/driverkit/releases/latest)
+![Architectures](https://img.shields.io/badge/ARCHS-x86__64%7Caarch64-blueviolet?style=for-the-badge)
+
 Status: **Under development**
 
-A command line tool that can be used to build the Falco kernel module and eBPF probe.
-
+A command line tool that can be used to build the [Falco](https://github.com/falcosecurity/falco) kernel module and eBPF probe.
 
 ## Usage
 
@@ -206,6 +208,24 @@ output:
 kernelconfigdata: Q09ORklHX0ZBTk9USUZZPXkKQ09ORklHX0t...
 ```
 
+### archlinux
+
+Example configuration file to build both the Kernel module and eBPF probe for Archlinux.
+Note: archlinux target uses the [Arch Linux Archive](https://wiki.archlinux.org/title/Arch_Linux_Archive) to fetch
+all ever supported kernel releases.  
+For arm64, it uses an user-provided mirror, as no official mirror is available: http://tardis.tiny-vps.com/aarm/.  
+The mirror has been up and updated since 2015.
+
+```yaml
+kernelversion: 1
+kernelrelease: 4.20.3-arch1
+target: archlinux
+output:
+  module: /tmp/falco-arch.ko
+  probe: /tmp/falco-arch.o
+driverversion: master
+```
+
 ### redhat 7
 
 ```yaml
@@ -405,13 +425,45 @@ Here's a very minimalistic example.
 
 
 ```go
-func (v archLinux) Script(c Config) (string, error) {
-  return "echo 'hello world'", nil
+func (c archlinux) Name() string {
+    return TargetTypeArchlinux.String()
+}
+
+func (c archlinux) TemplateScript() string {
+	return archlinuxTemplate
+}
+
+func (c archlinux) URLs(cfg Config, kr kernelrelease.KernelRelease) ([]string, error) {
+    urls := []string{}
+    if kr.Architecture == "amd64" {
+        urls = append(urls, fmt.Sprintf("https://archive.archlinux.org/packages/l/linux-headers/linux-headers-%s.%s-%d-%s.pkg.tar.xz",
+            kr.Fullversion,
+            kr.Extraversion,
+            cfg.KernelVersion,
+            kr.Architecture.ToNonDeb()))
+    } else {
+        urls = append(urls, fmt.Sprintf("http://tardis.tiny-vps.com/aarm/packages/l/linux-%s-headers/linux-%s-headers-%s-%d-%s.pkg.tar.xz",
+            kr.Architecture.ToNonDeb(),
+            kr.Architecture.ToNonDeb(),
+            kr.Fullversion,
+            cfg.KernelVersion,
+            kr.Architecture.ToNonDeb()))
+    }
+    return urls, nil
+}
+
+func (c archlinux) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+    return archlinuxTemplateData{
+        commonTemplateData: cfg.toTemplateData(),
+        KernelDownloadURL:  urls[0],
+        GCCVersion:         archlinuxGccVersionFromKernelRelease(kr),
+    }
 }
 ```
 
-Essentially, the `Script` function that you are implementing will need to return a string containing
-a `bash` script that will be executed by driverkit at build time.  
+Essentially, the various methods that you are implementing are needed to:
+* filling the script template (see below), that is a `bash` script that will be executed by driverkit at build time 
+* fetching kernel headers urls that will later be downloaded inside the builder container, and used for the driver build
 
 Under `pkg/driverbuilder/builder/templates` folder, you can find all the template scripts for the supported builders.  
 Adding a new template there and using `go:embed` to include it in your builder, allows leaner code 
@@ -438,7 +490,8 @@ If the user specifies:
 The `/tmp/driver` MUST be interpolated from the `DriverDirectory` constant from [`builders.go`](/pkg/driverbuilder/builder/builders.go).
 
 If you look at the various builder implemented, you will see that the task of creating a new builder
-can be easy or difficult depending on how the distribution ships their artifacts.
+can be easy or difficult depending on how the distribution ships their artifacts.  
+Indeed, the hardest part is fetching the kernel headers urls for each distro. 
 
 ### 3. Customize GCC version
 
@@ -465,4 +518,7 @@ For an example, you can check out Debian builder, namely: `debianLLVMVersionFrom
 When creating a new builder, it is recommended to check that [kernel-crawler](https://github.com/falcosecurity/kernel-crawler) 
 can also support collecting the new builders kernel versions and header package URLs. This will make sure that the latest drivers 
 for the new builder are automatically built by [test-infra](https://github.com/falcosecurity/test-infra). If required, add a feature request
-for support for the new builder on the [kernel-crawler](https://github.com/falcosecurity/kernel-crawler) repository.
+for support for the new builder on the kernel-crawler repository.  
+Note: be sure that the crawler you wants to add is interesting for the community as a whole.  
+For example, an archlinux crawler doesn't make much sense, because Arch is a rolling release and we should not support  
+any past Arch kernel for Falco.
