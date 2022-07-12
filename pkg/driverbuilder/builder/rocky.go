@@ -1,11 +1,8 @@
 package builder
 
 import (
-	"bytes"
 	_ "embed"
 	"fmt"
-	"text/template"
-
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
@@ -19,46 +16,34 @@ func init() {
 	BuilderByTarget[TargetTypeRocky] = &rocky{}
 }
 
+type rockyTemplateData struct {
+	commonTemplateData
+	KernelDownloadURL string
+	GCCVersion        string
+}
+
 // rocky is a driverkit target.
 type rocky struct {
 }
 
-// Script compiles the script to build the kernel module and/or the eBPF probe.
-func (c rocky) Script(cfg Config, kr kernelrelease.KernelRelease) (string, error) {
-	t := template.New(string(TargetTypeRocky))
-	parsed, err := t.Parse(rockyTemplate)
-	if err != nil {
-		return "", err
-	}
+func (c rocky) Name() string {
+	return TargetTypeRocky.String()
+}
 
-	var urls []string
-	if cfg.KernelUrls == nil {
-		// Check (and filter) existing kernels before continuing
-		urls, err = getResolvingURLs(fetchRockyKernelURLS(kr))
-	} else {
-		urls, err = getResolvingURLs(cfg.KernelUrls)
-	}
-	if err != nil {
-		return "", err
-	}
+func (c rocky) TemplateScript() string {
+	return rockyTemplate
+}
 
-	td := rockyTemplateData{
-		DriverBuildDir:    DriverDirectory,
-		ModuleDownloadURL: moduleDownloadURL(cfg),
-		KernelDownloadURL: urls[0],
-		GCCVersion:        rockyGccVersionFromKernelRelease(kr),
-		ModuleDriverName:  cfg.DriverName,
-		ModuleFullPath:    ModuleFullPath,
-		BuildModule:       len(cfg.Build.ModuleFilePath) > 0,
-		BuildProbe:        len(cfg.Build.ProbeFilePath) > 0,
-	}
+func (c rocky) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+	return fetchRockyKernelURLS(kr), nil
+}
 
-	buf := bytes.NewBuffer(nil)
-	err = parsed.Execute(buf, td)
-	if err != nil {
-		return "", err
+func (c rocky) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+	return rockyTemplateData{
+		commonTemplateData: cfg.toTemplateData(),
+		KernelDownloadURL:  urls[0],
+		GCCVersion:         rockyGccVersionFromKernelRelease(kr),
 	}
-	return buf.String(), nil
 }
 
 func fetchRockyKernelURLS(kr kernelrelease.KernelRelease) []string {
@@ -78,17 +63,6 @@ func fetchRockyKernelURLS(kr kernelrelease.KernelRelease) []string {
 		))
 	}
 	return urls
-}
-
-type rockyTemplateData struct {
-	DriverBuildDir    string
-	ModuleDownloadURL string
-	KernelDownloadURL string
-	GCCVersion        string
-	ModuleDriverName  string
-	ModuleFullPath    string
-	BuildModule       bool
-	BuildProbe        bool
 }
 
 func rockyGccVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {

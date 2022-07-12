@@ -1,14 +1,11 @@
 package builder
 
 import (
-	"bytes"
 	_ "embed"
 	"fmt"
+	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"regexp"
 	"strings"
-	"text/template"
-
-	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
 //go:embed templates/ubuntu.sh
@@ -21,6 +18,19 @@ const TargetTypeUbuntu Type = "ubuntu"
 const TargetTypeUbuntuGeneric Type = "ubuntu-generic"
 const TargetTypeUbuntuAWS Type = "ubuntu-aws"
 
+type ubuntuBuilder interface {
+	Builder
+	kernelHeadersPattern(kr kernelrelease.KernelRelease) string
+}
+
+type ubuntuTemplateData struct {
+	commonTemplateData
+	KernelDownloadURLS   []string
+	KernelLocalVersion   string
+	KernelHeadersPattern string
+	GCCVersion           string
+}
+
 func init() {
 	BuilderByTarget[TargetTypeUbuntu] = &ubuntu{}
 
@@ -32,44 +42,19 @@ func init() {
 // ubuntu is a driverkit target.
 type ubuntu struct{}
 
-// ubuntuTemplateData stores information to be templated into the shell script
-type ubuntuTemplateData struct {
-	DriverBuildDir       string
-	ModuleDownloadURL    string
-	KernelDownloadURLS   []string
-	KernelLocalVersion   string
-	KernelHeadersPattern string
-	ModuleDriverName     string
-	ModuleFullPath       string
-	BuildProbe           bool
-	BuildModule          bool
-	GCCVersion           string
+func (v ubuntu) Name() string {
+	return TargetTypeUbuntu.String()
 }
 
-// Script compiles the script to build the kernel module and/or the eBPF probe.
-func (v ubuntu) Script(c Config, kr kernelrelease.KernelRelease) (string, error) {
+func (v ubuntu) TemplateScript() string {
+	return ubuntuTemplate
+}
 
-	t := template.New(string(TargetTypeUbuntu))
+func (v ubuntu) URLs(c Config, kr kernelrelease.KernelRelease) ([]string, error) {
+	return ubuntuHeadersURLFromRelease(kr, c.Build.KernelVersion)
+}
 
-	parsed, err := t.Parse(ubuntuTemplate)
-	if err != nil {
-		return "", err
-	}
-
-	var urls []string
-	if c.KernelUrls == nil {
-		urls, err = ubuntuHeadersURLFromRelease(kr, c.Build.KernelVersion)
-	} else {
-		urls, err = getResolvingURLs(c.KernelUrls)
-	}
-	// if there was an error
-	if err != nil {
-		return "", err
-	}
-	if len(urls) < 2 {
-		return "", fmt.Errorf("specific kernel headers not found")
-	}
-
+func (v ubuntu) TemplateData(_ Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
 	// parse the flavor out of the kernelrelease extraversion
 	_, flavor := parseUbuntuExtraVersion(kr.Extraversion)
 
@@ -82,25 +67,12 @@ func (v ubuntu) Script(c Config, kr kernelrelease.KernelRelease) (string, error)
 		headersPattern = fmt.Sprintf("linux-headers*%s", flavor)
 	}
 
-	td := ubuntuTemplateData{
-		DriverBuildDir:       DriverDirectory,
-		ModuleDownloadURL:    moduleDownloadURL(c),
+	return ubuntuTemplateData{
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
 		KernelHeadersPattern: headersPattern,
-		ModuleDriverName:     c.Build.ModuleDriverName,
-		ModuleFullPath:       ModuleFullPath,
-		BuildModule:          len(c.Build.ModuleFilePath) > 0,
-		BuildProbe:           len(c.Build.ProbeFilePath) > 0,
 		GCCVersion:           ubuntuGCCVersionFromKernelRelease(kr),
 	}
-
-	buf := bytes.NewBuffer(nil)
-	err = parsed.Execute(buf, td)
-	if err != nil {
-		return "", err
-	}
-	return buf.String(), nil
 }
 
 func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv string) ([]string, error) {

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/bzip2"
 	"compress/gzip"
+	"database/sql"
 	_ "embed"
 	"fmt"
 	"io"
@@ -13,9 +14,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"text/template"
-
-	"database/sql"
 
 	_ "modernc.org/sqlite"
 
@@ -31,16 +29,17 @@ type amazonBuilder interface {
 	repos() []string
 	baseUrl() string
 	ext() string
-	target() Type
-}
-
-type amazonlinux2022 struct {
-}
-
-type amazonlinux2 struct {
 }
 
 type amazonlinux struct {
+}
+
+type amazonlinux2 struct {
+	amazonlinux
+}
+
+type amazonlinux2022 struct {
+	amazonlinux
 }
 
 // TargetTypeAmazonLinux2022 identifies the AmazonLinux2022 target.
@@ -59,69 +58,29 @@ func init() {
 }
 
 type amazonlinuxTemplateData struct {
-	DriverBuildDir     string
-	ModuleDownloadURL  string
+	commonTemplateData
 	KernelDownloadURLs []string
-	ModuleDriverName   string
-	ModuleFullPath     string
-	BuildModule        bool
-	BuildProbe         bool
 	LLVMVersion        string
 }
 
-// Script compiles the script to build the kernel module and/or the eBPF probe.
-func (a amazonlinux2022) Script(c Config, kr kernelrelease.KernelRelease) (string, error) {
-	return script(a, c, kr)
+func (a amazonlinux) Name() string {
+	return TargetTypeAmazonLinux.String()
 }
 
-func (a amazonlinux2022) repos() []string {
-	return []string{
-		"2022.0.20220202",
-		"2022.0.20220315",
+func (a amazonlinux) TemplateScript() string {
+	return amazonlinuxTemplate
+}
+
+func (a amazonlinux) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+	return fetchAmazonLinuxPackagesURLs(a, kr)
+}
+
+func (a amazonlinux) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+	return amazonlinuxTemplateData{
+		commonTemplateData: c.toTemplateData(),
+		KernelDownloadURLs: urls,
+		LLVMVersion:        amazonLLVMVersionFromKernelRelease(kr),
 	}
-}
-
-func (a amazonlinux2022) baseUrl() string {
-	return "https://al2022-repos-us-east-1-9761ab97.s3.dualstack.us-east-1.amazonaws.com/core/mirrors"
-}
-
-func (a amazonlinux2022) ext() string {
-	return "gz"
-}
-
-func (a amazonlinux2022) target() Type {
-	return TargetTypeAmazonLinux2022
-}
-
-// Script compiles the script to build the kernel module and/or the eBPF probe.
-func (a amazonlinux2) Script(c Config, kr kernelrelease.KernelRelease) (string, error) {
-	return script(a, c, kr)
-}
-
-func (a amazonlinux2) repos() []string {
-	return []string{
-		"core/2.0",
-		"core/latest",
-		"extras/kernel-5.4/latest",
-		"extras/kernel-5.10/latest",
-	}
-}
-
-func (a amazonlinux2) baseUrl() string {
-	return "http://amazonlinux.us-east-1.amazonaws.com/2"
-}
-
-func (a amazonlinux2) ext() string {
-	return "gz"
-}
-
-func (a amazonlinux2) target() Type {
-	return TargetTypeAmazonLinux2
-}
-
-// Script compiles the script to build the kernel module and/or the eBPF probe.
-func (a amazonlinux) Script(c Config, kr kernelrelease.KernelRelease) (string, error) {
-	return script(a, c, kr)
 }
 
 func (a amazonlinux) repos() []string {
@@ -145,60 +104,62 @@ func (a amazonlinux) ext() string {
 	return "bz2"
 }
 
-func (a amazonlinux) target() Type {
-	return TargetTypeAmazonLinux
+func (a amazonlinux2022) Name() string {
+	return TargetTypeAmazonLinux2022.String()
 }
 
-func script(a amazonBuilder, c Config, kr kernelrelease.KernelRelease) (string, error) {
-	t := template.New(string(a.target()))
-	parsed, err := t.Parse(amazonlinuxTemplate)
-	if err != nil {
-		return "", err
-	}
+func (a amazonlinux2022) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+	return fetchAmazonLinuxPackagesURLs(a, kr)
+}
 
-	var urls []string
-	if c.KernelUrls == nil {
-		// Check (and filter) existing kernels before continuing
-		var packages []string
-		packages, err = fetchAmazonLinuxPackagesURLs(a, kr)
-		if err != nil {
-			return "", err
-		}
-		urls, err = getResolvingURLs(packages)
-	} else {
-		urls, err = getResolvingURLs(c.KernelUrls)
+func (a amazonlinux2022) repos() []string {
+	return []string{
+		"2022.0.20220202",
+		"2022.0.20220315",
 	}
-	if err != nil {
-		return "", err
-	}
+}
 
-	td := amazonlinuxTemplateData{
-		DriverBuildDir:     DriverDirectory,
-		ModuleDownloadURL:  moduleDownloadURL(c),
-		KernelDownloadURLs: urls,
-		ModuleDriverName:   c.DriverName,
-		ModuleFullPath:     ModuleFullPath,
-		BuildModule:        len(c.Build.ModuleFilePath) > 0,
-		BuildProbe:         len(c.Build.ProbeFilePath) > 0,
-		LLVMVersion:        amazonLLVMVersionFromKernelRelease(kr),
-	}
+func (a amazonlinux2022) baseUrl() string {
+	return "https://al2022-repos-us-east-1-9761ab97.s3.dualstack.us-east-1.amazonaws.com/core/mirrors"
+}
 
-	buf := bytes.NewBuffer(nil)
-	err = parsed.Execute(buf, td)
-	if err != nil {
-		return "", err
+func (a amazonlinux2022) ext() string {
+	return "gz"
+}
+
+func (a amazonlinux2) Name() string {
+	return TargetTypeAmazonLinux2.String()
+}
+
+func (a amazonlinux2) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+	return fetchAmazonLinuxPackagesURLs(a, kr)
+}
+
+func (a amazonlinux2) repos() []string {
+	return []string{
+		"core/2.0",
+		"core/latest",
+		"extras/kernel-5.4/latest",
+		"extras/kernel-5.10/latest",
 	}
-	return buf.String(), nil
+}
+
+func (a amazonlinux2) baseUrl() string {
+	return "http://amazonlinux.us-east-1.amazonaws.com/2"
+}
+
+func (a amazonlinux2) ext() string {
+	return "gz"
 }
 
 func buildMirror(a amazonBuilder, r string, kv kernelrelease.KernelRelease) (string, error) {
 	var baseURL string
-	switch a.target() {
-	case TargetTypeAmazonLinux:
+	switch a.(type) {
+	case amazonlinux:
 		baseURL = fmt.Sprintf("%s/%s", a.baseUrl(), r)
-	case TargetTypeAmazonLinux2:
+	case amazonlinux2:
 		baseURL = fmt.Sprintf("%s/%s/%s", a.baseUrl(), r, kv.Architecture.ToNonDeb())
-	case TargetTypeAmazonLinux2022:
+	case amazonlinux2022:
 		baseURL = fmt.Sprintf("%s/%s/%s", a.baseUrl(), r, kv.Architecture.ToNonDeb())
 	default:
 		return "", fmt.Errorf("unsupported target")
@@ -271,7 +232,7 @@ func fetchAmazonLinuxPackagesURLs(a amazonBuilder, kv kernelrelease.KernelReleas
 			return nil, err
 		}
 		// Create the temporary database file
-		dbFile, err := ioutil.TempFile(os.TempDir(), fmt.Sprintf("%s-*.sqlite", string(a.target())))
+		dbFile, err := ioutil.TempFile(os.TempDir(), fmt.Sprintf("%s-*.sqlite", a.Name()))
 		if err != nil {
 			return nil, err
 		}

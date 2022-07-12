@@ -1,11 +1,8 @@
 package builder
 
 import (
-	"bytes"
 	_ "embed"
 	"fmt"
-	"text/template"
-
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
@@ -23,45 +20,21 @@ func init() {
 type archlinux struct {
 }
 
-// Script compiles the script to build the kernel module and/or the eBPF probe.
-func (c archlinux) Script(cfg Config, kr kernelrelease.KernelRelease) (string, error) {
-	t := template.New(string(TargetTypeArchlinux))
-	parsed, err := t.Parse(archlinuxTemplate)
-	if err != nil {
-		return "", err
-	}
-
-	var urls []string
-	if cfg.KernelUrls == nil {
-		// Check (and filter) existing kernels before continuing
-		urls, err = getResolvingURLs(fetchArchlinuxKernelURLS(kr, cfg.KernelVersion))
-	} else {
-		urls, err = getResolvingURLs(cfg.KernelUrls)
-	}
-	if err != nil {
-		return "", err
-	}
-
-	td := archlinuxTemplateData{
-		DriverBuildDir:    DriverDirectory,
-		ModuleDownloadURL: moduleDownloadURL(cfg),
-		KernelDownloadURL: urls[0],
-		GCCVersion:        archlinuxGccVersionFromKernelRelease(kr),
-		ModuleDriverName:  cfg.DriverName,
-		ModuleFullPath:    ModuleFullPath,
-		BuildModule:       len(cfg.Build.ModuleFilePath) > 0,
-		BuildProbe:        len(cfg.Build.ProbeFilePath) > 0,
-	}
-
-	buf := bytes.NewBuffer(nil)
-	err = parsed.Execute(buf, td)
-	if err != nil {
-		return "", err
-	}
-	return buf.String(), nil
+type archlinuxTemplateData struct {
+	commonTemplateData
+	KernelDownloadURL string
+	GCCVersion        string
 }
 
-func fetchArchlinuxKernelURLS(kr kernelrelease.KernelRelease, kv string) []string {
+func (c archlinux) Name() string {
+	return TargetTypeArchlinux.String()
+}
+
+func (c archlinux) TemplateScript() string {
+	return archlinuxTemplate
+}
+
+func (c archlinux) URLs(cfg Config, kr kernelrelease.KernelRelease) ([]string, error) {
 	urls := []string{}
 
 	if kr.Architecture == "amd64" {
@@ -69,7 +42,7 @@ func fetchArchlinuxKernelURLS(kr kernelrelease.KernelRelease, kv string) []strin
 			"https://archive.archlinux.org/packages/l/linux-headers/linux-headers-%s.%s-%s-%s.pkg.tar.xz",
 			kr.Fullversion,
 			kr.Extraversion,
-			kv,
+			cfg.KernelVersion,
 			kr.Architecture.ToNonDeb()))
 	} else {
 		urls = append(urls, fmt.Sprintf(
@@ -77,21 +50,18 @@ func fetchArchlinuxKernelURLS(kr kernelrelease.KernelRelease, kv string) []strin
 			kr.Architecture.ToNonDeb(),
 			kr.Architecture.ToNonDeb(),
 			kr.Fullversion,
-			kv,
+			cfg.KernelVersion,
 			kr.Architecture.ToNonDeb()))
 	}
-	return urls
+	return urls, nil
 }
 
-type archlinuxTemplateData struct {
-	DriverBuildDir    string
-	ModuleDownloadURL string
-	KernelDownloadURL string
-	GCCVersion        string
-	ModuleDriverName  string
-	ModuleFullPath    string
-	BuildModule       bool
-	BuildProbe        bool
+func (c archlinux) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+	return archlinuxTemplateData{
+		commonTemplateData: cfg.toTemplateData(),
+		KernelDownloadURL:  urls[0],
+		GCCVersion:         archlinuxGccVersionFromKernelRelease(kr),
+	}
 }
 
 func archlinuxGccVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {

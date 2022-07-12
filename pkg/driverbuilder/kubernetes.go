@@ -84,7 +84,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 
 	// generate the build script from the builder
 	kr := c.Build.KernelReleaseFromBuildConfig()
-	res, err := v.Script(c, kr)
+	res, err := builder.Script(v, c, kr)
 	if err != nil {
 		return err
 	}

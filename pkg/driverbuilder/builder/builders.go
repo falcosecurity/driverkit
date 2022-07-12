@@ -1,12 +1,15 @@
 package builder
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"log"
 	"net/http"
 	"net/url"
 	"path"
+	"text/template"
 
 	logger "github.com/sirupsen/logrus"
 )
@@ -26,6 +29,10 @@ var ModuleFullPath = path.Join(DriverDirectory, ModuleFileName)
 // ProbeFullPath is the standard path for the eBPF probe. Builders must place the compiled probe at this location.
 var ProbeFullPath = path.Join(DriverDirectory, "bpf", ProbeFileName)
 
+var HeadersNotFoundErr = errors.New("kernel headers not found")
+
+var HeadersTooFewFoundErrFmt = "not enough headers packages found; expected %d, found %d"
+
 // Config contains all the configurations needed to build the kernel module or the eBPF probe.
 type Config struct {
 	DriverName      string
@@ -34,9 +41,56 @@ type Config struct {
 	*Build
 }
 
+type commonTemplateData struct {
+	DriverBuildDir    string
+	ModuleDownloadURL string
+	ModuleDriverName  string
+	ModuleFullPath    string
+	BuildModule       bool
+	BuildProbe        bool
+}
+
 // Builder represents a builder capable of generating a script for a driverkit target.
 type Builder interface {
-	Script(c Config, kr kernelrelease.KernelRelease) (string, error)
+	Name() string
+	TemplateScript() string
+	URLs(c Config, kr kernelrelease.KernelRelease) ([]string, error)
+	TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{}
+}
+
+func Script(b Builder, c Config, kr kernelrelease.KernelRelease) (string, error) {
+	t := template.New(b.Name())
+	parsed, err := t.Parse(b.TemplateScript())
+	if err != nil {
+		return "", err
+	}
+
+	var urls []string
+	if c.KernelUrls == nil {
+		urls, err = b.URLs(c, kr)
+		if err != nil {
+			return "", err
+		}
+		// Only if returned urls array is not empty
+		// Otherwise, it is up to the builder to return an error
+		if len(urls) > 0 {
+			// Check (and filter) existing kernels before continuing
+			urls, err = getResolvingURLs(urls)
+		}
+	} else {
+		urls, err = getResolvingURLs(c.KernelUrls)
+	}
+	if err != nil {
+		return "", err
+	}
+
+	td := b.TemplateData(c, kr, urls)
+	buf := bytes.NewBuffer(nil)
+	err = parsed.Execute(buf, td)
+	if err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // Factory returns a builder for the given target.
@@ -48,8 +102,15 @@ func Factory(target Type) (Builder, error) {
 	return b, nil
 }
 
-func moduleDownloadURL(c Config) string {
-	return fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.DriverVersion)
+func (c Config) toTemplateData() commonTemplateData {
+	return commonTemplateData{
+		DriverBuildDir:    DriverDirectory,
+		ModuleDownloadURL: fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.DriverVersion),
+		ModuleDriverName:  c.DriverName,
+		ModuleFullPath:    ModuleFullPath,
+		BuildModule:       len(c.Build.ModuleFilePath) > 0,
+		BuildProbe:        len(c.Build.ProbeFilePath) > 0,
+	}
 }
 
 func resolveURLReference(u string) string {
@@ -65,7 +126,7 @@ func resolveURLReference(u string) string {
 }
 
 func getResolvingURLs(urls []string) ([]string, error) {
-	results := []string{}
+	var results []string
 	for _, u := range urls {
 		// in case url has some relative paths
 		// (kernel-crawler does not resolve them for us,
@@ -83,7 +144,7 @@ func getResolvingURLs(urls []string) ([]string, error) {
 		}
 	}
 	if len(results) == 0 {
-		return nil, fmt.Errorf("kernel not found")
+		return nil, HeadersNotFoundErr
 	}
 	return results, nil
 }
