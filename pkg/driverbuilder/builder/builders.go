@@ -108,8 +108,8 @@ func (c Config) toTemplateData() commonTemplateData {
 		ModuleDownloadURL: fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.DriverVersion),
 		ModuleDriverName:  c.DriverName,
 		ModuleFullPath:    ModuleFullPath,
-		BuildModule:       len(c.Build.ModuleFilePath) > 0,
-		BuildProbe:        len(c.Build.ProbeFilePath) > 0,
+		BuildModule:       len(c.ModuleFilePath) > 0,
+		BuildProbe:        len(c.ProbeFilePath) > 0,
 	}
 }
 
