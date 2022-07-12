@@ -1,10 +1,8 @@
 package builder
 
 import (
-	"bytes"
 	_ "embed"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
-	"text/template"
 )
 
 //go:embed templates/redhat.sh
@@ -22,36 +20,25 @@ func init() {
 }
 
 type redhatTemplateData struct {
-	DriverBuildDir    string
-	KernelPackage     string
-	ModuleDownloadURL string
-	ModuleDriverName  string
-	ModuleFullPath    string
-	BuildModule       bool
-	BuildProbe        bool
+	commonTemplateData
+	KernelPackage string
 }
 
-func (v redhat) Script(cfg Config, kr kernelrelease.KernelRelease) (string, error) {
-	t := template.New(string(TargetTypeRedhat))
-	parsed, err := t.Parse(redhatTemplate)
-	if err != nil {
-		return "", err
-	}
+func (v redhat) Name() string {
+	return TargetTypeRedhat.String()
+}
 
-	td := redhatTemplateData{
-		DriverBuildDir:    DriverDirectory,
-		KernelPackage:     kr.Fullversion + kr.FullExtraversion,
-		ModuleDownloadURL: moduleDownloadURL(cfg),
-		ModuleDriverName:  cfg.DriverName,
-		ModuleFullPath:    ModuleFullPath,
-		BuildModule:       len(cfg.Build.ModuleFilePath) > 0,
-		BuildProbe:        len(cfg.Build.ProbeFilePath) > 0,
-	}
+func (v redhat) TemplateScript() string {
+	return redhatTemplate
+}
 
-	buf := bytes.NewBuffer(nil)
-	err = parsed.Execute(buf, td)
-	if err != nil {
-		return "", err
+func (v redhat) URLs(_ Config, _ kernelrelease.KernelRelease) ([]string, error) {
+	return nil, nil
+}
+
+func (v redhat) TemplateData(c Config, kr kernelrelease.KernelRelease, _ []string) interface{} {
+	return redhatTemplateData{
+		commonTemplateData: c.toTemplateData(),
+		KernelPackage:      kr.Fullversion + kr.FullExtraversion,
 	}
-	return buf.String(), nil
 }

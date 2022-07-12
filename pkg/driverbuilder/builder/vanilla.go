@@ -1,11 +1,8 @@
 package builder
 
 import (
-	"bytes"
 	_ "embed"
 	"fmt"
-	"text/template"
-
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
@@ -24,52 +21,29 @@ func init() {
 }
 
 type vanillaTemplateData struct {
-	DriverBuildDir     string
-	ModuleDownloadURL  string
+	commonTemplateData
 	KernelDownloadURL  string
 	KernelLocalVersion string
-	ModuleDriverName   string
-	ModuleFullPath     string
-	BuildModule        bool
-	BuildProbe         bool
 }
 
-// Script compiles the script to build the kernel module and/or the eBPF probe.
-func (v vanilla) Script(c Config, kv kernelrelease.KernelRelease) (string, error) {
-	t := template.New(string(TargetTypeVanilla))
-	parsed, err := t.Parse(vanillaTemplate)
-	if err != nil {
-		return "", err
-	}
+func (v vanilla) Name() string {
+	return TargetTypeVanilla.String()
+}
 
-	var urls []string
-	if c.KernelUrls == nil {
-		// Check (and filter) existing kernels before continuing
-		urls, err = getResolvingURLs([]string{fetchVanillaKernelURLFromKernelVersion(kv)})
-	} else {
-		urls, err = getResolvingURLs(c.KernelUrls)
-	}
-	if err != nil {
-		return "", err
-	}
+func (v vanilla) TemplateScript() string {
+	return vanillaTemplate
+}
 
-	td := vanillaTemplateData{
-		DriverBuildDir:     DriverDirectory,
-		ModuleDownloadURL:  moduleDownloadURL(c),
+func (v vanilla) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+	return []string{fetchVanillaKernelURLFromKernelVersion(kr)}, nil
+}
+
+func (v vanilla) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+	return vanillaTemplateData{
+		commonTemplateData: c.toTemplateData(),
 		KernelDownloadURL:  urls[0],
-		KernelLocalVersion: kv.FullExtraversion,
-		ModuleDriverName:   c.DriverName,
-		ModuleFullPath:     ModuleFullPath,
-		BuildModule:        len(c.Build.ModuleFilePath) > 0,
-		BuildProbe:         len(c.Build.ProbeFilePath) > 0,
+		KernelLocalVersion: kr.FullExtraversion,
 	}
-
-	buf := bytes.NewBuffer(nil)
-	err = parsed.Execute(buf, td)
-	if err != nil {
-		return "", err
-	}
-	return buf.String(), nil
 }
 
 func fetchVanillaKernelURLFromKernelVersion(kv kernelrelease.KernelRelease) string {

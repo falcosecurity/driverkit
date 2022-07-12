@@ -1,16 +1,13 @@
 package builder
 
 import (
-	"bytes"
 	_ "embed"
 	"fmt"
+	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strings"
-	"text/template"
-
-	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
 //go:embed templates/debian.sh
@@ -23,60 +20,43 @@ func init() {
 	BuilderByTarget[TargetTypeDebian] = &debian{}
 }
 
+type debianTemplateData struct {
+	commonTemplateData
+	KernelDownloadURLS []string
+	KernelLocalVersion string
+	LLVMVersion        string
+}
+
 // debian is a driverkit target.
 type debian struct {
 }
 
-// Script compiles the script to build the kernel module and/or the eBPF probe.
-func (v debian) Script(c Config, kr kernelrelease.KernelRelease) (string, error) {
-	t := template.New(string(TargetTypeDebian))
+func (v debian) Name() string {
+	return TargetTypeDebian.String()
+}
 
-	debTemplateStr := fmt.Sprintf(debianTemplate, kr.Architecture.String())
-	parsed, err := t.Parse(debTemplateStr)
+func (v debian) TemplateScript() string {
+	return debianTemplate
+}
+
+func (v debian) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+	kurls, err := fetchDebianKernelURLs(kr)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
+	if len(kurls) < 3 {
+		return nil, fmt.Errorf(HeadersTooFewFoundErrFmt, 3, len(kurls))
+	}
+	return kurls, nil
+}
 
-	var urls []string
-	if c.KernelUrls == nil {
-		var kurls []string
-		kurls, err = fetchDebianKernelURLs(kr)
-		if err != nil {
-			return "", err
-		}
-		urls, err = getResolvingURLs(kurls)
-	} else {
-		urls, err = getResolvingURLs(c.KernelUrls)
-	}
-	if err != nil {
-		return "", err
-	}
-	// We need:
-	// kernel devel
-	// kernel devel common
-	// kbuild package
-	if len(urls) < 3 {
-		return "", fmt.Errorf("specific kernel headers not found")
-	}
-
-	td := debianTemplateData{
-		DriverBuildDir:     DriverDirectory,
-		ModuleDownloadURL:  fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.Build.DriverVersion),
+func (v debian) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+	return debianTemplateData{
+		commonTemplateData: c.toTemplateData(),
 		KernelDownloadURLS: urls,
 		KernelLocalVersion: kr.FullExtraversion,
-		ModuleDriverName:   c.DriverName,
-		ModuleFullPath:     ModuleFullPath,
-		BuildModule:        len(c.Build.ModuleFilePath) > 0,
-		BuildProbe:         len(c.Build.ProbeFilePath) > 0,
 		LLVMVersion:        debianLLVMVersionFromKernelRelease(kr),
 	}
-
-	buf := bytes.NewBuffer(nil)
-	err = parsed.Execute(buf, td)
-	if err != nil {
-		return "", err
-	}
-	return buf.String(), nil
 }
 
 func fetchDebianKernelURLs(kr kernelrelease.KernelRelease) ([]string, error) {
@@ -94,18 +74,6 @@ func fetchDebianKernelURLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return urls, nil
 }
 
-type debianTemplateData struct {
-	DriverBuildDir     string
-	ModuleDownloadURL  string
-	KernelDownloadURLS []string
-	KernelLocalVersion string
-	ModuleDriverName   string
-	ModuleFullPath     string
-	BuildModule        bool
-	BuildProbe         bool
-	LLVMVersion        string
-}
-
 func debianHeadersURLFromRelease(kr kernelrelease.KernelRelease) ([]string, error) {
 	baseURLS := []string{
 		"http://security-cdn.debian.org/pool/main/l/linux/",
@@ -121,7 +89,7 @@ func debianHeadersURLFromRelease(kr kernelrelease.KernelRelease) ([]string, erro
 		}
 	}
 
-	return nil, fmt.Errorf("kernel headers not found")
+	return nil, HeadersNotFoundErr
 }
 
 func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRelease) ([]string, error) {

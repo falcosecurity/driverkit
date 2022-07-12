@@ -1,15 +1,12 @@
 package builder
 
 import (
-	"bytes"
 	_ "embed"
 	"fmt"
+	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"text/template"
-
-	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
 //go:embed templates/flatcar.sh
@@ -22,68 +19,63 @@ func init() {
 	BuilderByTarget[TargetTypeFlatcar] = &flatcar{}
 }
 
-// flatcar is a driverkit target.
-type flatcar struct {
+type flatcarTemplateData struct {
+	commonTemplateData
+	KernelDownloadURL string
+	GCCVersion        string
+	FlatcarVersion    string
+	FlatcarChannel    string
+	KernelConfigURL   string
 }
 
-// Script compiles the script to build the kernel module and/or the eBPF probe.
-func (c flatcar) Script(cfg Config, kr kernelrelease.KernelRelease) (string, error) {
-	t := template.New(string(TargetTypeFlatcar))
-	parsed, err := t.Parse(flatcarTemplate)
-	if err != nil {
-		return "", err
-	}
+// flatcar is a driverkit target.
+type flatcar struct {
+	version   string
+	info      *flatcarReleaseInfo
+	kconfUrls []string
+}
 
+func (f flatcar) Name() string {
+	return TargetTypeFlatcar.String()
+}
+
+func (f flatcar) TemplateScript() string {
+	return flatcarTemplate
+}
+
+func (f flatcar) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
 	if kr.Extraversion != "" {
-		return "", fmt.Errorf("unexpected extraversion: %s", kr.Extraversion)
+		return nil, fmt.Errorf("unexpected extraversion: %s", kr.Extraversion)
 	}
 
 	// convert string to int
 	if kr.Version < 1500 {
-		return "", fmt.Errorf("not a valid flatcar release version: %d", kr.Version)
+		return nil, fmt.Errorf("not a valid flatcar release version: %d", kr.Version)
 	}
-	flatcarVersion := kr.Fullversion
-	flatcarInfo, err := fetchFlatcarMetadata(kr)
+	f.version = kr.Fullversion
+
+	var err error
+	f.info, err = fetchFlatcarMetadata(kr)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	kconfUrls, err := getResolvingURLs(fetchFlatcarKernelConfigURL(kr.Architecture, flatcarInfo.Channel, kr.Fullversion))
+	f.kconfUrls, err = getResolvingURLs(fetchFlatcarKernelConfigURL(kr.Architecture, f.info.Channel, kr.Fullversion))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
+	return fetchFlatcarKernelURLS(f.info.KernelVersion), nil
+}
 
-	var urls []string
-	if cfg.KernelUrls == nil {
-		// Check (and filter) existing kernels before continuing
-		urls, err = getResolvingURLs(fetchFlatcarKernelURLS(flatcarInfo.KernelVersion))
-	} else {
-		urls, err = getResolvingURLs(cfg.KernelUrls)
+func (f flatcar) TemplateData(c Config, _ kernelrelease.KernelRelease, urls []string) interface{} {
+	return flatcarTemplateData{
+		commonTemplateData: c.toTemplateData(),
+		KernelDownloadURL:  urls[0],
+		GCCVersion:         flatcarGccVersion(f.info.GCCVersion),
+		FlatcarVersion:     f.version,
+		FlatcarChannel:     f.info.Channel,
+		KernelConfigURL:    f.kconfUrls[0],
 	}
-	if err != nil {
-		return "", err
-	}
-
-	td := flatcarTemplateData{
-		DriverBuildDir:    DriverDirectory,
-		ModuleDownloadURL: moduleDownloadURL(cfg),
-		KernelDownloadURL: urls[0],
-		GCCVersion:        flatcarGccVersion(flatcarInfo.GCCVersion),
-		FlatcarVersion:    flatcarVersion,
-		FlatcarChannel:    flatcarInfo.Channel,
-		KernelConfigURL:   kconfUrls[0],
-		ModuleDriverName:  cfg.DriverName,
-		ModuleFullPath:    ModuleFullPath,
-		BuildModule:       len(cfg.Build.ModuleFilePath) > 0,
-		BuildProbe:        len(cfg.Build.ProbeFilePath) > 0,
-	}
-
-	buf := bytes.NewBuffer(nil)
-	err = parsed.Execute(buf, td)
-	if err != nil {
-		return "", err
-	}
-	return buf.String(), nil
 }
 
 func fetchFlatcarMetadata(kr kernelrelease.KernelRelease) (*flatcarReleaseInfo, error) {
@@ -157,20 +149,6 @@ type flatcarReleaseInfo struct {
 	Channel       string
 	GCCVersion    string
 	KernelVersion string
-}
-
-type flatcarTemplateData struct {
-	DriverBuildDir    string
-	ModuleDownloadURL string
-	KernelDownloadURL string
-	GCCVersion        string
-	FlatcarVersion    string
-	FlatcarChannel    string
-	KernelConfigURL   string
-	ModuleDriverName  string
-	ModuleFullPath    string
-	BuildModule       bool
-	BuildProbe        bool
 }
 
 func flatcarGccVersion(gccVersion string) string {

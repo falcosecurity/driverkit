@@ -1,11 +1,8 @@
 package builder
 
 import (
-	"bytes"
 	_ "embed"
 	"fmt"
-	"text/template"
-
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
@@ -23,45 +20,21 @@ func init() {
 type centos struct {
 }
 
-// Script compiles the script to build the kernel module and/or the eBPF probe.
-func (c centos) Script(cfg Config, kr kernelrelease.KernelRelease) (string, error) {
-	t := template.New(string(TargetTypeCentos))
-	parsed, err := t.Parse(centosTemplate)
-	if err != nil {
-		return "", err
-	}
-
-	var urls []string
-	if cfg.KernelUrls == nil {
-		// Check (and filter) existing kernels before continuing
-		urls, err = getResolvingURLs(fetchCentosKernelURLS(kr))
-	} else {
-		urls, err = getResolvingURLs(cfg.KernelUrls)
-	}
-	if err != nil {
-		return "", err
-	}
-
-	td := centosTemplateData{
-		DriverBuildDir:    DriverDirectory,
-		ModuleDownloadURL: moduleDownloadURL(cfg),
-		KernelDownloadURL: urls[0],
-		GCCVersion:        centosGccVersionFromKernelRelease(kr),
-		ModuleDriverName:  cfg.DriverName,
-		ModuleFullPath:    ModuleFullPath,
-		BuildModule:       len(cfg.Build.ModuleFilePath) > 0,
-		BuildProbe:        len(cfg.Build.ProbeFilePath) > 0,
-	}
-
-	buf := bytes.NewBuffer(nil)
-	err = parsed.Execute(buf, td)
-	if err != nil {
-		return "", err
-	}
-	return buf.String(), nil
+type centosTemplateData struct {
+	commonTemplateData
+	KernelDownloadURL string
+	GCCVersion        string
 }
 
-func fetchCentosKernelURLS(kr kernelrelease.KernelRelease) []string {
+func (c centos) Name() string {
+	return TargetTypeCentos.String()
+}
+
+func (c centos) TemplateScript() string {
+	return centosTemplate
+}
+
+func (c centos) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
 	vaultReleases := []string{
 		"6.0/os",
 		"6.0/updates",
@@ -169,18 +142,15 @@ func fetchCentosKernelURLS(kr kernelrelease.KernelRelease) []string {
 			kr.FullExtraversion,
 		))
 	}
-	return urls
+	return urls, nil
 }
 
-type centosTemplateData struct {
-	DriverBuildDir    string
-	ModuleDownloadURL string
-	KernelDownloadURL string
-	GCCVersion        string
-	ModuleDriverName  string
-	ModuleFullPath    string
-	BuildModule       bool
-	BuildProbe        bool
+func (c centos) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+	return centosTemplateData{
+		commonTemplateData: cfg.toTemplateData(),
+		KernelDownloadURL:  urls[0],
+		GCCVersion:         centosGccVersionFromKernelRelease(kr),
+	}
 }
 
 func centosGccVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
