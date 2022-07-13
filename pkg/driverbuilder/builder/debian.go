@@ -16,6 +16,12 @@ var debianTemplate string
 // TargetTypeDebian identifies the Debian target.
 const TargetTypeDebian Type = "debian"
 
+// We need:
+// kernel devel
+// kernel devel common
+// kbuild package
+const debianRequiredURLs = 3
+
 func init() {
 	BuilderByTarget[TargetTypeDebian] = &debian{}
 }
@@ -55,11 +61,7 @@ func (v debian) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []st
 }
 
 func (v debian) MinimumURLs() int {
-	// We need:
-	// kernel devel
-	// kernel devel common
-	// kbuild package
-	return 3
+	return debianRequiredURLs
 }
 
 func fetchDebianKernelURLs(kr kernelrelease.KernelRelease) ([]string, error) {

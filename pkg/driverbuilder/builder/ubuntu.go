@@ -18,10 +18,9 @@ const TargetTypeUbuntu Type = "ubuntu"
 const TargetTypeUbuntuGeneric Type = "ubuntu-generic"
 const TargetTypeUbuntuAWS Type = "ubuntu-aws"
 
-type ubuntuBuilder interface {
-	Builder
-	kernelHeadersPattern(kr kernelrelease.KernelRelease) string
-}
+// We expect both a common "_all" package,
+// and an arch dependent package.
+const ubuntuRequiredURLs = 2
 
 type ubuntuTemplateData struct {
 	commonTemplateData
@@ -55,12 +54,10 @@ func (v ubuntu) URLs(c Config, kr kernelrelease.KernelRelease) ([]string, error)
 }
 
 func (v ubuntu) MinimumURLs() int {
-	// We expect both a common "_all" package,
-	// and an arch dependent package.
-	return 2
+	return ubuntuRequiredURLs
 }
 
-func (v ubuntu) TemplateData(_ Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (v ubuntu) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
 	// parse the flavor out of the kernelrelease extraversion
 	_, flavor := parseUbuntuExtraVersion(kr.Extraversion)
 
@@ -74,6 +71,7 @@ func (v ubuntu) TemplateData(_ Config, kr kernelrelease.KernelRelease, urls []st
 	}
 
 	return ubuntuTemplateData{
+		commonTemplateData:   c.toTemplateData(),
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
 		KernelHeadersPattern: headersPattern,
@@ -82,7 +80,6 @@ func (v ubuntu) TemplateData(_ Config, kr kernelrelease.KernelRelease, urls []st
 }
 
 func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv string) ([]string, error) {
-
 	// decide which mirrors to use based on the architecture passed in
 	baseURLs := []string{}
 	if kr.Architecture.String() == "amd64" {
@@ -107,7 +104,7 @@ func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv string) ([]s
 		// try resolving the URLs
 		urls, err := getResolvingURLs(possibleURLs)
 		// there should be 2 urls returned - the _all.deb package and the _{arch}.deb package
-		if err == nil && len(urls) == 2 {
+		if err == nil && len(urls) == ubuntuRequiredURLs {
 			return urls, err
 		}
 	}
@@ -117,7 +114,6 @@ func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv string) ([]s
 }
 
 func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernelVersion string) ([]string, error) {
-
 	// parse the extra number and flavor for the kernelrelease extraversion
 	firstExtra, ubuntuFlavor := parseUbuntuExtraVersion(kr.Extraversion)
 

@@ -1,11 +1,9 @@
 package builder
 
 import (
-	"bytes"
 	_ "embed"
 	"fmt"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
-	"text/template"
 )
 
 // TargetTypePhoton identifies the Photon target.
@@ -22,37 +20,30 @@ func init() {
 type photon struct {
 }
 
-// Script compiles the script to build the kernel module and/or the eBPF probe.
-func (c photon) Script(cfg Config, kr kernelrelease.KernelRelease) (string, error) {
-	t := template.New(string(TargetTypePhoton))
-	parsed, err := t.Parse(photonTemplate)
-	if err != nil {
-		return "", err
-	}
-	
-	// Check (and filter) existing kernels before continuing
-	urls, err := getResolvingURLs(fetchPhotonKernelURLS(kr))
-	if err != nil {
-		return "", err
-	}
+type photonTemplateData struct {
+	commonTemplateData
+	KernelDownloadURL string
+	GCCVersion        string
+}
 
-	td := photonTemplateData{
-		DriverBuildDir:    DriverDirectory,
-		ModuleDownloadURL: moduleDownloadURL(cfg),
-		KernelDownloadURL: urls[0],
-		GCCVersion:        photonGccVersionFromKernelRelease(kr),
-		ModuleDriverName:  cfg.DriverName,
-		ModuleFullPath:    ModuleFullPath,
-		BuildModule:       len(cfg.Build.ModuleFilePath) > 0,
-		BuildProbe:        len(cfg.Build.ProbeFilePath) > 0,
-	}
+func (p photon) Name() string {
+	return TargetTypePhoton.String()
+}
 
-	buf := bytes.NewBuffer(nil)
-	err = parsed.Execute(buf, td)
-	if err != nil {
-		return "", err
+func (p photon) TemplateScript() string {
+	return photonTemplate
+}
+
+func (p photon) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+	return fetchPhotonKernelURLS(kr), nil
+}
+
+func (p photon) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+	return photonTemplateData{
+		commonTemplateData: cfg.toTemplateData(),
+		KernelDownloadURL:  urls[0],
+		GCCVersion:         photonGccVersionFromKernelRelease(kr),
 	}
-	return buf.String(), nil
 }
 
 func fetchPhotonKernelURLS(kr kernelrelease.KernelRelease) []string {
@@ -98,17 +89,6 @@ func fetchPhotonKernelURLS(kr kernelrelease.KernelRelease) []string {
 		}
 	}
 	return urls
-}
-
-type photonTemplateData struct {
-	DriverBuildDir    string
-	ModuleDownloadURL string
-	KernelDownloadURL string
-	GCCVersion        string
-	ModuleDriverName  string
-	ModuleFullPath    string
-	BuildModule       bool
-	BuildProbe        bool
 }
 
 func photonGccVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
