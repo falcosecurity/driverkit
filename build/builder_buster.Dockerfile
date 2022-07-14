@@ -11,7 +11,8 @@ RUN apt-get update \
 	&& apt-get install -y --no-install-recommends \
 	bash-completion \
 	bc \
-	clang-7 \
+	clang \
+    llvm \
 	ca-certificates \
 	curl \
 	dkms \
@@ -21,7 +22,6 @@ RUN apt-get update \
 	jq \
 	libc6-dev \
 	libelf-dev \
-	llvm-7 \
 	netcat \
 	xz-utils \
 	rpm2cpio \
@@ -42,12 +42,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 RUN if [ "$TARGETARCH" = "amd64" ] ; then apt-get install -y --no-install-recommends libmpx2; fi
-
-# Install clang 12
-RUN cd /tmp \
-	&& wget https://apt.llvm.org/llvm.sh \
-	&& chmod +x llvm.sh \
-	&& ./llvm.sh 12
 
 # gcc 6 is no longer included in debian stable, but we need it to
 # build kernel modules on the default debian-based ami used by

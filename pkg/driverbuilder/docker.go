@@ -110,6 +110,8 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		return err
 	}
 
+	kr := b.KernelReleaseFromBuildConfig()
+
 	// create a builder based on the choosen build type
 	v, err := builder.Factory(b.TargetType)
 	if err != nil {
@@ -123,7 +125,6 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	}
 
 	// Generate the build script from the builder
-	kr := c.Build.KernelReleaseFromBuildConfig()
 	driverkitScript, err := builder.Script(v, c, kr)
 	if err != nil {
 		return err
@@ -148,10 +149,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		return err
 	}
 
-	builderImage := BuilderBaseImage
-	if len(b.CustomBuilderImage) > 0 {
-		builderImage = b.CustomBuilderImage
-	}
+	builderImage := b.GetBuilderImage()
 
 	// Create the container
 	ctx := context.Background()

@@ -6,13 +6,17 @@ import (
 	"fmt"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"log"
+	"math"
 	"net/http"
 	"net/url"
 	"path"
+	"strings"
 	"text/template"
 
 	logger "github.com/sirupsen/logrus"
 )
+
+var BaseImage = "placeholder" // This is overwritten when using the Makefile to build
 
 // DriverDirectory is the directory the processor uses to store the driver.
 const DriverDirectory = "/tmp/driver"
@@ -46,6 +50,7 @@ type commonTemplateData struct {
 	ModuleFullPath    string
 	BuildModule       bool
 	BuildProbe        bool
+	GCCVersion        float64
 }
 
 // Builder represents a builder capable of generating a script for a driverkit target.
@@ -63,6 +68,8 @@ type MinimumURLsBuilder interface {
 }
 
 func Script(b Builder, c Config, kr kernelrelease.KernelRelease) (string, error) {
+	c.SetGCCVersion(b, kr)
+
 	t := template.New(b.Name())
 	parsed, err := t.Parse(b.TemplateScript())
 	if err != nil {
@@ -106,6 +113,101 @@ func Script(b Builder, c Config, kr kernelrelease.KernelRelease) (string, error)
 	return buf.String(), nil
 }
 
+type GCCVersionRequestor interface {
+	GCCVersion(kr kernelrelease.KernelRelease) float64
+}
+
+type Image struct {
+	GCCVersion []float64
+}
+
+var images = map[string]Image{
+	"buster": {
+		GCCVersion: []float64{4.8, 5.5, 6.3, 8},
+	},
+	"bullseye": {
+		GCCVersion: []float64{9, 10},
+	},
+	"bookworm": {
+		GCCVersion: []float64{11, 12},
+	},
+}
+
+func defaultGCC(kr kernelrelease.KernelRelease) float64 {
+	switch kr.Version {
+	case 5:
+		if kr.PatchLevel > 10 {
+			return 11
+		}
+		if kr.PatchLevel > 18 {
+			return 12
+		}
+		return 10
+	case 4:
+		return 8
+	case 3:
+		return 5
+	case 2:
+		return 4.8
+	default:
+		return 10
+	}
+}
+
+func (b *Build) SetGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
+	b.GCCVersion = 8 // default value
+
+	distance := math.MaxFloat64
+
+	// if builder implements "GCCVersionRequestor" interface -> use it
+	// Else, fetch the best builder available from the kernelrelease version
+	// using the deadly simple defaultGCC() algorithm
+	// Always returns nearest one
+	var targetGCC float64
+	if bb, ok := builder.(GCCVersionRequestor); ok {
+		targetGCC = bb.GCCVersion(kr)
+	} else {
+		targetGCC = defaultGCC(kr)
+	}
+
+	for _, img := range images {
+		var gcc float64
+		d := math.MaxFloat64
+		for _, gcc = range img.GCCVersion {
+			if gcc-targetGCC < d {
+				// Find the nearest to targetGCC
+				// for this image
+				d = gcc - targetGCC
+			}
+		}
+
+		if d < distance {
+			b.GCCVersion = gcc
+			distance = d
+		}
+	}
+}
+
+func (b *Build) GetBuilderImage() string {
+	if len(b.CustomBuilderImage) > 0 {
+		return b.CustomBuilderImage
+	}
+	builderImage := BaseImage
+	names := strings.SplitAfter(builderImage, ":")
+	// If no version
+	if len(names) == 1 {
+		names = append(names, "latest")
+	}
+	for name, img := range images {
+		for _, gcc := range img.GCCVersion {
+			if gcc == b.GCCVersion {
+				return names[0] + "_" + name + ":" + names[1]
+			}
+		}
+	}
+	return ""
+}
+
 // Factory returns a builder for the given target.
 func Factory(target Type) (Builder, error) {
 	b, ok := BuilderByTarget[target]
@@ -123,6 +225,7 @@ func (c Config) toTemplateData() commonTemplateData {
 		ModuleFullPath:    ModuleFullPath,
 		BuildModule:       len(c.ModuleFilePath) > 0,
 		BuildProbe:        len(c.ProbeFilePath) > 0,
+		GCCVersion:        c.GCCVersion,
 	}
 }
 

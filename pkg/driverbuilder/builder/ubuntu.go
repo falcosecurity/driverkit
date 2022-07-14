@@ -23,7 +23,6 @@ type ubuntuTemplateData struct {
 	KernelDownloadURLS   []string
 	KernelLocalVersion   string
 	KernelHeadersPattern string
-	GCCVersion           string
 }
 
 func init() {
@@ -67,8 +66,27 @@ func (v ubuntu) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []st
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
 		KernelHeadersPattern: headersPattern,
-		GCCVersion:           ubuntuGCCVersionFromKernelRelease(kr),
 	}
+}
+
+func (v ubuntu) GCCVersion(kr kernelrelease.KernelRelease) float64 {
+	switch kr.Version {
+	case 3:
+		switch {
+		case kr.PatchLevel == 13 || kr.PatchLevel == 2:
+			return 4.8
+		default:
+			return 6
+		}
+	case 5:
+		switch {
+		case kr.PatchLevel >= 18:
+			return 11
+		case kr.PatchLevel >= 11:
+			return 10
+		}
+	}
+	return 8
 }
 
 func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv string) ([]string, error) {
@@ -244,24 +262,4 @@ func parseUbuntuExtraVersion(extraversion string) (string, string) {
 
 	// if unable to parse a flavor assume "generic" and return back the extraversion passed in
 	return extraversion, "generic"
-}
-
-func ubuntuGCCVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
-	switch kr.Version {
-	case 3:
-		switch {
-		case kr.PatchLevel == 13 || kr.PatchLevel == 2:
-			return "4.8"
-		default:
-			return "6"
-		}
-	case 5:
-		switch {
-		case kr.PatchLevel >= 18:
-			return "11"
-		case kr.PatchLevel >= 11:
-			return "10"
-		}
-	}
-	return "8"
 }
