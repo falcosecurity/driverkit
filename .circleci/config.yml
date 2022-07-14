@@ -5,7 +5,7 @@ jobs:
       - image: alpine:3.16
     steps:
       - checkout
-      - setup_remote_docker:
+      - setup_remote_docker: # used by integration tests that runs driverkit binary that needs docker
           version: 20.10.12
       - run:
           name: Install deps
@@ -66,39 +66,104 @@ jobs:
           root: /tmp
           paths:
             - build-arm64/
-  "images":
+  "build-images":
     docker:
-      - image: cimg/base:stable
-        user: root
-    steps:
+      - image: alpine:3.16
+    steps: 
       - attach_workspace:
           at: /
       - checkout
       - setup_remote_docker:
           version: 20.10.12
+          docker_layer_caching: true
       - run:
-          name: Prepare env
+          name: Install deps
           command: |
-            docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-            docker context create dk-env
-            docker buildx create dk-env --driver docker-container --use
-            echo ${DOCKERHUB_SECRET} | docker login -u ${DOCKERHUB_USER} --password-stdin
-            sudo apt update
-            sudo apt install make bash git
+            apk update
+            apk add make bash git docker docker-cli-buildx
       - run:
-          name: Copy binaries from workspace
-          command: |
-            cp -r /build-* .
+          name: Login to registry
+          command: echo ${DOCKERHUB_SECRET} | docker login -u ${DOCKERHUB_USER} --password-stdin
       - run:
-          name: Build and Push all docker images
-          command: |
-            GIT_BRANCH="$CIRCLE_BRANCH" GIT_TAG="$CIRCLE_TAG" make push/all
+          name: Prepare artifact for driverkit image
+          command: | # driverkit dockerfile expects the binary there
+            mkdir -p build-amd64
+            cp /build-amd64/driverkit build-amd64/
+      - run:
+          name: Build and Push docker images
+          command: GIT_BRANCH="$CIRCLE_BRANCH" GIT_TAG="$CIRCLE_TAG" make push/all
       - run:
           name: Push latest images
           command: |
             if [ -n "$CIRCLE_TAG" ]
             then
               GIT_BRANCH="$CIRCLE_BRANCH" GIT_TAG="$CIRCLE_TAG" make push/latest
+            else
+              echo "Skipping (no git tag)"
+            fi
+  "build-images-arm64":
+    machine:
+      enabled: true
+      image: ubuntu-2004:2022.04.1
+      docker_layer_caching: true 
+    resource_class: arm.medium
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - checkout:
+          path: /tmp/source
+      - run:
+          name: Install deps
+          command: |
+            sudo apt update
+            sudo apt install make bash git
+      - run:
+          name: Login to registry
+          command: echo ${DOCKERHUB_SECRET} | docker login -u ${DOCKERHUB_USER} --password-stdin
+      - run:
+          name: Prepare artifact for driverkit image
+          command: | # driverkit dockerfile expects the binary there
+            mkdir -p /tmp/source/build-arm64
+            cp /tmp/build-arm64/driverkit /tmp/source/build-arm64/
+      - run:
+          name: Build and Push docker images
+          command: |
+            cd /tmp/source
+            GIT_BRANCH="$CIRCLE_BRANCH" GIT_TAG="$CIRCLE_TAG" make push/all
+      - run:
+          name: Push latest images if needed
+          command: |
+            cd /tmp/source
+            if [ -n "$CIRCLE_TAG" ]
+            then
+              GIT_BRANCH="$CIRCLE_BRANCH" GIT_TAG="$CIRCLE_TAG" make push/latest
+            else
+              echo "Skipping (no git tag)"
+            fi
+  "images":
+    docker:
+      - image: cimg/base:stable
+        user: root
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.12
+      - run:
+          name: Prepare env
+          command: |
+            echo ${DOCKERHUB_SECRET} | docker login -u ${DOCKERHUB_USER} --password-stdin
+            sudo apt update
+            sudo apt install make bash git
+      - run:
+          name: Build and Push manifest to registry
+          command: |
+            GIT_BRANCH="$CIRCLE_BRANCH" GIT_TAG="$CIRCLE_TAG" make manifest/all
+      - run:
+          name: Push latest manifest if needed
+          command: |
+            if [ -n "$CIRCLE_TAG" ]
+            then
+              GIT_BRANCH="$CIRCLE_BRANCH" GIT_TAG="$CIRCLE_TAG" make manifest/latest
             else
               echo "Skipping (no git tag)"
             fi
@@ -128,7 +193,7 @@ workflows:
           filters:
             tags:
               only: /v[0-9]+(\.[0-9]+)*(-.*)*/
-      - "images":
+      - "build-images":
           context: falco
           filters:
             branches:
@@ -138,7 +203,27 @@ workflows:
               only: /v[0-9]+(\.[0-9]+)*(-.*)*/
           requires:
             - "build-test"
-            - "build-test-arm64"
+      - "build-images-arm64":
+          context: falco
+          filters:
+            branches:
+              only:
+                - master
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(-.*)*/
+          requires:
+            - "build-test-arm64"      
+      - "images":
+          context: falco
+          filters:
+            branches:
+              only:
+                - master
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(-.*)*/
+          requires:
+            - "build-images"
+            - "build-images-arm64"
       - "release":
           context: falco
           filters:
