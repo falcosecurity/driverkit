@@ -19,7 +19,6 @@ func init() {
 type rockyTemplateData struct {
 	commonTemplateData
 	KernelDownloadURL string
-	GCCVersion        string
 }
 
 // rocky is a driverkit target.
@@ -42,7 +41,6 @@ func (c rocky) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []s
 	return rockyTemplateData{
 		commonTemplateData: cfg.toTemplateData(),
 		KernelDownloadURL:  urls[0],
-		GCCVersion:         rockyGccVersionFromKernelRelease(kr),
 	}
 }
 
@@ -63,14 +61,4 @@ func fetchRockyKernelURLS(kr kernelrelease.KernelRelease) []string {
 		))
 	}
 	return urls
-}
-
-func rockyGccVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
-	switch kr.Version {
-	case 3:
-		return "5"
-	case 2:
-		return "4.8"
-	}
-	return "8"
 }

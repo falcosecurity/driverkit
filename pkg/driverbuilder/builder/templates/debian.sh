@@ -32,7 +32,7 @@ sourcedir=$(find . -type d -name "linux-headers-*{{ .KernelArch }}" | head -n 1 
 {{ if .BuildModule }}
 # Build the module
 cd {{ .DriverBuildDir }}
-make CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
+make CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=$sourcedir
 mv {{ .ModuleDriverName }}.ko {{ .ModuleFullPath }}
 strip -g {{ .ModuleFullPath }}
 # Print results
@@ -42,6 +42,6 @@ modinfo {{ .ModuleFullPath }}
 {{ if .BuildProbe }}
 # Build the eBPF probe
 cd {{ .DriverBuildDir }}/bpf
-make LLC=/usr/bin/llc-{{ .LLVMVersion }} CLANG=/usr/bin/clang-{{ .LLVMVersion }} KERNELDIR=$sourcedir
+make KERNELDIR=$sourcedir
 ls -l probe.o
 {{ end }}

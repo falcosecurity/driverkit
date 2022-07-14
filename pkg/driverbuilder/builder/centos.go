@@ -23,7 +23,6 @@ type centos struct {
 type centosTemplateData struct {
 	commonTemplateData
 	KernelDownloadURL string
-	GCCVersion        string
 }
 
 func (c centos) Name() string {
@@ -161,20 +160,9 @@ func (c centos) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error)
 	return urls, nil
 }
 
-func (c centos) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (c centos) TemplateData(cfg Config, _ kernelrelease.KernelRelease, urls []string) interface{} {
 	return centosTemplateData{
 		commonTemplateData: cfg.toTemplateData(),
 		KernelDownloadURL:  urls[0],
-		GCCVersion:         centosGccVersionFromKernelRelease(kr),
 	}
-}
-
-func centosGccVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
-	switch kr.Version {
-	case 3:
-		return "5"
-	case 2:
-		return "4.8"
-	}
-	return "8"
 }

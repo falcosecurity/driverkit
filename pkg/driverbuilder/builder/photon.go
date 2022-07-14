@@ -23,7 +23,6 @@ type photon struct {
 type photonTemplateData struct {
 	commonTemplateData
 	KernelDownloadURL string
-	GCCVersion        string
 }
 
 func (p photon) Name() string {
@@ -42,7 +41,6 @@ func (p photon) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []
 	return photonTemplateData{
 		commonTemplateData: cfg.toTemplateData(),
 		KernelDownloadURL:  urls[0],
-		GCCVersion:         photonGccVersionFromKernelRelease(kr),
 	}
 }
 
@@ -89,11 +87,4 @@ func fetchPhotonKernelURLS(kr kernelrelease.KernelRelease) []string {
 		}
 	}
 	return urls
-}
-
-func photonGccVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
-	switch kr.Version {
-	default:
-		return "8"
-	}
 }

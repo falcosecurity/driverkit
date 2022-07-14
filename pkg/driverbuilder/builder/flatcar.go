@@ -6,6 +6,7 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -22,7 +23,6 @@ func init() {
 type flatcarTemplateData struct {
 	commonTemplateData
 	KernelDownloadURL string
-	GCCVersion        string
 	FlatcarVersion    string
 	FlatcarChannel    string
 	KernelConfigURL   string
@@ -71,11 +71,18 @@ func (f flatcar) TemplateData(c Config, _ kernelrelease.KernelRelease, urls []st
 	return flatcarTemplateData{
 		commonTemplateData: c.toTemplateData(),
 		KernelDownloadURL:  urls[0],
-		GCCVersion:         flatcarGccVersion(f.info.GCCVersion),
 		FlatcarVersion:     f.version,
 		FlatcarChannel:     f.info.Channel,
 		KernelConfigURL:    f.kconfUrls[0],
 	}
+}
+
+func (f flatcar) GCCVersion(_ kernelrelease.KernelRelease) float64 {
+	v, err := strconv.ParseFloat(f.info.GCCVersion, 64)
+	if err != nil {
+		return 8
+	}
+	return v
 }
 
 func fetchFlatcarMetadata(kr kernelrelease.KernelRelease) (*flatcarReleaseInfo, error) {
@@ -149,16 +156,4 @@ type flatcarReleaseInfo struct {
 	Channel       string
 	GCCVersion    string
 	KernelVersion string
-}
-
-func flatcarGccVersion(gccVersion string) string {
-	// reuse kernelrelease version parsing for gcc
-	gv := kernelrelease.FromString(gccVersion)
-	switch gv.Version {
-	case 7:
-		return "6"
-	default:
-		// builder doesn't support anything newer than 8 right now
-		return "8"
-	}
 }

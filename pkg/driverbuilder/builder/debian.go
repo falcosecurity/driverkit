@@ -30,7 +30,6 @@ type debianTemplateData struct {
 	commonTemplateData
 	KernelDownloadURLS []string
 	KernelLocalVersion string
-	LLVMVersion        string
 	KernelArch         string
 }
 
@@ -55,7 +54,6 @@ func (v debian) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []st
 		commonTemplateData: c.toTemplateData(),
 		KernelDownloadURLS: urls,
 		KernelLocalVersion: kr.FullExtraversion,
-		LLVMVersion:        debianLLVMVersionFromKernelRelease(kr),
 		KernelArch:         kr.Architecture.String(),
 	}
 }
@@ -187,12 +185,4 @@ func debianKbuildURLFromRelease(kr kernelrelease.KernelRelease) (string, error) 
 	}
 
 	return fmt.Sprintf("%s%s", baseURL, match[1]), nil
-}
-
-func debianLLVMVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
-	switch kr.Version {
-	case 5:
-		return "12"
-	}
-	return "7"
 }

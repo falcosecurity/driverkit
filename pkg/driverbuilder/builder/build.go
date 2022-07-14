@@ -16,6 +16,7 @@ type Build struct {
 	ModuleDeviceName   string
 	CustomBuilderImage string
 	KernelUrls         []string
+	GCCVersion         float64
 }
 
 func (b *Build) KernelReleaseFromBuildConfig() kernelrelease.KernelRelease {

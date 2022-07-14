@@ -28,7 +28,7 @@ mv usr/src/kernels/*/* /tmp/kernel
 # Build the kernel module
 cd {{ .DriverBuildDir }}
 
-make KERNELDIR=/tmp/kernel CC=/usr/bin/gcc LD=/usr/bin/ld.bfd CROSS_COMPILE=""
+make KERNELDIR=/tmp/kernel CC=/usr/bin/gcc-{{ .GCCVersion }} LD=/usr/bin/ld.bfd CROSS_COMPILE=""
 mv {{ .ModuleDriverName }}.ko {{ .ModuleFullPath }}
 # Print results
 modinfo {{ .ModuleFullPath }}
@@ -37,6 +37,6 @@ modinfo {{ .ModuleFullPath }}
 {{ if .BuildProbe }}
 # Build the eBPF probe
 cd {{ .DriverBuildDir }}/bpf
-make LLC=/usr/bin/llc-{{ .LLVMVersion }} CLANG=/usr/bin/clang-{{ .LLVMVersion }} KERNELDIR=/tmp/kernel
+make KERNELDIR=/tmp/kernel
 ls -l probe.o
 {{ end }}

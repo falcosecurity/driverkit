@@ -23,7 +23,6 @@ type archlinux struct {
 type archlinuxTemplateData struct {
 	commonTemplateData
 	KernelDownloadURL string
-	GCCVersion        string
 }
 
 func (c archlinux) Name() string {
@@ -56,20 +55,9 @@ func (c archlinux) URLs(cfg Config, kr kernelrelease.KernelRelease) ([]string, e
 	return urls, nil
 }
 
-func (c archlinux) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (c archlinux) TemplateData(cfg Config, _ kernelrelease.KernelRelease, urls []string) interface{} {
 	return archlinuxTemplateData{
 		commonTemplateData: cfg.toTemplateData(),
 		KernelDownloadURL:  urls[0],
-		GCCVersion:         archlinuxGccVersionFromKernelRelease(kr),
 	}
-}
-
-func archlinuxGccVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
-	switch kr.Version {
-	case 3:
-		return "5"
-	case 2:
-		return "4.8"
-	}
-	return "8"
 }

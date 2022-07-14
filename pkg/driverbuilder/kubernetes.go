@@ -72,6 +72,8 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 	podClient := bp.coreV1Client.Pods(namespace)
 	configClient := bp.coreV1Client.ConfigMaps(namespace)
 
+	kr := build.KernelReleaseFromBuildConfig()
+
 	// create a builder based on the chosen build type
 	v, err := builder.Factory(build.TargetType)
 	if err != nil {
@@ -86,7 +88,6 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 	}
 
 	// generate the build script from the builder
-	kr := c.Build.KernelReleaseFromBuildConfig()
 	res, err := builder.Script(v, c, kr)
 	if err != nil {
 		return err
@@ -164,10 +165,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 		)
 	}
 
-	builderImage := BuilderBaseImage
-	if len(build.CustomBuilderImage) > 0 {
-		builderImage = build.CustomBuilderImage
-	}
+	builderImage := build.GetBuilderImage()
 
 	secuContext := corev1.PodSecurityContext{
 		RunAsUser: &bp.runAsUser,

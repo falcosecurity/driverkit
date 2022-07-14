@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"github.com/creasty/defaults"
-	"github.com/falcosecurity/driverkit/pkg/driverbuilder"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"github.com/falcosecurity/driverkit/validate"
 	"github.com/go-playground/validator/v10"
@@ -37,7 +36,7 @@ func init() {
 
 func (ro *RootOptions) SetDefaults() {
 	if defaults.CanUpdate(ro.BuilderImage) {
-		ro.BuilderImage = driverbuilder.BuilderBaseImage
+		ro.BuilderImage = builder.BaseImage
 	}
 }
 
@@ -133,7 +132,7 @@ func RootOptionsLevelValidation(level validator.StructLevel) {
 	}
 
 	// Target redhat requires a valid build image (has to be registered in order to download packages)
-	if opts.Target == builder.TargetTypeRedhat.String() && opts.BuilderImage == driverbuilder.BuilderBaseImage {
+	if opts.Target == builder.TargetTypeRedhat.String() && opts.BuilderImage == builder.BaseImage {
 		level.ReportError(opts.BuilderImage, "builderimage", "builderimage", "required_builderimage_with_target_redhat", "")
 	}
 }

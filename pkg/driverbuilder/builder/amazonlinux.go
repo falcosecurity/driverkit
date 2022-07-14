@@ -60,7 +60,6 @@ func init() {
 type amazonlinuxTemplateData struct {
 	commonTemplateData
 	KernelDownloadURLs []string
-	LLVMVersion        string
 }
 
 func (a amazonlinux) Name() string {
@@ -79,7 +78,6 @@ func (a amazonlinux) TemplateData(c Config, kr kernelrelease.KernelRelease, urls
 	return amazonlinuxTemplateData{
 		commonTemplateData: c.toTemplateData(),
 		KernelDownloadURLs: urls,
-		LLVMVersion:        amazonLLVMVersionFromKernelRelease(kr),
 	}
 }
 
@@ -313,15 +311,4 @@ func bunzip(data io.Reader) (res []byte, err error) {
 	res = b.Bytes()
 
 	return
-}
-
-func amazonLLVMVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
-	switch kr.Version {
-	case 4:
-		return "7"
-	case 5:
-		return "12"
-	default:
-		return "12"
-	}
 }
