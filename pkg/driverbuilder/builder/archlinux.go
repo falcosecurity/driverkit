@@ -66,14 +66,14 @@ func fetchArchlinuxKernelURLS(kr kernelrelease.KernelRelease, kv string) []strin
 
 	if kr.Architecture == "amd64" {
 		urls = append(urls, fmt.Sprintf(
-			"https://archive.archlinux.org/packages/l/linux-headers/linux-headers-%s.%s-%d-%s.pkg.tar.xz",
+			"https://archive.archlinux.org/packages/l/linux-headers/linux-headers-%s.%s-%s-%s.pkg.tar.xz",
 			kr.Fullversion,
 			kr.Extraversion,
 			kv,
 			kr.Architecture.ToNonDeb()))
 	} else {
 		urls = append(urls, fmt.Sprintf(
-			"http://tardis.tiny-vps.com/aarm/packages/l/linux-%s-headers/linux-%s-headers-%s-%d-%s.pkg.tar.xz",
+			"http://tardis.tiny-vps.com/aarm/packages/l/linux-%s-headers/linux-%s-headers-%s-%s-%s.pkg.tar.xz",
 			kr.Architecture.ToNonDeb(),
 			kr.Architecture.ToNonDeb(),
 			kr.Fullversion,
