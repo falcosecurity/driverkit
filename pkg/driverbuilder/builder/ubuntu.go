@@ -64,7 +64,7 @@ func (v ubuntu) Script(c Config, kr kernelrelease.KernelRelease) (string, error)
 
 	td := ubuntuTemplateData{
 		DriverBuildDir:       DriverDirectory,
-		ModuleDownloadURL:    fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.Build.DriverVersion),
+		ModuleDownloadURL:    moduleDownloadURL(c),
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
 		KernelHeadersPattern: "linux*headers*",
