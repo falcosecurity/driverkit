@@ -37,34 +37,34 @@ func persistentValidateFunc(rootCommand *RootCmd, rootOpts *RootOptions) func(c 
 			"output-probe":  "output.probe",
 		}
 		rootCommand.c.Flags().VisitAll(func(f *pflag.Flag) {
-			if name := f.Name; !skip[name] {
-				if name == "kernelurls" {
-					// Slice types need special treatment when used as flags. If we call 'Set(name, value)',
-					// rather than replace, it appends. Since viper will already have the cli options set
-					// if supplied, we only need this step if rootCommand doesn't already have them e.g.
-					// not set on CLI so read from config.
-					if cli_urls, err := rootCommand.c.Flags().GetStringSlice(name); err == nil && len(cli_urls) != 0 {
-						return
-					}
-					value := viper.GetStringSlice(name)
-					if len(value) != 0 {
-						strValue := strings.Join(value, ",")
-						rootCommand.c.Flags().Set(name, strValue)
-					}
-				} else {
-					value := viper.GetString(name)
-					if value == "" {
-						// fallback to nested options in config file, if any
-						if nestedName, ok := nested[name]; ok {
-							value = viper.GetString(nestedName)
-						}
-					}
-					// set the value, if any, otherwise let the default
-					if value != "" {
-						rootCommand.c.Flags().Set(name, value)
-					}
-				}
-			}
+		    if name := f.Name; !skip[name] {
+                if name == "kernelurls" {
+                    // Slice types need special treatment when used as flags. If we call 'Set(name, value)',
+                    // rather than replace, it appends. Since viper will already have the cli options set
+                    // if supplied, we only need this step if rootCommand doesn't already have them e.g.
+                    // not set on CLI so read from config.
+                    if cli_urls, err := rootCommand.c.Flags().GetStringSlice(name); err == nil && len(cli_urls) != 0 {
+                       return
+                    }
+                    value := viper.GetStringSlice(name)
+                    if len(value) != 0 {
+                        strValue := strings.Join(value, ",")
+                        rootCommand.c.Flags().Set(name, strValue)
+                    }
+                } else {
+                    value := viper.GetString(name)
+                    if value == "" {
+                        // fallback to nested options in config file, if any
+                        if nestedName, ok := nested[name]; ok {
+                            value = viper.GetString(nestedName)
+                        }
+                    }
+                    // set the value, if any, otherwise let the default
+                    if value != "" {
+                        rootCommand.c.Flags().Set(name, value)
+                    }
+                }
+            }
 		})
 
 		// Avoid sensitive info into default values help line
