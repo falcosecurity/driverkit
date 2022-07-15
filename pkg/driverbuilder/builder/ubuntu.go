@@ -44,9 +44,6 @@ func (v ubuntu) Script(c Config, kr kernelrelease.KernelRelease) (string, error)
 		return "", err
 	}
 
-	// debugging
-	fmt.Printf("%+v\n", kr)
-
 	var urls []string
 	if c.KernelUrls == nil {
 		urls, err = ubuntuHeadersURLFromRelease(kr, c.Build.KernelVersion)
@@ -84,18 +81,19 @@ func (v ubuntu) Script(c Config, kr kernelrelease.KernelRelease) (string, error)
 }
 
 func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv string) ([]string, error) {
-	baseURLs := []string{
-		"http://archive.ubuntu.com/ubuntu/pool/main/l",
-		"http://ports.ubuntu.com/pool/main/l",
 
-		// "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux",
-		// "http://security.ubuntu.com/ubuntu/pool/main/l/linux",
-		// "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux",
-		// "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-gke-5.4",
-		// "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-gke-4.15",
-		// "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws",
-		// "http://security.ubuntu.com/ubuntu/pool/main/l/linux-aws",
-		// "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws",
+	// decide which mirrors to use based on the architecture passed in
+	fmt.Println(kr.Architecture.String())
+	baseURLs := []string{}
+	if kr.Architecture.String() == "amd64" {
+		baseURLs = []string{
+			"https://mirrors.edge.kernel.org/ubuntu/pool/main/l",
+			"http://security.ubuntu.com/ubuntu/pool/main/l",
+		}
+	} else {
+		baseURLs = []string{
+			"http://ports.ubuntu.com/ubuntu-ports/pool/main/l",
+		}
 	}
 
 	for _, url := range baseURLs {
@@ -106,12 +104,14 @@ func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv string) ([]s
 		}
 		// try resolving the URLs
 		urls, err := getResolvingURLs(possibleURLs)
+		fmt.Println(urls)
 		// there should be 2 urls returned - the _all package and the arch-specific package
-		if err == nil && len(urls) < 2 {
+		if err == nil && len(urls) == 2 {
 			return urls, err
 		}
 	}
 
+	// packages weren't found, return error out
 	return nil, fmt.Errorf("kernel headers not found")
 }
 
@@ -122,8 +122,9 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 	// piece together possible subdirs on Ubuntu URLs for a given flavor
 	// these include the base (such as 'linux-azure') and the base + version/path ('linux-azure-5.15')
 	possibleSubDirs := []string{
-		fmt.Sprintf("linux-%s", ubuntuFlavor),
-		fmt.Sprintf("linux-%s-%s.%s", ubuntuFlavor, kr.Version, kr.PatchLevel),
+		"linux",                               // default subdir, where generic, lowlatency, etc. are store
+		fmt.Sprintf("linux-%s", ubuntuFlavor), // ex: linux-aws
+		fmt.Sprintf("linux-%s-%d.%d", ubuntuFlavor, kr.Version, kr.PatchLevel), // ex: linux-azure-5.15
 	}
 
 	// build all possible full URLs with the flavor subdirs
@@ -135,36 +136,31 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 		)
 	}
 
-	// this jank is to specifically handle hwe/generic kernels,
-	// they are named differently whether in an arch-specific package or _all package
-	var ubuntuArchFlavor string
-	var ubuntuAllFlavor string
-	if ubuntuFlavor == "hwe" {
-		ubuntuArchFlavor = "generic"
-		ubuntuAllFlavor = "hwe"
-	} else {
-		ubuntuArchFlavor = ubuntuFlavor
-		ubuntuAllFlavor = ubuntuFlavor
-	}
-
 	// piece together all possible naming patterns for packages
 	// in general, there should be 2: an arch-specific package and an _all package
 	packageNamePatterns := []string{
 		fmt.Sprintf(
-			"linux-headers-%s-%s-%s_%s-%s.%s_%s.deb",
+			"linux-headers-%s%s_%s-%s.%s_%s_all.deb",
 			kr.Fullversion,
-			firstExtra,
-			ubuntuArchFlavor,
+			kr.FullExtraversion,
 			kr.Fullversion,
 			firstExtra,
 			kernelVersion,
 			kr.Architecture.String(),
 		),
 		fmt.Sprintf(
-			"linux-%s-%s.%s-headers-%s-%s_%s-%s.%s_all.deb",
-			ubuntuAllFlavor,
-			kr.Version,
-			kr.PatchLevel,
+			"linux-headers-%s-%s-%s_%s-%s.%s_%s.deb",
+			kr.Fullversion,
+			firstExtra,
+			ubuntuFlavor,
+			kr.Fullversion,
+			firstExtra,
+			kernelVersion,
+			kr.Architecture.String(),
+		),
+		fmt.Sprintf(
+			"linux-%s-headers-%s-%s_%s-%s.%s_all.deb",
+			ubuntuFlavor,
 			kr.Fullversion,
 			firstExtra,
 			kr.Fullversion,
@@ -204,10 +200,6 @@ func extractUbuntuFlavor(extraversion string) string {
 	firstExtraSplit := strings.Split(extraversion, "-")
 	if len(firstExtraSplit) > 0 {
 		flavor := firstExtraSplit[1]
-		// generic is stored as "hwe" on ubuntu archive
-		if flavor == "generic" {
-			flavor = "hwe"
-		}
 		return flavor
 	}
 	return ""
@@ -227,7 +219,6 @@ func ubuntuGCCVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
 			return "10"
 		}
 	}
-
 	return "8"
 }
 
