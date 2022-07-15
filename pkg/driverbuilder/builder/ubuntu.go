@@ -145,7 +145,7 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 	}
 
 	// piece together all possible naming patterns for packages
-	// in general, there should be 2: an arch-specific package and an _all package
+	// 2 urls should resolve: an _{arch}.deb package and an _all.deb package
 	packageNamePatterns := []string{
 		fmt.Sprintf(
 			"linux-headers-%s%s_%s-%s.%s_%s_all.deb",
@@ -188,12 +188,7 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 		}
 	}
 
-	// testing
-	fmt.Println(packageFullURLs)
-	// os.Exit(1)
-
 	return packageFullURLs, nil
-
 }
 
 func extractExtraNumber(extraversion string) string {
