@@ -62,8 +62,7 @@ func (v ubuntu) Script(c Config, kr kernelrelease.KernelRelease) (string, error)
 	if err != nil {
 		return "", err
 	}
-	// if no results
-	if len(urls) == 0 {
+	if len(urls) < 2 {
 		return "", fmt.Errorf("specific kernel headers not found")
 	}
 
@@ -174,6 +173,15 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 			kr.Fullversion,
 			firstExtra,
 			kernelVersion,
+		),
+		fmt.Sprintf(
+			"linux-headers-%s%s_%s-%s.%s_%s.deb",
+			kr.Fullversion,
+			kr.FullExtraversion,
+			kr.Fullversion,
+			firstExtra,
+			kernelVersion,
+			kr.Architecture.String(),
 		),
 	}
 
