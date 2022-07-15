@@ -10,11 +10,19 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
-// TargetTypeUbuntuGeneric identifies the Ubuntu target.
+// TargetTypeUbuntu identifies the Ubuntu target.
 const TargetTypeUbuntu Type = "ubuntu"
+
+// backwards compatibility
+const TargetTypeUbuntuGeneric Type = "ubuntu-generic"
+const TargetTypeUbuntuAWS Type = "ubuntu-aws"
 
 func init() {
 	BuilderByTarget[TargetTypeUbuntu] = &ubuntu{}
+
+	// backwards compatibility
+	BuilderByTarget[TargetTypeUbuntuGeneric] = &ubuntu{}
+	BuilderByTarget[TargetTypeUbuntuAWS] = &ubuntu{}
 }
 
 // ubuntu is a driverkit target.
