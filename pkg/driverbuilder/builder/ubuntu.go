@@ -67,6 +67,8 @@ func (v ubuntuGeneric) Script(c Config, kr kernelrelease.KernelRelease) (string,
 
 	if kr.IsGKE() {
 		td.KernelHeadersPattern = "linux-headers*gke"
+	} else if kr.IsAzure() {
+		td.KernelHeadersPattern = "linux-headers*azure"
 	}
 
 	buf := bytes.NewBuffer(nil)

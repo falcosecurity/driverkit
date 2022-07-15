@@ -47,6 +47,10 @@ func (kr *KernelRelease) IsGKE() bool {
 	return strings.HasSuffix(kr.Extraversion, "gke")
 }
 
+func (kr *KernelRelease) IsAzure() bool {
+	return strings.HasSuffix(kr.Extraversion, "azure")
+}
+
 // FromString extracts a KernelRelease object from string.
 func FromString(kernelVersionStr string) KernelRelease {
 	kv := KernelRelease{}
