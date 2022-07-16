@@ -93,7 +93,6 @@ func (v ubuntu) Script(c Config, kr kernelrelease.KernelRelease) (string, error)
 func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv string) ([]string, error) {
 
 	// decide which mirrors to use based on the architecture passed in
-	fmt.Println(kr.Architecture.String())
 	baseURLs := []string{}
 	if kr.Architecture.String() == "amd64" {
 		baseURLs = []string{
@@ -102,6 +101,8 @@ func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv string) ([]s
 		}
 	} else {
 		baseURLs = []string{
+			// arm64 and others are hosted on ports.ubuntu.com
+			// but they will resolve for amd64 without this if logic
 			"http://ports.ubuntu.com/ubuntu-ports/pool/main/l",
 		}
 	}
@@ -129,10 +130,14 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 	firstExtra := extractExtraNumber(kr.Extraversion)
 	ubuntuFlavor := extractUbuntuFlavor(kr.Extraversion)
 
-	// piece together possible subdirs on Ubuntu URLs for a given flavor
+	// piece together possible subdirs on Ubuntu base URLs for a given flavor
 	// these include the base (such as 'linux-azure') and the base + version/path ('linux-azure-5.15')
+	// examples:
+	// 		https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux
+	// 		https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws
+	// 		https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-azure-5.15
 	possibleSubDirs := []string{
-		"linux",                               // default subdir, where generic, lowlatency, etc. are store
+		"linux",                               // default subdir, where generic etc. are stored
 		fmt.Sprintf("linux-%s", ubuntuFlavor), // ex: linux-aws
 		fmt.Sprintf("linux-%s-%d.%d", ubuntuFlavor, kr.Version, kr.PatchLevel), // ex: linux-azure-5.15
 	}
@@ -222,14 +227,17 @@ func extractUbuntuFlavor(extraversion string) string {
 func ubuntuGCCVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
 	switch kr.Version {
 	case 3:
-		if kr.PatchLevel == 13 || kr.PatchLevel == 2 {
+		switch {
+		case kr.PatchLevel == 13 || kr.PatchLevel == 2:
 			return "4.8"
+		default:
+			return "6"
 		}
-		return "6"
 	case 5:
-		if kr.PatchLevel >= 19 {
+		switch {
+		case kr.PatchLevel >= 19:
 			return "11"
-		} else if kr.PatchLevel >= 11 {
+		case kr.PatchLevel >= 11:
 			return "10"
 		}
 	}
