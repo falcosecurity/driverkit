@@ -131,7 +131,7 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 	ubuntuFlavor := extractUbuntuFlavor(kr.Extraversion)
 
 	// piece together possible subdirs on Ubuntu base URLs for a given flavor
-	// these include the base (such as 'linux-azure') and the base + version/path ('linux-azure-5.15')
+	// these include the base (such as 'linux-azure') and the base + version/patch ('linux-azure-5.15')
 	// examples:
 	// 		https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux
 	// 		https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-aws
