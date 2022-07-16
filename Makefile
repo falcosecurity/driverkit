@@ -88,7 +88,7 @@ integration_test: $(test_configs)
 
 .PHONY: $(test_configs)
 $(test_configs): ${driverkit}
-	${driverkit} docker -c $@ --builderimage falcosecurity/driverkit-builder:latest -l debug --timeout 600
+	${driverkit} docker -c $@ --builderimage $(IMAGE_NAME_BUILDER_COMMIT) -l debug --timeout 600
 
 .PHONY: ${driverkit_docgen}
 ${driverkit_docgen}: ${PWD}/docgen
