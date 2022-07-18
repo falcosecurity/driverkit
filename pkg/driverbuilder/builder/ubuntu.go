@@ -223,7 +223,9 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 func parseUbuntuExtraVersion(extraversion string) (string, string, error) {
 	if strings.Contains(extraversion, "-") {
 		split := strings.Split(extraversion, "-")
-		return split[0], split[1], nil
+		extraNumber := split[0]
+		flavor := split[1]
+		return extraNumber, flavor, nil
 	}
 
 	// let the user know the kernelrelease may be formatted incorrectly
