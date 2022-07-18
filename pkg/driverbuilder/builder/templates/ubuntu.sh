@@ -18,7 +18,7 @@ cd /tmp/kernel-download
 {{range $url := .KernelDownloadURLS}}
 curl --silent -o kernel.deb -SL {{ $url }}
 ar x kernel.deb
-tar -xf data.tar.*
+tar -xvf data.tar.*
 {{end}}
 
 cd /tmp/kernel-download/usr/src/
