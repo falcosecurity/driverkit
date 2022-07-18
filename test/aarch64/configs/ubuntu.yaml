@@ -1,5 +1,5 @@
 kernelversion: 199
-kernelrelease: 4.15.0-188
+kernelrelease: 4.15.0-188-generic
 target: ubuntu-generic
 kernelurls: [
   "https://download.falco.org/fixtures/driverkit/aarch64_devel/linux-headers-4.15.0-188_4.15.0-188.199_all.deb",
