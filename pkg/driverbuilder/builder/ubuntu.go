@@ -74,7 +74,7 @@ func (v ubuntu) Script(c Config, kr kernelrelease.KernelRelease) (string, error)
 		ModuleDownloadURL:    moduleDownloadURL(c),
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
-		KernelHeadersPattern: "linux*headers*",
+		KernelHeadersPattern: "linux-headers*",
 		ModuleDriverName:     c.Build.ModuleDriverName,
 		ModuleFullPath:       ModuleFullPath,
 		BuildModule:          len(c.Build.ModuleFilePath) > 0,
@@ -202,6 +202,10 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 			)
 		}
 	}
+
+	// fmt.Println()
+	// fmt.Println(packageFullURLs)
+	// fmt.Println()
 
 	return packageFullURLs, nil
 }
