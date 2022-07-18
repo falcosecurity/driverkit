@@ -69,12 +69,18 @@ func (v ubuntu) Script(c Config, kr kernelrelease.KernelRelease) (string, error)
 		return "", fmt.Errorf("specific kernel headers not found")
 	}
 
+	// parse the flavor out of the kernelrelease extraversion
+	_, flavor, err := parseUbuntuExtraVersion(kr.Extraversion)
+	if err != nil {
+		return "", err
+	}
+
 	td := ubuntuTemplateData{
 		DriverBuildDir:       DriverDirectory,
 		ModuleDownloadURL:    moduleDownloadURL(c),
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
-		KernelHeadersPattern: fmt.Sprintf("linux-headers*%s", extractUbuntuFlavor(kr.Extraversion)),
+		KernelHeadersPattern: fmt.Sprintf("linux-headers*%s", flavor),
 		ModuleDriverName:     c.Build.ModuleDriverName,
 		ModuleFullPath:       ModuleFullPath,
 		BuildModule:          len(c.Build.ModuleFilePath) > 0,
@@ -126,8 +132,12 @@ func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv string) ([]s
 }
 
 func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernelVersion string) ([]string, error) {
-	firstExtra := extractExtraNumber(kr.Extraversion)
-	ubuntuFlavor := extractUbuntuFlavor(kr.Extraversion)
+
+	// parse the extra number and flavor for the kernelrelease extraversion
+	firstExtra, ubuntuFlavor, err := parseUbuntuExtraVersion(kr.Extraversion)
+	if err != nil {
+		return nil, err
+	}
 
 	// piece together possible subdirs on Ubuntu base URLs for a given flavor
 	// these include the base (such as 'linux-azure') and the base + version/patch ('linux-azure-5.15')
@@ -203,28 +213,26 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 		}
 	}
 
-	// fmt.Println()
-	// fmt.Println(packageFullURLs)
-	// fmt.Println()
-
 	return packageFullURLs, nil
 }
 
-func extractExtraNumber(extraversion string) string {
-	firstExtraSplit := strings.Split(extraversion, "-")
-	if len(firstExtraSplit) > 0 {
-		return firstExtraSplit[0]
+// parse the extraversion from the kernelrelease to retrieve the extraNumber and flavor
+// error out if unable to parse from passed in info
+// Example: Input -> "188-generic", Output -> "188", "generic", nil
+// NOTE: make sure the kernelrelease passed in appears *exactly* as `uname -r` output
+func parseUbuntuExtraVersion(extraversion string) (string, string, error) {
+	if strings.Contains(extraversion, "-") {
+		split := strings.Split(extraversion, "-")
+		return split[0], split[1], nil
 	}
-	return ""
-}
 
-func extractUbuntuFlavor(extraversion string) string {
-	firstExtraSplit := strings.Split(extraversion, "-")
-	if len(firstExtraSplit) > 0 {
-		flavor := firstExtraSplit[1]
-		return flavor
-	}
-	return ""
+	// let the user know the kernelrelease may be formatted incorrectly
+	err := fmt.Errorf(
+		"Unable to parse ExtraVersion: %s! Ensure supplied kernelrelease is formatted correctly. Example: '4.15.0-188-generic'",
+		extraversion,
+	)
+
+	return "", "", err
 }
 
 func ubuntuGCCVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
