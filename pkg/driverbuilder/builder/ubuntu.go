@@ -74,7 +74,7 @@ func (v ubuntu) Script(c Config, kr kernelrelease.KernelRelease) (string, error)
 		ModuleDownloadURL:    moduleDownloadURL(c),
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
-		KernelHeadersPattern: "linux-headers*",
+		KernelHeadersPattern: fmt.Sprintf("linux-headers*%s", extractUbuntuFlavor(kr.Extraversion)),
 		ModuleDriverName:     c.Build.ModuleDriverName,
 		ModuleFullPath:       ModuleFullPath,
 		BuildModule:          len(c.Build.ModuleFilePath) > 0,
