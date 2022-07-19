@@ -72,12 +72,21 @@ func (v ubuntu) Script(c Config, kr kernelrelease.KernelRelease) (string, error)
 	// parse the flavor out of the kernelrelease extraversion
 	_, flavor := parseUbuntuExtraVersion(kr.Extraversion)
 
+	// handle hwe kernels, which resolve to "generic" urls under /linux-hwe
+	// Example: http://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-hwe/linux-headers-4.18.0-24-generic_4.18.0-24.25~18.04.1_amd64.deb
+	headersPattern := ""
+	if flavor == "hwe" {
+		headersPattern = "linux-headers*generic"
+	} else {
+		headersPattern = fmt.Sprintf("linux-headers*%s", flavor)
+	}
+
 	td := ubuntuTemplateData{
 		DriverBuildDir:       DriverDirectory,
 		ModuleDownloadURL:    moduleDownloadURL(c),
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
-		KernelHeadersPattern: fmt.Sprintf("linux-headers*%s", flavor),
+		KernelHeadersPattern: headersPattern,
 		ModuleDriverName:     c.Build.ModuleDriverName,
 		ModuleFullPath:       ModuleFullPath,
 		BuildModule:          len(c.Build.ModuleFilePath) > 0,
