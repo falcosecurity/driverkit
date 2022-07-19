@@ -265,7 +265,7 @@ func ubuntuGCCVersionFromKernelRelease(kr kernelrelease.KernelRelease) string {
 		}
 	case 5:
 		switch {
-		case kr.PatchLevel >= 19:
+		case kr.PatchLevel >= 18:
 			return "11"
 		case kr.PatchLevel >= 11:
 			return "10"
