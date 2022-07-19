@@ -21,7 +21,7 @@ type OutputOptions struct {
 type RootOptions struct {
 	Architecture     string   `validate:"required,oneof=amd64 arm64" name:"architecture"`
 	DriverVersion    string   `default:"master" validate:"eq=master|sha1|semver" name:"driver version"`
-	KernelVersion    string   `default:"1" validate:"required" name:"kernel version"`
+	KernelVersion    string   `default:"1" validate:"omitempty" name:"kernel version"`
 	ModuleDriverName string   `default:"falco" validate:"max=60" name:"kernel module driver name"`
 	ModuleDeviceName string   `default:"falco" validate:"excludes=/,max=255" name:"kernel module device name"`
 	KernelRelease    string   `validate:"required,ascii" name:"kernel release"`
@@ -135,6 +135,6 @@ func RootOptionsLevelValidation(level validator.StructLevel) {
 
 	// Target redhat requires a valid build image (has to be registered in order to download packages)
 	if opts.Target == builder.TargetTypeRedhat.String() && opts.BuilderImage == driverbuilder.BuilderBaseImage {
-	    level.ReportError(opts.BuilderImage, "builderimage", "builderimage", "required_builderimage_with_target_redhat", "")
+		level.ReportError(opts.BuilderImage, "builderimage", "builderimage", "required_builderimage_with_target_redhat", "")
 	}
 }
