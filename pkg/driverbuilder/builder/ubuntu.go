@@ -207,7 +207,26 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 		}
 	}
 
-	return packageFullURLs, nil
+	// return out the deduplicated url list
+	return deduplicateURLs(packageFullURLs), nil
+}
+
+// deduplicate the array of URLs to ensure we are
+// only get unique resolving URLs for packages
+func deduplicateURLs(urls []string) []string {
+	keys := make(map[string]bool)
+	dedupURLs := []string{}
+
+	// loop over the URL list
+	// set a flag for new URLs in list, add to dedup list
+	// do nothing if URL is duplicate
+	for _, url := range urls {
+		if _, value := keys[url]; !value {
+			keys[url] = true
+			dedupURLs = append(dedupURLs, url)
+		}
+	}
+	return dedupURLs
 }
 
 // parse the extraversion from the kernelrelease to retrieve the extraNumber and flavor
