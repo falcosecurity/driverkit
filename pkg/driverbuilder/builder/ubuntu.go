@@ -76,9 +76,9 @@ func (v ubuntu) Script(c Config, kr kernelrelease.KernelRelease) (string, error)
 	// Example: http://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-hwe/linux-headers-4.18.0-24-generic_4.18.0-24.25~18.04.1_amd64.deb
 	headersPattern := ""
 	if flavor == "hwe" {
-		headersPattern = "linux-headers*generic"
+		headersPattern = "linux-headers*generic*"
 	} else {
-		headersPattern = fmt.Sprintf("linux-headers*%s", flavor)
+		headersPattern = fmt.Sprintf("linux-headers*%s*", flavor)
 	}
 
 	td := ubuntuTemplateData{
@@ -246,7 +246,9 @@ func parseUbuntuExtraVersion(extraversion string) (string, string) {
 	if strings.Contains(extraversion, "-") {
 		split := strings.Split(extraversion, "-")
 		extraNumber := split[0]
-		flavor := strings.Join(split[1:], "-") // assume the back half of the split is the flavor, rejoin on '-'
+		// some flavors may be more than one word, ex: "intel-iotg"
+		// but getting just the first word is enough
+		flavor := split[1]
 		return extraNumber, flavor
 	}
 
