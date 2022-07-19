@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -76,9 +77,9 @@ func (v ubuntu) Script(c Config, kr kernelrelease.KernelRelease) (string, error)
 	// Example: http://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-hwe/linux-headers-4.18.0-24-generic_4.18.0-24.25~18.04.1_amd64.deb
 	headersPattern := ""
 	if flavor == "hwe" {
-		headersPattern = "linux-headers*generic*"
+		headersPattern = "linux-headers*generic"
 	} else {
-		headersPattern = fmt.Sprintf("linux-headers*%s*", flavor)
+		headersPattern = fmt.Sprintf("linux-headers*%s", flavor)
 	}
 
 	td := ubuntuTemplateData{
@@ -245,10 +246,21 @@ func deduplicateURLs(urls []string) []string {
 func parseUbuntuExtraVersion(extraversion string) (string, string) {
 	if strings.Contains(extraversion, "-") {
 		split := strings.Split(extraversion, "-")
+
 		extraNumber := split[0]
-		// some flavors may be more than one word, ex: "intel-iotg"
-		// but getting just the first word is enough
-		flavor := split[1]
+		flavorText := strings.Join(split[1:], "-") // back half of text
+
+		// extract the flavor from the flavorText using a regex
+		// ubuntu has these named in 3 (known) styles, examples:
+		// 		1. "generic"
+		// 		2. "generic-5"
+		// 		3. "generic-5.15"
+		// but some come in with multi-part names, such as:
+		// 		"intel-iotg-5.15"
+		// which must be handled as well - easier to do with regex
+		r, _ := regexp.Compile("^([a-z-]+[a-z])-*\\d?.*$")
+		flavor := r.FindStringSubmatch(flavorText)[1] // match should be second index
+
 		return extraNumber, flavor
 	}
 
