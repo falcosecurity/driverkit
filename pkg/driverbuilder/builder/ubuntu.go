@@ -246,7 +246,7 @@ func parseUbuntuExtraVersion(extraversion string) (string, string) {
 	if strings.Contains(extraversion, "-") {
 		split := strings.Split(extraversion, "-")
 		extraNumber := split[0]
-		flavor := split[1]
+		flavor := strings.Join(split[1:], "-") // assume the back half of the split is the flavor, rejoin on '-'
 		return extraNumber, flavor
 	}
 
