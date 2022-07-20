@@ -298,11 +298,12 @@ func TestFetchUbuntuKernelURL(t *testing.T) {
 
 func TestUbuntuGCCVersionFromKernelRelease(t *testing.T) {
 	for _, test := range tests {
-		gotGCCVersion := ubuntuGCCVersionFromKernelRelease(test.config)
+		input := test.config
+		gotGCCVersion := ubuntuGCCVersionFromKernelRelease(input)
 		if gotGCCVersion != test.expected.gccVersion {
 			t.Errorf(
 				"Test Input: [ '%v' ] | Got: [ '%s' ] / Want: [ '%s' ]",
-				test.config,
+				input,
 				gotGCCVersion,
 				test.expected.gccVersion,
 			)
@@ -312,11 +313,12 @@ func TestUbuntuGCCVersionFromKernelRelease(t *testing.T) {
 
 func TestParseUbuntuExtraVersion(t *testing.T) {
 	for _, test := range tests {
-		gotFirstExtra, gotFlavor := parseUbuntuExtraVersion(test.config.Extraversion)
+		input := test.config.Extraversion
+		gotFirstExtra, gotFlavor := parseUbuntuExtraVersion(input)
 		if gotFirstExtra != test.expected.firstExtra {
 			t.Errorf(
 				"Test Input: [ '%s' ] | Got: [ '%s' ] / Want: [ '%s' ]",
-				test.config.Extraversion,
+				input,
 				gotFirstExtra,
 				test.expected.firstExtra,
 			)
@@ -324,7 +326,7 @@ func TestParseUbuntuExtraVersion(t *testing.T) {
 		if gotFlavor != test.expected.flavor {
 			t.Errorf(
 				"Test Input: [ '%s' ] | Got: [ '%s' ] / Want: [ '%s' ]",
-				test.config.Extraversion,
+				input,
 				gotFlavor,
 				test.expected.flavor,
 			)
