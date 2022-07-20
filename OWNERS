@@ -1,10 +1,6 @@
 approvers:
-  - fntlnz
   - leodido
   - dwindsor
   - fededp
-reviewers:
+emeritus_approvers:
   - fntlnz
-  - leodido
-  - dwindsor
-  - fededp
