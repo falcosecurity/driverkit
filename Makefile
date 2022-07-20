@@ -80,7 +80,7 @@ push/latest:
 
 .PHONY: test
 test:
-	go test -v -race ./...
+	go test -v -cover -race ./...
 	go test -v -buildmode=pie ./cmd
 
 .PHONY: integration_test
