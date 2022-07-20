@@ -81,7 +81,7 @@ push/latest:
 .PHONY: test
 test:
 	go test -v -cover -race ./...
-	go test -v -buildmode=pie ./cmd
+	go test -v -cover -buildmode=pie ./cmd
 
 .PHONY: integration_test
 integration_test: $(test_configs)
