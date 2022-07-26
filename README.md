@@ -193,6 +193,18 @@ output:
   probe: /tmp/falco-flatcar-3185.0.0.o
 driverversion: master
 ```
+### minikube
+Example configuration file to build both the Kernel module and eBPF probe for Minikube.
+```yaml
+kernelversion: 1_1.26.0
+kernelrelease: 5.10.57
+target: minikube
+architecture: amd64
+output:
+  module: /tmp/falco_minikube_5.10.57_1_1.26.0.ko
+  probe: /tmp/falco_minikube_5.10.57_1_1.26.0.o
+kernelconfigdata: Q09ORklHX0ZBTk9USUZZPXkKQ09ORklHX0t...
+```
 
 ### redhat 7
 
