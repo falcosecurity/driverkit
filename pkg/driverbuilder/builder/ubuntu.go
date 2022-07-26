@@ -151,6 +151,14 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 			kr.Architecture.String(),
 		),
 		fmt.Sprintf(
+			"linux-headers-%s-%s_%s-%s.%s_all.deb",
+			kr.Fullversion,
+			firstExtra,
+			kr.Fullversion,
+			firstExtra,
+			kernelVersion,
+		),
+		fmt.Sprintf(
 			"linux-headers-%s-%s-%s_%s-%s.%s_%s.deb",
 			kr.Fullversion,
 			firstExtra,
