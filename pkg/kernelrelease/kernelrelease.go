@@ -1,25 +1,53 @@
 package kernelrelease
 
 import (
+	"fmt"
 	"log"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 var (
 	kernelVersionPattern = regexp.MustCompile(`(?P<fullversion>^(?P<version>0|[1-9]\d*)\.(?P<patchlevel>0|[1-9]\d*)\.(?P<sublevel>0|[1-9]\d*))(?P<fullextraversion>-(?P<extraversion>0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-_]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$`)
 )
 
+// Architectures is a Map [Architecture] -> non-deb-ArchitectureString
+type Architectures map[Architecture]string
+
+// SupportedArchs enforces the duality of architecture->non-deb one when adding a new one
+var SupportedArchs = Architectures{
+	"amd64": "x86_64",
+	"arm64": "aarch64",
+}
+
+// Privately cached at startup for quicker access
+var supportedArchsSlice []string
+
+func init() {
+	i := 0
+	supportedArchsSlice = make([]string, len(SupportedArchs))
+	for k := range SupportedArchs {
+		supportedArchsSlice[i] = k.String()
+		i++
+	}
+}
+
+func (aa Architectures) String() string {
+	return "[" + strings.Join(supportedArchsSlice, ",") + "]"
+}
+
+func (aa Architectures) Strings() []string {
+	return supportedArchsSlice
+}
+
 type Architecture string
 
 func (a Architecture) ToNonDeb() string {
-	switch a {
-	case "arm64":
-		return "aarch64"
-	case "amd64":
-		return "x86_64"
+	if val, ok := SupportedArchs[a]; ok {
+		return val
 	}
-	return ""
+	panic(fmt.Errorf("missing non-deb name for arch: %s", a.String()))
 }
 
 func (a Architecture) String() string {

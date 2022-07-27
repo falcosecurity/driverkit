@@ -2,7 +2,7 @@ package validate
 
 import (
 	"fmt"
-	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
+	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"github.com/go-playground/validator/v10"
 	"reflect"
 )
@@ -12,8 +12,8 @@ func isArchitectureSupported(fl validator.FieldLevel) bool {
 
 	switch field.Kind() {
 	case reflect.String:
-		for _, arch := range builder.SupportedArchs {
-			if arch == field.String() {
+		for arch := range kernelrelease.SupportedArchs {
+			if arch.String() == field.String() {
 				return true
 			}
 		}

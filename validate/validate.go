@@ -2,6 +2,7 @@ package validate
 
 import (
 	"fmt"
+	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"reflect"
 	"strings"
 
@@ -76,7 +77,7 @@ func init() {
 		"architecture",
 		T,
 		func(ut ut.Translator) error {
-			return ut.Add("architecture", fmt.Sprintf("{0} must be a valid architecture (%s)", builder.SupportedArchs), true)
+			return ut.Add("architecture", fmt.Sprintf("{0} must be a valid architecture (%s)", kernelrelease.SupportedArchs.String()), true)
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
 			t, _ := ut.T(fe.Tag(), fe.Field())
