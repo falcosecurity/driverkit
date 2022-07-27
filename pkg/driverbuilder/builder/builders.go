@@ -14,8 +14,6 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
-var SupportedArchs = []string{"amd64", "arm64"}
-
 // DriverDirectory is the directory the processor uses to store the driver.
 const DriverDirectory = "/tmp/driver"
 

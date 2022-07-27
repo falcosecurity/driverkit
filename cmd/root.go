@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"io"
 	"os"
 	"runtime"
@@ -129,7 +130,7 @@ func NewRootCmd() *RootCmd {
 
 	flags.StringVar(&rootOpts.Output.Module, "output-module", rootOpts.Output.Module, "filepath where to save the resulting kernel module")
 	flags.StringVar(&rootOpts.Output.Probe, "output-probe", rootOpts.Output.Probe, "filepath where to save the resulting eBPF probe")
-	flags.StringVar(&rootOpts.Architecture, "architecture", runtime.GOARCH, "target architecture for the built driver, one of ["+strings.Join(builder.SupportedArchs, ",")+"]")
+	flags.StringVar(&rootOpts.Architecture, "architecture", runtime.GOARCH, "target architecture for the built driver, one of "+kernelrelease.SupportedArchs.String())
 	flags.StringVar(&rootOpts.DriverVersion, "driverversion", rootOpts.DriverVersion, "driver version as a git commit hash or as a git tag")
 	flags.StringVar(&rootOpts.KernelVersion, "kernelversion", rootOpts.KernelVersion, "kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v'")
 	flags.StringVar(&rootOpts.KernelRelease, "kernelrelease", rootOpts.KernelRelease, "kernel release to build the module for, it can be found by executing 'uname -v'")
@@ -148,7 +149,7 @@ func NewRootCmd() *RootCmd {
 		return targets, cobra.ShellCompDirectiveDefault
 	})
 	rootCmd.RegisterFlagCompletionFunc("architecture", func(c *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		return builder.SupportedArchs, cobra.ShellCompDirectiveDefault
+		return kernelrelease.SupportedArchs.Strings(), cobra.ShellCompDirectiveDefault
 	})
 
 	// Subcommands

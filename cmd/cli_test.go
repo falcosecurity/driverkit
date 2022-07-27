@@ -6,6 +6,7 @@ package cmd
 import (
 	"bytes"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
+	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -392,7 +393,7 @@ func initFlagsTemplateData(args []string) flagsTemplateData {
 	return flagsTemplateData{
 		Targets:             "[" + strings.Join(targets, ",") + "]",
 		CurrentArch:         runtime.GOARCH,
-		Architectures:       "[" + strings.Join(builder.SupportedArchs, ",") + "]",
+		Architectures:       kernelrelease.SupportedArchs.String(),
 		TargetsVerticalList: strings.Join(targets, "\n"),
 		Cmd:                 cmd,
 	}
