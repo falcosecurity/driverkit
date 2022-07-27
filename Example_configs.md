@@ -26,6 +26,9 @@ output:
 driverversion: master
 ```
 
+> **NOTE:** ubuntu-generic exists to retain backward compatibility only,
+> and should not be used in new configs.
+
 ## ubuntu-aws
 
 Example configuration file to build both the Kernel module and eBPF probe for Ubuntu AWS.
@@ -39,6 +42,9 @@ output:
   probe: /tmp/falco-ubuntu-aws.o
 driverversion: master
 ```
+
+> **NOTE:** ubuntu-aws exists to retain backward compatibility only,
+> and should not be used in new configs.
 
 ## centos 6
 
@@ -132,6 +138,7 @@ output:
   probe: /tmp/falco-flatcar-3185.0.0.o
 driverversion: master
 ```
+
 ## minikube
 Example configuration file to build both the Kernel module and eBPF probe for Minikube.
 ```yaml
