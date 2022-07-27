@@ -1,3 +1,3 @@
 INFO using config file                             file=testdata/configs/1.yaml
-DEBU running with options                          arch=%s driverversion=master kernelrelease=4.15.0-1057-aws kernelversion=59 output-module=/tmp/falco-ubuntu-aws.ko target=ubuntu-aws
+DEBU running with options                          arch={{ .CurrentArch }} driverversion=master kernelrelease=4.15.0-1057-aws kernelversion=59 output-module=/tmp/falco-ubuntu-aws.ko target=ubuntu-aws
 INFO driver building, it will take a few seconds   processor=docker
