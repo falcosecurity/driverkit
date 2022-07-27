@@ -36,6 +36,7 @@ func init() {
 	V.RegisterValidation("filepath", isFilePath)
 	V.RegisterValidation("sha1", isSHA1)
 	V.RegisterValidation("target", isTargetSupported)
+	V.RegisterValidation("architecture", isArchitectureSupported)
 	V.RegisterValidation("semver", isSemVer)
 	V.RegisterValidation("proxy", isProxy)
 	V.RegisterValidation("imagename", isImageName)
@@ -72,6 +73,19 @@ func init() {
 	)
 
 	V.RegisterTranslation(
+		"architecture",
+		T,
+		func(ut ut.Translator) error {
+			return ut.Add("architecture", fmt.Sprintf("{0} must be a valid architecture (%s)", builder.SupportedArchs), true)
+		},
+		func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T(fe.Tag(), fe.Field())
+
+			return t
+		},
+	)
+
+	V.RegisterTranslation(
 		"required_kernelconfigdata_with_target_vanilla",
 		T,
 		func(ut ut.Translator) error {
@@ -98,17 +112,17 @@ func init() {
 	)
 
 	V.RegisterTranslation(
-	    "required_builderimage_with_target_redhat",
-	    T,
-	    func(ut ut.Translator) error {
-	        return ut.Add("required_builderimage_with_target_redhat", "{0} is a required field when target is redhat", true)
-	    },
-	    func(ut ut.Translator, fe validator.FieldError) string {
-	        t, _ := ut.T("required_builderimage_with_target_redhat", "builder image") // fixme ? tag "name" does not work when used at struct level
+		"required_builderimage_with_target_redhat",
+		T,
+		func(ut ut.Translator) error {
+			return ut.Add("required_builderimage_with_target_redhat", "{0} is a required field when target is redhat", true)
+		},
+		func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T("required_builderimage_with_target_redhat", "builder image") // fixme ? tag "name" does not work when used at struct level
 
-    		return t
-    	},
-    )
+			return t
+		},
+	)
 
 	V.RegisterTranslation(
 		"logrus",
