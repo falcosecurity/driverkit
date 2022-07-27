@@ -37,34 +37,34 @@ func persistentValidateFunc(rootCommand *RootCmd, rootOpts *RootOptions) func(c 
 			"output-probe":  "output.probe",
 		}
 		rootCommand.c.Flags().VisitAll(func(f *pflag.Flag) {
-		    if name := f.Name; !skip[name] {
-                if name == "kernelurls" {
-                    // Slice types need special treatment when used as flags. If we call 'Set(name, value)',
-                    // rather than replace, it appends. Since viper will already have the cli options set
-                    // if supplied, we only need this step if rootCommand doesn't already have them e.g.
-                    // not set on CLI so read from config.
-                    if cli_urls, err := rootCommand.c.Flags().GetStringSlice(name); err == nil && len(cli_urls) != 0 {
-                       return
-                    }
-                    value := viper.GetStringSlice(name)
-                    if len(value) != 0 {
-                        strValue := strings.Join(value, ",")
-                        rootCommand.c.Flags().Set(name, strValue)
-                    }
-                } else {
-                    value := viper.GetString(name)
-                    if value == "" {
-                        // fallback to nested options in config file, if any
-                        if nestedName, ok := nested[name]; ok {
-                            value = viper.GetString(nestedName)
-                        }
-                    }
-                    // set the value, if any, otherwise let the default
-                    if value != "" {
-                        rootCommand.c.Flags().Set(name, value)
-                    }
-                }
-            }
+			if name := f.Name; !skip[name] {
+				if name == "kernelurls" {
+					// Slice types need special treatment when used as flags. If we call 'Set(name, value)',
+					// rather than replace, it appends. Since viper will already have the cli options set
+					// if supplied, we only need this step if rootCommand doesn't already have them e.g.
+					// not set on CLI so read from config.
+					if cli_urls, err := rootCommand.c.Flags().GetStringSlice(name); err == nil && len(cli_urls) != 0 {
+						return
+					}
+					value := viper.GetStringSlice(name)
+					if len(value) != 0 {
+						strValue := strings.Join(value, ",")
+						rootCommand.c.Flags().Set(name, strValue)
+					}
+				} else {
+					value := viper.GetString(name)
+					if value == "" {
+						// fallback to nested options in config file, if any
+						if nestedName, ok := nested[name]; ok {
+							value = viper.GetString(nestedName)
+						}
+					}
+					// set the value, if any, otherwise let the default
+					if value != "" {
+						rootCommand.c.Flags().Set(name, value)
+					}
+				}
+			}
 		})
 
 		// Avoid sensitive info into default values help line
@@ -118,6 +118,9 @@ func NewRootCmd() *RootCmd {
 
 	flags := rootCmd.Flags()
 
+	targets := builder.BuilderByTarget.Targets()
+	sort.Strings(targets)
+
 	flags.StringVarP(&configOptions.ConfigFile, "config", "c", configOptions.ConfigFile, "config file path (default $HOME/.driverkit.yaml if exists)")
 	flags.StringVarP(&configOptions.LogLevel, "loglevel", "l", configOptions.LogLevel, "log level")
 	flags.IntVar(&configOptions.Timeout, "timeout", configOptions.Timeout, "timeout in seconds")
@@ -126,11 +129,11 @@ func NewRootCmd() *RootCmd {
 
 	flags.StringVar(&rootOpts.Output.Module, "output-module", rootOpts.Output.Module, "filepath where to save the resulting kernel module")
 	flags.StringVar(&rootOpts.Output.Probe, "output-probe", rootOpts.Output.Probe, "filepath where to save the resulting eBPF probe")
-	flags.StringVar(&rootOpts.Architecture, "architecture", runtime.GOARCH, "target architecture for the built driver")
+	flags.StringVar(&rootOpts.Architecture, "architecture", runtime.GOARCH, "target architecture for the built driver, one of ["+strings.Join(builder.SupportedArchs, ",")+"]")
 	flags.StringVar(&rootOpts.DriverVersion, "driverversion", rootOpts.DriverVersion, "driver version as a git commit hash or as a git tag")
 	flags.StringVar(&rootOpts.KernelVersion, "kernelversion", rootOpts.KernelVersion, "kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v'")
 	flags.StringVar(&rootOpts.KernelRelease, "kernelrelease", rootOpts.KernelRelease, "kernel release to build the module for, it can be found by executing 'uname -v'")
-	flags.StringVarP(&rootOpts.Target, "target", "t", rootOpts.Target, "the system to target the build for")
+	flags.StringVarP(&rootOpts.Target, "target", "t", rootOpts.Target, "the system to target the build for, one of ["+strings.Join(targets, ",")+"]")
 	flags.StringVar(&rootOpts.KernelConfigData, "kernelconfigdata", rootOpts.KernelConfigData, "base64 encoded kernel config data: in some systems it can be found under the /boot directory, in other it is gzip compressed under /proc")
 	flags.StringVar(&rootOpts.ModuleDeviceName, "moduledevicename", rootOpts.ModuleDeviceName, "kernel module device name (the default is falco, so the device will be under /dev/falco*)")
 	flags.StringVar(&rootOpts.ModuleDriverName, "moduledrivername", rootOpts.ModuleDriverName, "kernel module driver name, i.e. the name you see when you check installed modules via lsmod")
@@ -142,9 +145,10 @@ func NewRootCmd() *RootCmd {
 	// Flag annotations and custom completions
 	rootCmd.MarkFlagFilename("config", viper.SupportedExts...)
 	rootCmd.RegisterFlagCompletionFunc("target", func(c *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-		targets := builder.BuilderByTarget.Targets()
-		sort.Strings(targets)
 		return targets, cobra.ShellCompDirectiveDefault
+	})
+	rootCmd.RegisterFlagCompletionFunc("architecture", func(c *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return builder.SupportedArchs, cobra.ShellCompDirectiveDefault
 	})
 
 	// Subcommands
