@@ -12,8 +12,6 @@ If that distribution is not supported by driverkit, the Falco Drivers Build Grid
 
 To add a new supported distribution, you need to create a specific file implementing the `builder.Builder` interface.
 
-You can find the specific distribution files into the [pkg/driverbuilder/builder](/pkg/driverbuilder/builder) folder.
-
 Here's the [archlinux](archlinux.go) one for reference.
 
 Following this simple set of instructions should help you while you implement a new `builder.Builder`.
