@@ -1,17 +1,3 @@
-amazonlinux
-amazonlinux2
-amazonlinux2022
-archlinux
-centos
-debian
-flatcar
-minikube
-photon
-redhat
-rocky
-ubuntu
-ubuntu-aws
-ubuntu-generic
-vanilla
+{{ .TargetsVerticalList }}
 :0
 Completion ended with directive: ShellCompDirectiveDefault

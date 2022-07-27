@@ -11,7 +11,7 @@ Available Commands:
   kubernetes  Build Falco kernel modules and eBPF probes against a Kubernetes cluster.
 
 Flags:
-      --architecture string       target architecture for the built driver (default "%s")
+      --architecture string       target architecture for the built driver, one of {{ .Architectures }} (default "{{ .CurrentArch }}")
       --builderimage string       docker image to be used to build the kernel module and eBPF probe. If not provided, the default image will be used. (default "falcosecurity/driverkit-builder:latest")
   -c, --config string             config file path (default $HOME/.driverkit.yaml if exists)
       --driverversion string      driver version as a git commit hash or as a git tag (default "master")
@@ -27,7 +27,7 @@ Flags:
       --output-module string      filepath where to save the resulting kernel module
       --output-probe string       filepath where to save the resulting eBPF probe
       --proxy string              the proxy to use to download data
-  -t, --target string             the system to target the build for
+  -t, --target string             the system to target the build for, one of {{ .Targets }}
       --timeout int               timeout in seconds (default 120)
 
 Use "driverkit [command] --help" for more information about a command.

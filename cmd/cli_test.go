@@ -5,22 +5,23 @@ package cmd
 
 import (
 	"bytes"
-	"fmt"
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"testing"
+	"text/template"
 
 	"github.com/acarl005/stripansi"
 	"gotest.tools/assert"
 )
 
 type expect struct {
-	err            string
-	out            string
-	fmtRuntimeArch bool
+	err string
+	out string
 }
 
 type testCase struct {
@@ -34,32 +35,28 @@ var tests = []testCase{
 	{
 		args: []string{"help"},
 		expect: expect{
-			out:            "testdata/help.txt",
-			fmtRuntimeArch: true,
+			out: "testdata/help.txt",
 		},
 	},
 	{
 		args: []string{"-h"},
 		expect: expect{
-			out:            "testdata/help-flag.txt",
-			fmtRuntimeArch: true,
+			out: "testdata/help-flag.txt",
 		},
 	},
 	{
 		descr: "empty",
 		args:  []string{},
 		expect: expect{
-			out:            "testdata/autohelp.txt",
-			fmtRuntimeArch: true,
+			out: "testdata/autohelp.txt",
 		},
 	},
 	{
 		descr: "invalid/processor",
 		args:  []string{"abc"},
 		expect: expect{
-			out:            "testdata/non-existent-processor.txt",
-			err:            `invalid argument "abc" for "driverkit"`,
-			fmtRuntimeArch: true,
+			out: "testdata/non-existent-processor.txt",
+			err: `invalid argument "abc" for "driverkit"`,
 		},
 	},
 	{
@@ -69,9 +66,8 @@ var tests = []testCase{
 			"wrong",
 		},
 		expect: expect{
-			out:            "testdata/invalid-proxyconfig.txt",
-			err:            "exiting for validation errors",
-			fmtRuntimeArch: true,
+			out: "testdata/invalid-proxyconfig.txt",
+			err: "exiting for validation errors",
 		},
 	},
 	{
@@ -99,9 +95,8 @@ var tests = []testCase{
 		descr: "docker/empty",
 		args:  []string{"docker"},
 		expect: expect{
-			err:            "exiting for validation errors",
-			out:            "testdata/dockernoopts.txt",
-			fmtRuntimeArch: true,
+			err: "exiting for validation errors",
+			out: "testdata/dockernoopts.txt",
 		},
 	},
 	{
@@ -124,8 +119,7 @@ var tests = []testCase{
 			"debug",
 		},
 		expect: expect{
-			out:            "testdata/docker-with-flags-debug.txt",
-			fmtRuntimeArch: true,
+			out: "testdata/docker-with-flags-debug.txt",
 		},
 	},
 	{
@@ -148,8 +142,7 @@ var tests = []testCase{
 			"debug",
 		},
 		expect: expect{
-			out:            "testdata/docker-with-flags-debug.txt",
-			fmtRuntimeArch: true,
+			out: "testdata/docker-with-flags-debug.txt",
 		},
 	},
 	{
@@ -162,24 +155,22 @@ var tests = []testCase{
 			"debug",
 		},
 		expect: expect{
-			out:            "testdata/docker-from-config-debug.txt",
-			fmtRuntimeArch: true,
+			out: "testdata/docker-from-config-debug.txt",
 		},
 	},
 	{
-	    descr: "docker/from-config-file-using-urls",
-        args: []string{
-            "docker",
-            "-c",
-            "testdata/configs/2.yaml",
-            "--loglevel",
-            "debug",
-        },
-        expect: expect{
-            out:            "testdata/docker-override-urls-from-config-debug.txt",
-            fmtRuntimeArch: true,
-        },
-    },
+		descr: "docker/from-config-file-using-urls",
+		args: []string{
+			"docker",
+			"-c",
+			"testdata/configs/2.yaml",
+			"--loglevel",
+			"debug",
+		},
+		expect: expect{
+			out: "testdata/docker-override-urls-from-config-debug.txt",
+		},
+	},
 	{
 		descr: "docker/override-from-config-file",
 		env: map[string]string{
@@ -194,53 +185,50 @@ var tests = []testCase{
 			"debug",
 		},
 		expect: expect{
-			out:            "testdata/docker-override-from-config-debug.txt",
-			fmtRuntimeArch: true,
+			out: "testdata/docker-override-from-config-debug.txt",
 		},
 	},
 	{
-	    descr: "docker/build-related-target-azure",
-	    args: []string{
-	        "docker",
-	        "--kernelrelease",
-	        "4.15.0-1057-azure",
-	        "--kernelversion",
-	        "62",
-	        "--kernelurls",
-	        "http://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-azure/linux-azure-headers-4.15.0-1057_4.15.0-1057.62_all.deb",
-	        "--kernelurls",
-	        "http://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-azure/linux-headers-4.15.0-1057-azure_4.15.0-1057.62_amd64.deb",
-	        "--target",
-	        "ubuntu-aws",
-	        "--output-module",
-	        "/tmp/falco-ubuntu-azure.ko",
-	        "--loglevel",
-	        "debug",
-        },
-        expect: expect{
-            out:            "testdata/docker-related-target-debug.txt",
-            fmtRuntimeArch: true,
-        },
-    },
-    {
-        descr: "docker/build-target-check-validation-redhat",
-        args: []string{
-            "docker",
-            "--kernelrelease",
-            "4.18.0-348.el8.x86_64",
-            "--target",
-            "redhat",
-            "--output-module",
-            "/tmp/falco-redhat.ko",
-            "--loglevel",
-            "debug",
-        },
-        expect: expect{
-            out:            "testdata/docker-target-redhat-validation-error-debug.txt",
-            err:            "exiting for validation errors",
-            fmtRuntimeArch: true,
-        },
-    },
+		descr: "docker/build-related-target-azure",
+		args: []string{
+			"docker",
+			"--kernelrelease",
+			"4.15.0-1057-azure",
+			"--kernelversion",
+			"62",
+			"--kernelurls",
+			"http://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-azure/linux-azure-headers-4.15.0-1057_4.15.0-1057.62_all.deb",
+			"--kernelurls",
+			"http://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-azure/linux-headers-4.15.0-1057-azure_4.15.0-1057.62_amd64.deb",
+			"--target",
+			"ubuntu-aws",
+			"--output-module",
+			"/tmp/falco-ubuntu-azure.ko",
+			"--loglevel",
+			"debug",
+		},
+		expect: expect{
+			out: "testdata/docker-related-target-debug.txt",
+		},
+	},
+	{
+		descr: "docker/build-target-check-validation-redhat",
+		args: []string{
+			"docker",
+			"--kernelrelease",
+			"4.18.0-348.el8.x86_64",
+			"--target",
+			"redhat",
+			"--output-module",
+			"/tmp/falco-redhat.ko",
+			"--loglevel",
+			"debug",
+		},
+		expect: expect{
+			out: "testdata/docker-target-redhat-validation-error-debug.txt",
+			err: "exiting for validation errors",
+		},
+	},
 	{
 		descr: "complete/docker/targets",
 		args: []string{
@@ -345,7 +333,27 @@ func run(t *testing.T, test testCase) {
 	}
 }
 
+type testTemplateData struct {
+	Targets             string
+	CurrentArch         string
+	Architectures       string
+	TargetsVerticalList string
+}
+
+func initTestTemplateData(t *testing.T) testTemplateData {
+	targets := builder.BuilderByTarget.Targets()
+	sort.Strings(targets)
+	return testTemplateData{
+		Targets:             "[" + strings.Join(targets, ",") + "]",
+		CurrentArch:         runtime.GOARCH,
+		Architectures:       "[" + strings.Join(builder.SupportedArchs, ",") + "]",
+		TargetsVerticalList: strings.Join(targets, "\n"),
+	}
+}
+
 func TestCLI(t *testing.T) {
+	td := initTestTemplateData(t)
+
 	for _, test := range tests {
 		descr := test.descr
 		if descr == "" {
@@ -359,11 +367,15 @@ func TestCLI(t *testing.T) {
 			if err != nil {
 				t.Fatalf("output fixture not found: %v", err)
 			}
-			if !test.expect.fmtRuntimeArch {
-				test.expect.out = string(out)
-			} else {
-				test.expect.out = fmt.Sprintf(string(out), runtime.GOARCH)
-			}
+
+			tplate := template.New("test")
+			parsed, err := tplate.Parse(string(out))
+			assert.NilError(t, err)
+			buf := bytes.NewBuffer(nil)
+			err = parsed.Execute(buf, td)
+			assert.NilError(t, err)
+
+			test.expect.out = buf.String()
 		}
 
 		t.Run(test.descr, func(t *testing.T) {
