@@ -333,27 +333,82 @@ func run(t *testing.T, test testCase) {
 	}
 }
 
+// Simple explanation:
+// basically we leverage text.template to execute templates for test data.
+// testTemplateData is the actual template structure used to fill the test requested output.
+// It internally stores all the help text, split in section { Desc, Usage, Commands, Flags, Info }
+// plus the flagsTemplateData (that is the template data used to fill Flags fields basically).
 type testTemplateData struct {
+	Desc     string
+	Usage    string
+	Commands string
+	Flags    string
+	Info     string
+	flagsTemplateData
+}
+
+func readTemplateFile(t *testing.T, s string) string {
+	out, err := ioutil.ReadFile("testdata/templates/" + s)
+	assert.NilError(t, err)
+	return string(out)
+}
+
+func initTestTemplateData(t *testing.T, args []string) testTemplateData {
+	td := initFlagsTemplateData(args)
+	return testTemplateData{
+		Usage:             readTemplateFile(t, "usage.txt"),
+		Commands:          readTemplateFile(t, "commands.txt"),
+		Flags:             runTemplate(t, readTemplateFile(t, "flags.txt"), td),
+		Desc:              readTemplateFile(t, "desc.txt"),
+		Info:              readTemplateFile(t, "info.txt"),
+		flagsTemplateData: td,
+	}
+}
+
+type flagsTemplateData struct {
 	Targets             string
 	CurrentArch         string
 	Architectures       string
 	TargetsVerticalList string
+
+	// It is the subcmd being called, ie: driverkit (root) or docker,kubernetes.
+	// It is automatically fetched by args passed to each test case
+	Cmd string
 }
 
-func initTestTemplateData(t *testing.T) testTemplateData {
+func initFlagsTemplateData(args []string) flagsTemplateData {
 	targets := builder.BuilderByTarget.Targets()
 	sort.Strings(targets)
-	return testTemplateData{
+
+	cmd := "driverkit"
+	if len(args) > 0 {
+		if args[0] == "docker" {
+			cmd = "docker"
+		} else if args[0] == "kubernetes" {
+			cmd = "kubernetes"
+		}
+	}
+
+	return flagsTemplateData{
 		Targets:             "[" + strings.Join(targets, ",") + "]",
 		CurrentArch:         runtime.GOARCH,
 		Architectures:       "[" + strings.Join(builder.SupportedArchs, ",") + "]",
 		TargetsVerticalList: strings.Join(targets, "\n"),
+		Cmd:                 cmd,
 	}
 }
 
-func TestCLI(t *testing.T) {
-	td := initTestTemplateData(t)
+func runTemplate(t *testing.T, f string, td interface{}) string {
+	tplate := template.New("test")
+	parsed, err := tplate.Parse(f)
+	assert.NilError(t, err)
+	buf := bytes.NewBuffer(nil)
+	err = parsed.Execute(buf, td)
+	assert.NilError(t, err)
+	return buf.String()
+}
 
+func TestCLI(t *testing.T) {
 	for _, test := range tests {
 		descr := test.descr
 		if descr == "" {
@@ -367,15 +422,8 @@ func TestCLI(t *testing.T) {
 			if err != nil {
 				t.Fatalf("output fixture not found: %v", err)
 			}
-
-			tplate := template.New("test")
-			parsed, err := tplate.Parse(string(out))
-			assert.NilError(t, err)
-			buf := bytes.NewBuffer(nil)
-			err = parsed.Execute(buf, td)
-			assert.NilError(t, err)
-
-			test.expect.out = buf.String()
+			td := initTestTemplateData(t, test.args)
+			test.expect.out = runTemplate(t, string(out), td)
 		}
 
 		t.Run(test.descr, func(t *testing.T) {
