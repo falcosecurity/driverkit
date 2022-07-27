@@ -80,9 +80,14 @@ driverkit docker -c ubuntu-aws.yaml
 It is possible to customize the kernel module name that is produced by Driverkit with the `moduledevicename` and `moduledrivername` options.
 In this context, the _device name_ is the prefix used for the devices in `/dev/`, while the _driver name_ is the kernel module name as reported by `modinfo` or `lsmod` once the module is loaded.
 
-### Examples
+## Examples
 
 For a comprehensive list of examples, heads to [example configs](Example_configs.md)!
+
+## Support a new target
+
+To add support for a new target, a new builder must be added.  
+For more info, you can find specific docs under [pkg/driverbuilder/builder](/pkg/driverbuilder/builder) README file.
 
 ## Survey
 
