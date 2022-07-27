@@ -151,14 +151,6 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 			kr.Architecture.String(),
 		),
 		fmt.Sprintf(
-			"linux-headers-%s-%s_%s-%s.%s_all.deb",
-			kr.Fullversion,
-			firstExtra,
-			kr.Fullversion,
-			firstExtra,
-			kernelVersion,
-		),
-		fmt.Sprintf(
 			"linux-headers-%s-%s-%s_%s-%s.%s_%s.deb",
 			kr.Fullversion,
 			firstExtra,
@@ -186,6 +178,18 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 			kernelVersion,
 			kr.Architecture.String(),
 		),
+	}
+
+	if ubuntuFlavor == "generic" {
+		packageNamePatterns = append(packageNamePatterns,
+			fmt.Sprintf(
+				"linux-headers-%s-%s_%s-%s.%s_all.deb",
+				kr.Fullversion,
+				firstExtra,
+				kr.Fullversion,
+				firstExtra,
+				kernelVersion,
+			))
 	}
 
 	// combine it all together now
