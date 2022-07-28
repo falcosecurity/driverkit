@@ -26,6 +26,8 @@ uname -r
 ## Help
 
 By checking driverkit help, you can quickly discover info about:
+* Supported options
+* Supported commands
 * Supported architectures
 * Supported targets
 * Default options
@@ -39,7 +41,21 @@ driverkit help
 The target architecture is taken from runtime environment, but it can be overridden through `architecture` config.  
 Driverkit also supports cross building for arm64 using qemu from an x86_64 host.
 
-Note: we could not automatically fetch correct architecture because some kernel names do not have the `-$arch`, namely Ubuntu ones.
+> **NOTE:** we could not automatically fetch correct architecture given a kernelrelease,
+> because some kernel names do not have any architecture suffix, namely Ubuntu ones.
+
+## Headers
+
+Driverkit has an internal logic to retrieve headers urls given a target and desired kernelrelease/kernelversion.  
+Unfortunately, the logic is quite hard to implement correctly for every supported target.   
+As of today, the preferred method is to instead use the `kernelurls` configuration param,  
+that allows to specify a list of headers.
+
+> **NOTE:** the internal headers fetching logic should be considered a fallback that will be, sooner or later, deprecated.  
+
+A solution to crawl all supported kernels by multiple distro was recently developed,  
+and it provides a json output with aforementioned `kernelheaders`: https://github.com/falcosecurity/kernel-crawler.  
+Json for supported architectures can be found at https://github.com/falcosecurity/kernel-crawler/tree/main/kernels.
 
 ## How to use
 
