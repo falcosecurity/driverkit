@@ -105,6 +105,11 @@ func (c centos) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error)
 		"8-stream/BaseOS",
 	}
 
+	stream9Releases := []string{
+		"9-stream/AppStream",
+		"9-stream/BaseOS",
+	}
+
 	urls := []string{}
 	for _, r := range edgeReleases {
 		urls = append(urls, fmt.Sprintf(
@@ -142,6 +147,17 @@ func (c centos) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error)
 			kr.FullExtraversion,
 		))
 	}
+
+	for _, r := range stream9Releases {
+		urls = append(urls, fmt.Sprintf(
+			"http://mirror.stream.centos.org/%s/%s/os/Packages/kernel-devel-%s%s.rpm",
+			r,
+			kr.Architecture.ToNonDeb(),
+			kr.Fullversion,
+			kr.FullExtraversion,
+		))
+	}
+
 	return urls, nil
 }
 
