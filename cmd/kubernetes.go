@@ -34,6 +34,12 @@ func NewKubernetesCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Co
 		f.Usage = upperAfterPointRegexp.ReplaceAllString(f.Usage, ", ${1}")
 		f.Usage = upperAfterCommaRegexp.ReplaceAllStringFunc(f.Usage, strings.ToLower)
 	})
+	// Add Kubernetes pods options flags
+	flags := kubernetesCmd.Flags()
+	flags.StringVar(&kubernetesOptions.Namespace, "namespace", "default", "Namespace")
+	flags.Int64Var(&kubernetesOptions.RunAsUser, "run-as-user", 0, "Pods runner user")
+	flags.StringVar(&kubernetesOptions.ImagePullSecret, "image-pull-secret", "", "ImagePullSecret")
+	kubernetesCmd.PersistentFlags().AddFlagSet(flags)
 	// Add root flags
 	kubernetesCmd.PersistentFlags().AddFlagSet(rootFlags)
 
@@ -75,7 +81,6 @@ func kubernetesRun(cmd *cobra.Command, args []string, kubefactory factory.Factor
 		return err
 	}
 
-	buildProcessor := driverbuilder.NewKubernetesBuildProcessor(kc.CoreV1(), clientConfig, namespaceStr, viper.GetInt("timeout"), viper.GetString("proxy"))
-
+	buildProcessor := driverbuilder.NewKubernetesBuildProcessor(kc.CoreV1(), clientConfig, kubernetesOptions.RunAsUser, kubernetesOptions.Namespace, kubernetesOptions.ImagePullSecret, viper.GetInt("timeout"), viper.GetString("proxy"))
 	return buildProcessor.Start(b)
 }

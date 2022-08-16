@@ -3,20 +3,12 @@ package driverbuilder
 import (
 	"io"
 	"text/template"
-
-	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 )
 
-var waitForModuleScript = `
+var waitForLockScript = `
 touch /tmp/module-download.lock
 while true; do
-  if [ ! -f ` + builder.ModuleFullPath + ` ]; then
-    echo "Falco module not found - waiting for 10 seconds"
-	sleep 10
-	continue
-  fi
-  echo "module found, wait for the download lock to be released"
-  if [ -f /tmp/module-download.lock ]; then
+  if [ -f /tmp/download.lock ]; then
     echo "Lock not released yet - waiting for 5 seconds"
     sleep 5
     continue
@@ -26,18 +18,17 @@ while true; do
 done
 `
 
-// waitForModuleAndCat MUST only output the file, any other output will break
+// waitForFileAndCat MUST only output the file, any other output will break
 // the download file itself because it goes trough stdout
-var waitForModuleAndCat = `
+var waitForFileAndCat = `
 while true; do
-  if [ ! -f ` + builder.ModuleFullPath + ` ]; then
+  if [ ! -f "$1" ]; then
 	sleep 10 1>&/dev/null
 	continue
   fi
   break
 done
-cat ` + builder.ModuleFullPath + `
-rm /tmp/module-download.lock 1>&/dev/null
+cat "$1"
 `
 
 type makefileData struct {
