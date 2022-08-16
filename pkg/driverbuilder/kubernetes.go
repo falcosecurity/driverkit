@@ -30,24 +30,28 @@ const KubernetesBuildProcessorName = "kubernetes"
 const falcoBuilderUIDLabel = "org.falcosecurity/driverkit-uid"
 
 type KubernetesBuildProcessor struct {
-	coreV1Client v1.CoreV1Interface
-	clientConfig *restclient.Config
-	namespace    string
-	timeout      int
-	proxy        string
+	coreV1Client    v1.CoreV1Interface
+	clientConfig    *restclient.Config
+	runAsUser       int64
+	namespace       string
+	imagePullSecret string
+	timeout         int
+	proxy           string
 }
 
 // NewKubernetesBuildProcessor constructs a KubernetesBuildProcessor
 // starting from a kubernetes.Clientset. bufferSize represents the length of the
 // channel we use to do the builds. A bigger bufferSize will mean that we can save more Builds
 // for processing, however setting this to a big value will have impacts
-func NewKubernetesBuildProcessor(corev1Client v1.CoreV1Interface, clientConfig *restclient.Config, namespace string, timeout int, proxy string) *KubernetesBuildProcessor {
+func NewKubernetesBuildProcessor(corev1Client v1.CoreV1Interface, clientConfig *restclient.Config, runAsUser int64, namespace string, imagePullSecret string, timeout int, proxy string) *KubernetesBuildProcessor {
 	return &KubernetesBuildProcessor{
-		coreV1Client: corev1Client,
-		clientConfig: clientConfig,
-		namespace:    namespace,
-		timeout:      timeout,
-		proxy:        proxy,
+		coreV1Client:    corev1Client,
+		clientConfig:    clientConfig,
+		runAsUser:       runAsUser,
+		namespace:       namespace,
+		imagePullSecret: imagePullSecret,
+		timeout:         timeout,
+		proxy:           proxy,
 	}
 }
 
@@ -91,7 +95,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 
 	// Append a script to the entrypoint to wait
 	// for the module to be ready before exiting PID 1
-	res = fmt.Sprintf("%s\n%s", res, waitForModuleScript)
+	res = fmt.Sprintf("%s\n%s", res, waitForLockScript)
 
 	buildCmd := []string{
 		"/bin/bash",
@@ -132,7 +136,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 			"kernel.config":         string(configDecoded),
 			"module-Makefile":       bufMakefile.String(),
 			"fill-driver-config.sh": bufFillDriverConfig.String(),
-			"module-downloader.sh":  waitForModuleAndCat,
+			"downloader.sh":         waitForFileAndCat,
 		},
 	}
 	// Construct environment variable array of corev1.EnvVar
@@ -156,11 +160,16 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 		builderImage = build.CustomBuilderImage
 	}
 
+	secuContext := corev1.PodSecurityContext{
+		RunAsUser: &bp.runAsUser,
+	}
 	pod := &corev1.Pod{
 		ObjectMeta: commonMeta,
 		Spec: corev1.PodSpec{
 			ActiveDeadlineSeconds: pointer.Int64Ptr(deadline),
 			RestartPolicy:         corev1.RestartPolicyNever,
+			SecurityContext:       &secuContext,
+			ImagePullSecrets:      []corev1.LocalObjectReference{{Name: bp.imagePullSecret}},
 			Containers: []corev1.Container{
 				{
 					Name:            name,
@@ -209,22 +218,30 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 	if err != nil {
 		return err
 	}
+	defer configClient.Delete(ctx, cm.Name, metav1.DeleteOptions{})
 	_, err = podClient.Create(ctx, pod, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
+	defer podClient.Delete(ctx, pod.Name, metav1.DeleteOptions{})
 
-	out, err := os.Create(build.ModuleFilePath)
+	outModule, err := os.Create(build.ModuleFilePath)
+	if err != nil {
+		return err
+	}
+	defer outModule.Close()
+
+	outProbe, err := os.Create(build.ProbeFilePath)
 
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer outProbe.Close()
 
-	return bp.copyModuleFromPodWithUID(ctx, out, namespace, string(uid))
+	return bp.copyModuleAndProbeFromPodWithUID(ctx, outModule, outProbe, namespace, string(uid))
 }
 
-func (bp *KubernetesBuildProcessor) copyModuleFromPodWithUID(ctx context.Context, out io.Writer, namespace string, falcoBuilderUID string) error {
+func (bp *KubernetesBuildProcessor) copyModuleAndProbeFromPodWithUID(ctx context.Context, outModule io.Writer, outProbe io.Writer, namespace string, falcoBuilderUID string) error {
 	namespacedClient := bp.coreV1Client.Pods(namespace)
 	watch, err := namespacedClient.Watch(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", falcoBuilderUIDLabel, falcoBuilderUID),
@@ -251,20 +268,53 @@ func (bp *KubernetesBuildProcessor) copyModuleFromPodWithUID(ctx context.Context
 				continue
 			}
 			if p.Status.Phase == corev1.PodRunning {
-				logger.WithField(falcoBuilderUIDLabel, falcoBuilderUID).Info("start downloading module from pod")
-				err = copySingleFileFromPod(out, bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name)
+				logger.WithField(falcoBuilderUIDLabel, falcoBuilderUID).Info("start downloading module and probe from pod")
+				if builder.ModuleFullPath != "" {
+					err = copySingleFileFromPod(outModule, bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name, builder.ModuleFullPath)
+					if err != nil {
+						return err
+					}
+				}
+				if builder.ProbeFullPath != "" {
+					err = copySingleFileFromPod(outProbe, bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name, builder.ProbeFullPath)
+					if err != nil {
+						return err
+					}
+				}
+				err = unlockPod(bp.coreV1Client, bp.clientConfig, p)
 				if err != nil {
 					return err
 				}
-				logger.WithField(falcoBuilderUIDLabel, falcoBuilderUID).Info("completed downloading module from pod")
+				logger.WithField(falcoBuilderUIDLabel, falcoBuilderUID).Info("completed downloading from pod")
 			}
 			return nil
 		}
-
 	}
 }
 
-func copySingleFileFromPod(out io.Writer, podClient v1.PodsGetter, clientConfig *restclient.Config, namespace, podName string) error {
+func unlockPod(podClient v1.PodsGetter, clientConfig *restclient.Config, pod *corev1.Pod) error {
+	options := &exec.ExecOptions{
+		PodClient: podClient,
+		Config:    clientConfig,
+		Pod:       pod,
+		Command: []string{
+			"rm",
+			"/tmp/download.lock",
+		},
+		Executor: &exec.DefaultRemoteExecutor{},
+	}
+
+	if err := options.Validate(); err != nil {
+		return err
+	}
+	if err := options.Run(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func copySingleFileFromPod(out io.Writer, podClient v1.PodsGetter, clientConfig *restclient.Config, namespace string, podName string, fileNameToCopy string) error {
 	if len(namespace) == 0 {
 		return errors.New("need a namespace to copy from pod")
 	}
@@ -281,15 +331,15 @@ func copySingleFileFromPod(out io.Writer, podClient v1.PodsGetter, clientConfig 
 				Out:    out,
 				ErrOut: bytes.NewBuffer([]byte{}), //TODO(fntlnz): necessary to deal with errors here?
 			},
-			Stdin: false,
-
+			Stdin:     false,
 			Namespace: namespace,
 			PodName:   podName,
 		},
 
 		Command: []string{
 			"/bin/bash",
-			"/driverkit/module-downloader.sh",
+			"/driverkit/downloader.sh",
+			fileNameToCopy,
 		},
 		Executor: &exec.DefaultRemoteExecutor{},
 	}

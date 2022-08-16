@@ -9,8 +9,8 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
-var validProcessors = []string{"docker", "kubernetes"}
-var aliasProcessors = []string{"docker", "k8s"}
+var validProcessors = []string{"docker", "kubernetes", "kubernetes-in-cluster"}
+var aliasProcessors = []string{"docker", "k8s", "k8s-ic"}
 var configOptions *ConfigOptions
 
 // ConfigOptions represent the persistent configuration flags of driverkit.
