@@ -21,13 +21,11 @@ rm -Rf /tmp/kernel
 mkdir -p /tmp/kernel
 mv usr/src/linux-headers-*/* /tmp/kernel
 
-# Change current gcc
-ln -sf /usr/bin/gcc-{{ .GCCVersion }} /usr/bin/gcc
 {{ if .BuildModule }}
 
 # Build the module
 cd {{ .DriverBuildDir }}
-make KERNELDIR=/tmp/kernel
+make CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=/tmp/kernel
 mv {{ .ModuleDriverName }}.ko {{ .ModuleFullPath }}
 strip -g {{ .ModuleFullPath }}
 
@@ -38,6 +36,6 @@ modinfo {{ .ModuleFullPath }}
 
 # Build the eBPF probe
 cd {{ .DriverBuildDir }}/bpf
-make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc KERNELDIR=/tmp/kernel
+make LLC=/usr/bin/llc-7 CLANG=/usr/bin/clang-7 CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=/tmp/kernel
 ls -l probe.o
 {{ end }}

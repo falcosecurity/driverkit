@@ -24,13 +24,10 @@ tar -xf data.tar.*
 cd /tmp/kernel-download/usr/src/
 sourcedir=$(find . -type d -name "{{ .KernelHeadersPattern }}" | head -n 1 | xargs readlink -f)
 
-# Change current gcc
-ln -sf /usr/bin/gcc-{{ .GCCVersion }} /usr/bin/gcc
-
 {{ if .BuildModule }}
 # Build the module
 cd {{ .DriverBuildDir }}
-make KERNELDIR=$sourcedir
+make CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=$sourcedir
 mv {{ .ModuleDriverName }}.ko {{ .ModuleFullPath }}
 strip -g {{ .ModuleFullPath }}
 # Print results
@@ -52,6 +49,6 @@ else
 	CLANG_BIN=/usr/bin/clang-7
 fi
 
-make LLC=$LLC_BIN CLANG=$CLANG_BIN CC=/usr/bin/gcc-8 KERNELDIR=$sourcedir
+make LLC=$LLC_BIN CLANG=$CLANG_BIN CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=$sourcedir
 ls -l probe.o
 {{ end }}
