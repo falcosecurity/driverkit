@@ -20,9 +20,6 @@ rm -Rf /tmp/kernel
 mkdir -p /tmp/kernel
 mv /tmp/kernel-download/*/* /tmp/kernel
 
-# Change current gcc
-ln -sf /usr/bin/gcc-{{ .GCCVersion }} /usr/bin/gcc
-
 curl --silent -o /tmp/kernel.config -SL {{ .KernelConfigURL }}
 
 cd /tmp/kernel
@@ -33,7 +30,7 @@ make KCONFIG_CONFIG=/tmp/kernel.config modules_prepare
 {{ if .BuildModule }}
 # Build the module
 cd {{ .DriverBuildDir }}
-make KERNELDIR=/tmp/kernel
+make CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=/tmp/kernel
 mv {{ .ModuleDriverName }}.ko {{ .ModuleFullPath }}
 strip -g {{ .ModuleFullPath }}
 # Print results
@@ -43,6 +40,6 @@ modinfo {{ .ModuleFullPath }}
 {{ if .BuildProbe }}
 # Build the eBPF probe
 cd {{ .DriverBuildDir }}/bpf
-make LLC=/usr/bin/llc-12 CLANG=/usr/bin/clang-12 CC=/usr/bin/gcc KERNELDIR=/tmp/kernel
+make LLC=/usr/bin/llc-12 CLANG=/usr/bin/clang-12 CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=/tmp/kernel
 ls -l probe.o
 {{ end }}
