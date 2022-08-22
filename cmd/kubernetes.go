@@ -36,9 +36,7 @@ func NewKubernetesCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Co
 	})
 	// Add Kubernetes pods options flags
 	flags := kubernetesCmd.Flags()
-	flags.StringVar(&kubernetesOptions.Namespace, "namespace", "default", "Namespace")
-	flags.Int64Var(&kubernetesOptions.RunAsUser, "run-as-user", 0, "Pods runner user")
-	flags.StringVar(&kubernetesOptions.ImagePullSecret, "image-pull-secret", "", "ImagePullSecret")
+	addKubernetesFlags(flags)
 	kubernetesCmd.PersistentFlags().AddFlagSet(flags)
 	// Add root flags
 	kubernetesCmd.PersistentFlags().AddFlagSet(rootFlags)
