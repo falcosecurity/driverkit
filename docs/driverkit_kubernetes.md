@@ -34,7 +34,7 @@ driverkit kubernetes [flags]
   -l, --loglevel string                log level (default "info")
       --moduledevicename string        kernel module device name (the default is falco, so the device will be under /dev/falco*) (default "falco")
       --moduledrivername string        kernel module driver name, i.e. the name you see when you check installed modules via lsmod (default "falco")
-      --namespace string               Namespace (default "default")
+  -n, --namespace string               If present, the namespace scope for the pods and its config  (default "default")
       --output-module string           filepath where to save the resulting kernel module
       --output-probe string            filepath where to save the resulting eBPF probe
       --proxy string                   the proxy to use to download data

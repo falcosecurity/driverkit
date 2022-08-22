@@ -21,9 +21,7 @@ func NewKubernetesInClusterCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) 
 
 	// Add Kubernetes pods options flags
 	flags := kubernetesInClusterCmd.Flags()
-	flags.StringVar(&kubernetesOptions.Namespace, "namespace", "default", "Namespace")
-	flags.Int64Var(&kubernetesOptions.RunAsUser, "run-as-user", 0, "Pods runner user")
-	flags.StringVar(&kubernetesOptions.ImagePullSecret, "image-pull-secret", "", "ImagePullSecret")
+	addKubernetesFlags(flags)
 	kubernetesInClusterCmd.PersistentFlags().AddFlagSet(flags)
 	// Add root flags
 	kubernetesInClusterCmd.PersistentFlags().AddFlagSet(rootFlags)
