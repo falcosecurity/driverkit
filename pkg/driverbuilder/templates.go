@@ -6,7 +6,7 @@ import (
 )
 
 var waitForLockScript = `
-touch /tmp/module-download.lock
+touch /tmp/download.lock
 while true; do
   if [ -f /tmp/download.lock ]; then
     echo "Lock not released yet - waiting for 5 seconds"
