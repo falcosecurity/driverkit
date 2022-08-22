@@ -40,6 +40,6 @@ modinfo {{ .ModuleFullPath }}
 {{ if .BuildProbe }}
 # Build the eBPF probe
 cd {{ .DriverBuildDir }}/bpf
-make LLC=/usr/bin/llc-12 CLANG=/usr/bin/clang-12 CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=/tmp/kernel
+make LLC=/usr/bin/llc-12 CLANG=/usr/bin/clang-12 KERNELDIR=/tmp/kernel
 ls -l probe.o
 {{ end }}

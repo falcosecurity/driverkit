@@ -49,6 +49,6 @@ else
 	CLANG_BIN=/usr/bin/clang-7
 fi
 
-make LLC=$LLC_BIN CLANG=$CLANG_BIN CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=$sourcedir
+make LLC=$LLC_BIN CLANG=$CLANG_BIN KERNELDIR=$sourcedir
 ls -l probe.o
 {{ end }}
