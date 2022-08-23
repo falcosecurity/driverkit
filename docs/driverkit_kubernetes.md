@@ -23,6 +23,7 @@ driverkit kubernetes [flags]
       --context string                 the name of the kubeconfig context to use
       --driverversion string           driver version as a git commit hash or as a git tag (default "master")
       --dryrun                         do not actually perform the action
+      --gccversion float          enforce a specific gcc version for the build
   -h, --help                           help for kubernetes
       --image-pull-secret string       ImagePullSecret
       --insecure-skip-tls-verify       if true, the server's certificate will not be checked for validity, this will make your HTTPS connections insecure

@@ -14,6 +14,7 @@ driverkit
   -c, --config string             config file path (default $HOME/.driverkit.yaml if exists)
       --driverversion string      driver version as a git commit hash or as a git tag (default "master")
       --dryrun                    do not actually perform the action
+      --gccversion float          enforce a specific gcc version for the build
   -h, --help                      help for driverkit
       --kernelconfigdata string   base64 encoded kernel config data: in some systems it can be found under the /boot directory, in other it is gzip compressed under /proc
       --kernelrelease string      kernel release to build the module for, it can be found by executing 'uname -v'

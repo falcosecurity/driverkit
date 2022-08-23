@@ -26,6 +26,7 @@ type RootOptions struct {
 	Target           string   `validate:"required,target" name:"target"`
 	KernelConfigData string   `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level
 	BuilderImage     string   `validate:"imagename" name:"builder image"`
+	GCCVersion       float64  `name:"gcc version"`
 	KernelUrls       []string `name:"kernel header urls"`
 	Output           OutputOptions
 }
@@ -106,6 +107,7 @@ func (ro *RootOptions) toBuild() *builder.Build {
 		ProbeFilePath:      ro.Output.Probe,
 		ModuleDriverName:   ro.ModuleDriverName,
 		ModuleDeviceName:   ro.ModuleDeviceName,
+		GCCVersion:         ro.GCCVersion,
 		CustomBuilderImage: ro.BuilderImage,
 		KernelUrls:         ro.KernelUrls,
 	}

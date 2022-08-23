@@ -177,6 +177,10 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		}
 	}
 
+	logger.
+		WithField("image", builderImage).
+		Debug("starting container")
+
 	containerCfg := &container.Config{
 		Tty:   true,
 		Cmd:   []string{"/bin/sleep", strconv.Itoa(bp.timeout)},
