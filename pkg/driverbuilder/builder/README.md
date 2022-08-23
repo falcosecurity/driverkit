@@ -124,23 +124,48 @@ Indeed, the hardest part is fetching the kernel headers urls for each distro.
 
 ### 3. Customize GCC version
 
-Driverkit builder image supports 4 gcc versions:
-* GCC-8
-* GCC-6.3.0
-* GCC-5.5.0
-* GCC-4.8.4
+Driverkit builder images support multiple gcc versions:
 
-You can dynamically choose the one you prefer, likely switching on the kernel version.  
-For an example, you can check out Ubuntu builder, namely: `ubuntuGCCVersionFromKernelRelease`.
+From **driverkit-builder_buster** image:
 
-### 4. Customize llvm version
+* /usr/bin/gcc-8
+* /usr/bin/gcc-6 (6.3.0)
+* /usr/bin/gcc-5 (5.5.0)
+* /usr/bin/gcc-4.8 (4.8.4)
 
-Driverkit builder image supports 2 llvm versions:
-* llvm-7
-* llvm-12
+From **driverkit-builder_bullseye** image:
 
-You can dynamically choose the one you prefer, likely switching on the kernel version.  
-For an example, you can check out Debian builder, namely: `debianLLVMVersionFromKernelRelease`.
+* /usr/bin/gcc-9
+* /usr/bin/gcc-10
+
+From **driverkit-builder_bookworm** image:
+
+* /usr/bin/gcc-11
+* /usr/bin/gcc-12
+
+You can dynamically choose the one you prefer, likely switching on the kernel version,
+by letting your builder implement the `builder.GCCVersionRequestor` interface.  
+A sane default is provided, switching on the kernel version.  
+Please note that requested gcc version is used to find the correct builder image to be used.  
+
+Moreover, Driverkit builder images support multiple clang versions:
+
+From **driverkit-builder_buster** image:
+
+* /usr/bin/clang (clang-7)
+
+From **driverkit-builder_bullseye** image:
+
+* /usr/bin/clang (clang-11)
+
+From **driverkit-builder_bookworm** image:
+
+* /usr/bin/clang (clang-14)
+
+Note, however, that there is no mechanism to dynamically choose a clang version,  
+as changing it should not be needed.
+The build will use the one provided by the chosen builder image.  
+Any failure must be treated as a bug, and an issue opened on [libs](https://github.com/falcosecurity/libs) repository.
 
 ### 5. kernel-crawler
 
