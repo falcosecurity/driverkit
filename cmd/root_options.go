@@ -34,12 +34,6 @@ func init() {
 	validate.V.RegisterStructValidation(RootOptionsLevelValidation, RootOptions{})
 }
 
-func (ro *RootOptions) SetDefaults() {
-	if defaults.CanUpdate(ro.BuilderImage) {
-		ro.BuilderImage = builder.BaseImage
-	}
-}
-
 // NewRootOptions ...
 func NewRootOptions() *RootOptions {
 	rootOpts := &RootOptions{}
@@ -132,7 +126,7 @@ func RootOptionsLevelValidation(level validator.StructLevel) {
 	}
 
 	// Target redhat requires a valid build image (has to be registered in order to download packages)
-	if opts.Target == builder.TargetTypeRedhat.String() && opts.BuilderImage == builder.BaseImage {
+	if opts.Target == builder.TargetTypeRedhat.String() && opts.BuilderImage == "" {
 		level.ReportError(opts.BuilderImage, "builderimage", "builderimage", "required_builderimage_with_target_redhat", "")
 	}
 }

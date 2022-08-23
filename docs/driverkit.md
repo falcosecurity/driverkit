@@ -10,7 +10,7 @@ driverkit
 
 ```
       --architecture string       target architecture for the built driver, one of [amd64,arm64] (default "amd64")
-      --builderimage string       docker image to be used to build the kernel module and eBPF probe. If not provided, the default image will be used. (default "falcosecurity/driverkit-builder:latest")
+      --builderimage string       docker image to be used to build the kernel module and eBPF probe. If not provided, an automatically selected image will be used.
   -c, --config string             config file path (default $HOME/.driverkit.yaml if exists)
       --driverversion string      driver version as a git commit hash or as a git tag (default "master")
       --dryrun                    do not actually perform the action

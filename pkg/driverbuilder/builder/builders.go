@@ -136,21 +136,18 @@ var images = map[string]Image{
 func defaultGCC(kr kernelrelease.KernelRelease) float64 {
 	switch kr.Version {
 	case 5:
-		if kr.PatchLevel > 10 {
-			return 11
-		}
-		if kr.PatchLevel > 18 {
+		if kr.PatchLevel >= 18 {
 			return 12
 		}
-		return 10
+		return 11
 	case 4:
 		return 8
 	case 3:
-		return 5
+		return 5.5
 	case 2:
 		return 4.8
 	default:
-		return 10
+		return 12
 	}
 }
 
@@ -162,7 +159,7 @@ func (b *Build) SetGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 	// if builder implements "GCCVersionRequestor" interface -> use it
 	// Else, fetch the best builder available from the kernelrelease version
 	// using the deadly simple defaultGCC() algorithm
-	// Always returns nearest one
+	// Always returns the nearest one
 	var targetGCC float64
 	if bb, ok := builder.(GCCVersionRequestor); ok {
 		targetGCC = bb.GCCVersion(kr)
@@ -170,30 +167,37 @@ func (b *Build) SetGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 		targetGCC = defaultGCC(kr)
 	}
 
-	for _, img := range images {
-		var gcc float64
+	for name, img := range images {
+		var foundGCC float64
 		d := math.MaxFloat64
-		for _, gcc = range img.GCCVersion {
-			if gcc-targetGCC < d {
+		for _, gcc := range img.GCCVersion {
+			if math.Abs(gcc-targetGCC) < d {
 				// Find the nearest to targetGCC
 				// for this image
-				d = gcc - targetGCC
+				d = math.Abs(gcc - targetGCC)
+				foundGCC = gcc
 			}
 		}
+		logger.WithField("image", name).
+			WithField("targetGCC", targetGCC).
+			Debug("foundGCC=", foundGCC)
 
 		if d < distance {
-			b.GCCVersion = gcc
+			b.GCCVersion = foundGCC
 			distance = d
 		}
 	}
+	logger.WithField("targetGCC", targetGCC).
+		Debug("foundGCC=", b.GCCVersion)
 }
 
 func (b *Build) GetBuilderImage() string {
 	if len(b.CustomBuilderImage) > 0 {
+		// CustomBuilderImage MUST have requested GCC installed inside
 		return b.CustomBuilderImage
 	}
 	builderImage := BaseImage
-	names := strings.SplitAfter(builderImage, ":")
+	names := strings.Split(builderImage, ":")
 	// If no version
 	if len(names) == 1 {
 		names = append(names, "latest")
@@ -201,11 +205,11 @@ func (b *Build) GetBuilderImage() string {
 	for name, img := range images {
 		for _, gcc := range img.GCCVersion {
 			if gcc == b.GCCVersion {
-				return names[0] + "_" + name + ":" + names[1]
+				return names[0] + "_" + name + ":" + names[1] + "_x86_64" // TODO remove "_x86_64"
 			}
 		}
 	}
-	return ""
+	return builderImage
 }
 
 // Factory returns a builder for the given target.

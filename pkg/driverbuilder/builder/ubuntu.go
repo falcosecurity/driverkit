@@ -81,9 +81,9 @@ func (v ubuntu) GCCVersion(kr kernelrelease.KernelRelease) float64 {
 	case 5:
 		switch {
 		case kr.PatchLevel >= 18:
-			return 11
+			return 12
 		case kr.PatchLevel >= 11:
-			return 10
+			return 11
 		}
 	}
 	return 8
