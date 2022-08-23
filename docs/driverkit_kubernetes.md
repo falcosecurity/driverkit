@@ -13,7 +13,7 @@ driverkit kubernetes [flags]
       --as string                      username to impersonate for the operation, user could be a regular user or a service account in a namespace
       --as-group stringArray           group to impersonate for the operation, this flag can be repeated to specify multiple groups
       --as-uid string                  uID to impersonate for the operation
-      --builderimage string            docker image to be used to build the kernel module and eBPF probe. If not provided, the default image will be used. (default "falcosecurity/driverkit-builder:latest")
+      --builderimage string            docker image to be used to build the kernel module and eBPF probe. If not provided, an automatically selected image will be used.
       --cache-dir string               default cache directory (default "$HOME/.kube/cache")
       --certificate-authority string   path to a cert file for the certificate authority
       --client-certificate string      path to a client certificate file for TLS

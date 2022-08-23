@@ -13,7 +13,7 @@ var tests = []struct {
 	expected      struct {
 		headersURLs []string
 		urls        []string
-		gccVersion  string
+		gccVersion  float64
 		firstExtra  string
 		flavor      string
 		err         error
@@ -33,14 +33,14 @@ var tests = []struct {
 		expected: struct {
 			headersURLs []string
 			urls        []string
-			gccVersion  string
+			gccVersion  float64
 			firstExtra  string
 			flavor      string
 			err         error
 		}{
 			headersURLs: []string{"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-4.15.0-188-generic_4.15.0-188.199_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-4.15.0-188_4.15.0-188.199_all.deb"},
 			urls:        []string{"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-4.15.0-188_4.15.0-188.199_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-4.15.0-188-generic_4.15.0-188.199_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-generic-headers-4.15.0-188_4.15.0-188.199_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-4.15.0-188_4.15.0-188.199_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-4.15.0-188_4.15.0-188.199_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic/linux-headers-4.15.0-188_4.15.0-188.199_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic/linux-headers-4.15.0-188-generic_4.15.0-188.199_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic/linux-generic-headers-4.15.0-188_4.15.0-188.199_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic/linux-headers-4.15.0-188_4.15.0-188.199_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic/linux-headers-4.15.0-188_4.15.0-188.199_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic-4.15/linux-headers-4.15.0-188_4.15.0-188.199_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic-4.15/linux-headers-4.15.0-188-generic_4.15.0-188.199_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic-4.15/linux-generic-headers-4.15.0-188_4.15.0-188.199_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic-4.15/linux-headers-4.15.0-188_4.15.0-188.199_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic-4.15/linux-headers-4.15.0-188_4.15.0-188.199_all.deb"},
-			gccVersion:  "8",
+			gccVersion:  8,
 			firstExtra:  "188",
 			flavor:      "generic",
 			err:         fmt.Errorf("kernel headers not found"),
@@ -60,14 +60,14 @@ var tests = []struct {
 		expected: struct {
 			headersURLs []string
 			urls        []string
-			gccVersion  string
+			gccVersion  float64
 			firstExtra  string
 			flavor      string
 			err         error
 		}{
 			headersURLs: []string{"http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws/linux-headers-4.15.0-1140-aws_4.15.0-1140.151_arm64.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws/linux-aws-headers-4.15.0-1140_4.15.0-1140.151_all.deb"},
 			urls:        []string{"http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux/linux-headers-4.15.0-1140-aws_4.15.0-1140.151_arm64_all.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux/linux-headers-4.15.0-1140-aws_4.15.0-1140.151_arm64.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux/linux-aws-headers-4.15.0-1140_4.15.0-1140.151_all.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws/linux-headers-4.15.0-1140-aws_4.15.0-1140.151_arm64_all.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws/linux-headers-4.15.0-1140-aws_4.15.0-1140.151_arm64.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws/linux-aws-headers-4.15.0-1140_4.15.0-1140.151_all.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws-4.15/linux-headers-4.15.0-1140-aws_4.15.0-1140.151_arm64_all.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws-4.15/linux-headers-4.15.0-1140-aws_4.15.0-1140.151_arm64.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws-4.15/linux-aws-headers-4.15.0-1140_4.15.0-1140.151_all.deb"},
-			gccVersion:  "8",
+			gccVersion:  8,
 			firstExtra:  "1140",
 			flavor:      "aws",
 			err:         nil,
@@ -87,14 +87,14 @@ var tests = []struct {
 		expected: struct {
 			headersURLs []string
 			urls        []string
-			gccVersion  string
+			gccVersion  float64
 			firstExtra  string
 			flavor      string
 			err         error
 		}{
 			headersURLs: []string{"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-intel-iotg/linux-headers-5.15.0-1004-intel-iotg_5.15.0-1004.6_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-intel-iotg/linux-intel-iotg-headers-5.15.0-1004_5.15.0-1004.6_all.deb"},
 			urls:        []string{"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-5.15.0-1004-intel-iotg_5.15.0-1004.6_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-5.15.0-1004-intel-iotg_5.15.0-1004.6_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-intel-iotg-headers-5.15.0-1004_5.15.0-1004.6_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-intel-iotg/linux-headers-5.15.0-1004-intel-iotg_5.15.0-1004.6_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-intel-iotg/linux-headers-5.15.0-1004-intel-iotg_5.15.0-1004.6_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-intel-iotg/linux-intel-iotg-headers-5.15.0-1004_5.15.0-1004.6_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-intel-iotg-5.15/linux-headers-5.15.0-1004-intel-iotg_5.15.0-1004.6_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-intel-iotg-5.15/linux-headers-5.15.0-1004-intel-iotg_5.15.0-1004.6_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-intel-iotg-5.15/linux-intel-iotg-headers-5.15.0-1004_5.15.0-1004.6_all.deb"},
-			gccVersion:  "10",
+			gccVersion:  11,
 			firstExtra:  "1004",
 			flavor:      "intel-iotg",
 			err:         nil,
@@ -114,14 +114,14 @@ var tests = []struct {
 		expected: struct {
 			headersURLs []string
 			urls        []string
-			gccVersion  string
+			gccVersion  float64
 			firstExtra  string
 			flavor      string
 			err         error
 		}{
 			headersURLs: []string{},
 			urls:        []string{"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-5.15.0-24-lowlatency-hwe-5.15_5.15.0-24.24~20.04.3_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-5.15.0-24-lowlatency-hwe_5.15.0-24.24~20.04.3_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-lowlatency-hwe-headers-5.15.0-24_5.15.0-24.24~20.04.3_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-5.15.0-24-lowlatency-hwe-5.15_5.15.0-24.24~20.04.3_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-lowlatency-hwe/linux-headers-5.15.0-24-lowlatency-hwe-5.15_5.15.0-24.24~20.04.3_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-lowlatency-hwe/linux-headers-5.15.0-24-lowlatency-hwe_5.15.0-24.24~20.04.3_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-lowlatency-hwe/linux-lowlatency-hwe-headers-5.15.0-24_5.15.0-24.24~20.04.3_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-lowlatency-hwe/linux-headers-5.15.0-24-lowlatency-hwe-5.15_5.15.0-24.24~20.04.3_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-lowlatency-hwe-5.15/linux-headers-5.15.0-24-lowlatency-hwe-5.15_5.15.0-24.24~20.04.3_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-lowlatency-hwe-5.15/linux-headers-5.15.0-24-lowlatency-hwe_5.15.0-24.24~20.04.3_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-lowlatency-hwe-5.15/linux-lowlatency-hwe-headers-5.15.0-24_5.15.0-24.24~20.04.3_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-lowlatency-hwe-5.15/linux-headers-5.15.0-24-lowlatency-hwe-5.15_5.15.0-24.24~20.04.3_amd64.deb"},
-			gccVersion:  "10",
+			gccVersion:  11,
 			firstExtra:  "24",
 			flavor:      "lowlatency-hwe",
 			err:         fmt.Errorf("kernel headers not found"),
@@ -141,14 +141,14 @@ var tests = []struct {
 		expected: struct {
 			headersURLs []string
 			urls        []string
-			gccVersion  string
+			gccVersion  float64
 			firstExtra  string
 			flavor      string
 			err         error
 		}{
 			headersURLs: []string{"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-3.13.0-100-generic_3.13.0-100.147_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-3.13.0-100_3.13.0-100.147_all.deb"},
 			urls:        []string{"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-3.13.0-100_3.13.0-100.147_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-3.13.0-100-generic_3.13.0-100.147_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-generic-headers-3.13.0-100_3.13.0-100.147_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-3.13.0-100_3.13.0-100.147_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-3.13.0-100_3.13.0-100.147_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic/linux-headers-3.13.0-100_3.13.0-100.147_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic/linux-headers-3.13.0-100-generic_3.13.0-100.147_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic/linux-generic-headers-3.13.0-100_3.13.0-100.147_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic/linux-headers-3.13.0-100_3.13.0-100.147_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic/linux-headers-3.13.0-100_3.13.0-100.147_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic-3.13/linux-headers-3.13.0-100_3.13.0-100.147_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic-3.13/linux-headers-3.13.0-100-generic_3.13.0-100.147_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic-3.13/linux-generic-headers-3.13.0-100_3.13.0-100.147_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic-3.13/linux-headers-3.13.0-100_3.13.0-100.147_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic-3.13/linux-headers-3.13.0-100_3.13.0-100.147_all.deb"},
-			gccVersion:  "4.8",
+			gccVersion:  4.8,
 			firstExtra:  "100",
 			flavor:      "generic",
 			err:         nil,
@@ -168,14 +168,14 @@ var tests = []struct {
 		expected: struct {
 			headersURLs []string
 			urls        []string
-			gccVersion  string
+			gccVersion  float64
 			firstExtra  string
 			flavor      string
 			err         error
 		}{
 			headersURLs: []string{},
 			urls:        []string{"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-3.16.0-38-lts-utopic_3.16.0-38.52~14.04.1_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-3.16.0-38-lts-utopic_3.16.0-38.52~14.04.1_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-lts-utopic-headers-3.16.0-38_3.16.0-38.52~14.04.1_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-lts-utopic/linux-headers-3.16.0-38-lts-utopic_3.16.0-38.52~14.04.1_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-lts-utopic/linux-headers-3.16.0-38-lts-utopic_3.16.0-38.52~14.04.1_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-lts-utopic/linux-lts-utopic-headers-3.16.0-38_3.16.0-38.52~14.04.1_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-lts-utopic-3.16/linux-headers-3.16.0-38-lts-utopic_3.16.0-38.52~14.04.1_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-lts-utopic-3.16/linux-headers-3.16.0-38-lts-utopic_3.16.0-38.52~14.04.1_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-lts-utopic-3.16/linux-lts-utopic-headers-3.16.0-38_3.16.0-38.52~14.04.1_all.deb"},
-			gccVersion:  "6",
+			gccVersion:  6,
 			firstExtra:  "38",
 			flavor:      "lts-utopic",
 			err:         nil,
@@ -195,14 +195,14 @@ var tests = []struct {
 		expected: struct {
 			headersURLs []string
 			urls        []string
-			gccVersion  string
+			gccVersion  float64
 			firstExtra  string
 			flavor      string
 			err         error
 		}{
 			headersURLs: []string{"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm/linux-headers-5.19.0-1004-kvm_5.19.0-1004.4_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm/linux-kvm-headers-5.19.0-1004_5.19.0-1004.4_all.deb"},
 			urls:        []string{"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-5.19.0-1004-kvm_5.19.0-1004.4_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-5.19.0-1004-kvm_5.19.0-1004.4_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-kvm-headers-5.19.0-1004_5.19.0-1004.4_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm/linux-headers-5.19.0-1004-kvm_5.19.0-1004.4_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm/linux-headers-5.19.0-1004-kvm_5.19.0-1004.4_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm/linux-kvm-headers-5.19.0-1004_5.19.0-1004.4_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm-5.19/linux-headers-5.19.0-1004-kvm_5.19.0-1004.4_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm-5.19/linux-headers-5.19.0-1004-kvm_5.19.0-1004.4_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm-5.19/linux-kvm-headers-5.19.0-1004_5.19.0-1004.4_all.deb"},
-			gccVersion:  "11",
+			gccVersion:  12,
 			firstExtra:  "1004",
 			flavor:      "kvm",
 			err:         nil,
@@ -297,12 +297,13 @@ func TestFetchUbuntuKernelURL(t *testing.T) {
 }
 
 func TestUbuntuGCCVersionFromKernelRelease(t *testing.T) {
+	b := ubuntu{}
 	for _, test := range tests {
 		input := test.config
-		gotGCCVersion := ubuntuGCCVersionFromKernelRelease(input)
+		gotGCCVersion := b.GCCVersion(input)
 		if gotGCCVersion != test.expected.gccVersion {
 			t.Errorf(
-				"Test Input: [ '%v' ] | Got: [ '%s' ] / Want: [ '%s' ]",
+				"Test Input: [ '%v' ] | Got: [ '%f' ] / Want: [ '%f' ]",
 				input,
 				gotGCCVersion,
 				test.expected.gccVersion,
