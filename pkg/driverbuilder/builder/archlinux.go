@@ -38,10 +38,14 @@ func (c archlinux) URLs(cfg Config, kr kernelrelease.KernelRelease) ([]string, e
 
 	if kr.Architecture == "amd64" {
 		urls = append(urls, fmt.Sprintf(
-			"https://archive.archlinux.org/packages/l/linux-headers/linux-headers-%s.%s-%s-%s.pkg.tar.xz",
+			"https://archive.archlinux.org/packages/l/linux-headers/linux-headers-%s.%s-%s.pkg.tar.xz",
 			kr.Fullversion,
 			kr.Extraversion,
-			cfg.KernelVersion,
+			kr.Architecture.ToNonDeb()))
+		urls = append(urls, fmt.Sprintf(
+			"https://archive.archlinux.org/packages/l/linux-headers/linux-headers-%s.%s-%s.pkg.tar.zst",
+			kr.Fullversion,
+			kr.Extraversion,
 			kr.Architecture.ToNonDeb()))
 	} else {
 		urls = append(urls, fmt.Sprintf(

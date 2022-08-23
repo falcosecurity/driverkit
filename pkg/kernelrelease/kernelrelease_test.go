@@ -144,6 +144,17 @@ func TestFromString(t *testing.T) {
 				FullExtraversion: "-1044-gke",
 			},
 		},
+		"arch version": {
+			kernelVersionStr: "5.19.3.arch1-1",
+			want: KernelRelease{
+				Fullversion:      "5.19.3",
+				Version:          5,
+				PatchLevel:       19,
+				Sublevel:         3,
+				Extraversion:     "arch1-1",
+				FullExtraversion: ".arch1-1",
+			},
+		},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
