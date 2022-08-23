@@ -210,7 +210,7 @@ func (b *Build) GetBuilderImage() string {
 	for name, img := range images {
 		for _, gcc := range img.GCCVersion {
 			if gcc == b.GCCVersion {
-				return names[0] + "_" + name + ":" + names[1] + "_x86_64" // TODO remove "_x86_64"
+				return names[0] + "_" + name + ":" + names[1]
 			}
 		}
 	}

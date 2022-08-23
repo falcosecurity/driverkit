@@ -16,7 +16,7 @@ ifeq ($(COMMITS_FROM_GIT_TAG),0)
 	endif
 endif
 
-DOCKER_ORG ?= fededp
+DOCKER_ORG ?= falcosecurity
 
 BUILDERS := $(patsubst build/builder_%.Dockerfile,%,$(wildcard build/builder_*.Dockerfile))
 
