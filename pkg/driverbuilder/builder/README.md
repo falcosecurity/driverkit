@@ -18,6 +18,7 @@ Following this simple set of instructions should help you while you implement a 
 
 
 ### 1. Builder file
+
 Create a file, named with the name of the distro you want to add in the `pkg/driverbuilder/builder` folder.
 
 ```bash
@@ -28,16 +29,15 @@ touch pkg/driverbuilder/builder/archlinux.go
 
 Your builder will need a constant for the target it implements. Usually that constant
 can just be the name of the distribution you are implementing. A builder can implement
-more than one target at time. For example, the Ubuntu builder implements both `ubuntu-generic` and `ubuntu-aws`
-to reflect the organization that the distro itself has.
+more than one target at time. For example, the minikube builder is just a vanilla one.
 
 Once you have the constant, you will need to add it to the `BuilderByTarget` map.
-
 
 Open your file and you will need to have something like this:
 
 ```go
 // TargetTypeArchLinux identifies the Arch Linux target.
+/// NOTE: the target name should exactly match the /etc/os-release ID value.
 const TargetTypeArchLinux Type = "archlinux"
 
 type archLinux struct {
@@ -85,7 +85,6 @@ func (c archlinux) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls
     return archlinuxTemplateData{
         commonTemplateData: cfg.toTemplateData(),
         KernelDownloadURL:  urls[0],
-        GCCVersion:         archlinuxGccVersionFromKernelRelease(kr),
     }
 }
 ```
