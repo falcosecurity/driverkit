@@ -10,7 +10,7 @@ import (
 var archlinuxTemplate string
 
 // TargetTypeArchlinux identifies the Archlinux target.
-const TargetTypeArchlinux Type = "archlinux"
+const TargetTypeArchlinux Type = "arch"
 
 func init() {
 	BuilderByTarget[TargetTypeArchlinux] = &archlinux{}

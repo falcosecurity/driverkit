@@ -115,6 +115,7 @@ manifest/latest:
 
 .PHONY: test
 test:
+	go clean -testcache
 	go test -v -cover -race ./...
 	go test -v -cover -buildmode=pie ./cmd
 
