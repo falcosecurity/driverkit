@@ -197,20 +197,42 @@ func (b *Build) SetGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 }
 
 func (b *Build) GetBuilderImage() string {
+	var imageTag string
+
+	// One can pass "auto:tag/latest" to choose the automatic
+	// image selection but forcing an imagetag
 	if len(b.CustomBuilderImage) > 0 {
-		// CustomBuilderImage MUST have requested GCC installed inside
-		return b.CustomBuilderImage
+		customNames := strings.Split(b.CustomBuilderImage, ":")
+		if customNames[0] != "auto" {
+			// CustomBuilderImage MUST have requested GCC installed inside
+			return b.CustomBuilderImage
+		}
+
+		// Updated image tag if "auto:tag" is passed
+		if len(customNames) > 1 {
+			imageTag = customNames[1]
+		} else {
+			imageTag = "latest"
+		}
 	}
+
+	// A bit complicated because we must check that
+	// "auto:tag" custom builder image was not passed
 	builderImage := BaseImage
 	names := strings.Split(builderImage, ":")
-	// If no version
-	if len(names) == 1 {
-		names = append(names, "latest")
+	// Updated image tag if no "auto" custom builder image was passed
+	if imageTag == "" {
+		if len(names) > 1 {
+			imageTag = names[1]
+		} else {
+			imageTag = "latest"
+		}
 	}
+
 	for name, img := range images {
 		for _, gcc := range img.GCCVersion {
 			if gcc == b.GCCVersion {
-				return names[0] + "_" + name + ":" + names[1]
+				return names[0] + "_" + name + ":" + imageTag
 			}
 		}
 	}
