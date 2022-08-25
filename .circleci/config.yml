@@ -17,8 +17,8 @@ jobs:
           name: Test
           command: make test
       - run:
-          name: Integration tests # test cross build too!
-          command: make -e TARGET_TEST_ARCH=* integration_test
+          name: Integration tests
+          command: make integration_test
       - run:
           name: Prepare Artifacts
           command: |
