@@ -202,7 +202,7 @@ var tests = []testCase{
 			"--kernelurls",
 			"http://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-azure/linux-headers-4.15.0-1057-azure_4.15.0-1057.62_amd64.deb",
 			"--target",
-			"ubuntu-aws",
+			"ubuntu-azure",
 			"--output-module",
 			"/tmp/falco-ubuntu-azure.ko",
 			"--loglevel",
