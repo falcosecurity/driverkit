@@ -52,11 +52,11 @@ var tests = []struct {
 			Version:          4,
 			PatchLevel:       15,
 			Sublevel:         0,
-			Extraversion:     "1129-aws",
-			FullExtraversion: "-1129-aws",
+			Extraversion:     "1140-aws",
+			FullExtraversion: "-1140-aws",
 			Architecture:     "arm64",
 		},
-		kernelversion: "138",
+		kernelversion: "151",
 		expected: struct {
 			headersURLs []string
 			urls        []string
@@ -65,10 +65,10 @@ var tests = []struct {
 			flavor      string
 			err         error
 		}{
-			headersURLs: []string{"http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws/linux-headers-4.15.0-1129-aws_4.15.0-1129.138_arm64.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws/linux-aws-headers-4.15.0-1129_4.15.0-1129.138_all.deb"},
-			urls:        []string{"http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux/linux-headers-4.15.0-1129-aws_4.15.0-1129.138_arm64_all.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux/linux-headers-4.15.0-1129-aws_4.15.0-1129.138_arm64.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux/linux-aws-headers-4.15.0-1129_4.15.0-1129.138_all.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws/linux-headers-4.15.0-1129-aws_4.15.0-1129.138_arm64_all.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws/linux-headers-4.15.0-1129-aws_4.15.0-1129.138_arm64.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws/linux-aws-headers-4.15.0-1129_4.15.0-1129.138_all.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws-4.15/linux-headers-4.15.0-1129-aws_4.15.0-1129.138_arm64_all.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws-4.15/linux-headers-4.15.0-1129-aws_4.15.0-1129.138_arm64.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws-4.15/linux-aws-headers-4.15.0-1129_4.15.0-1129.138_all.deb"},
+			headersURLs: []string{"http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws/linux-headers-4.15.0-1140-aws_4.15.0-1140.151_arm64.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws/linux-aws-headers-4.15.0-1140_4.15.0-1140.151_all.deb"},
+			urls:        []string{"http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux/linux-headers-4.15.0-1140-aws_4.15.0-1140.151_arm64_all.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux/linux-headers-4.15.0-1140-aws_4.15.0-1140.151_arm64.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux/linux-aws-headers-4.15.0-1140_4.15.0-1140.151_all.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws/linux-headers-4.15.0-1140-aws_4.15.0-1140.151_arm64_all.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws/linux-headers-4.15.0-1140-aws_4.15.0-1140.151_arm64.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws/linux-aws-headers-4.15.0-1140_4.15.0-1140.151_all.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws-4.15/linux-headers-4.15.0-1140-aws_4.15.0-1140.151_arm64_all.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws-4.15/linux-headers-4.15.0-1140-aws_4.15.0-1140.151_arm64.deb", "http://ports.ubuntu.com/ubuntu-ports/pool/main/l/linux-aws-4.15/linux-aws-headers-4.15.0-1140_4.15.0-1140.151_all.deb"},
 			gccVersion:  "8",
-			firstExtra:  "1129",
+			firstExtra:  "1140",
 			flavor:      "aws",
 			err:         nil,
 		},
@@ -183,15 +183,15 @@ var tests = []struct {
 	},
 	{
 		config: kernelrelease.KernelRelease{
-			Fullversion:      "5.18.0",
+			Fullversion:      "5.19.0",
 			Version:          5,
-			PatchLevel:       18,
+			PatchLevel:       19,
 			Sublevel:         0,
-			Extraversion:     "1001-kvm",
-			FullExtraversion: "-1001-kvm",
+			Extraversion:     "1004-kvm",
+			FullExtraversion: "-1004-kvm",
 			Architecture:     "amd64",
 		},
-		kernelversion: "1",
+		kernelversion: "4",
 		expected: struct {
 			headersURLs []string
 			urls        []string
@@ -200,10 +200,10 @@ var tests = []struct {
 			flavor      string
 			err         error
 		}{
-			headersURLs: []string{"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm/linux-headers-5.18.0-1001-kvm_5.18.0-1001.1_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm/linux-kvm-headers-5.18.0-1001_5.18.0-1001.1_all.deb"},
-			urls:        []string{"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-5.18.0-1001-kvm_5.18.0-1001.1_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-5.18.0-1001-kvm_5.18.0-1001.1_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-kvm-headers-5.18.0-1001_5.18.0-1001.1_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm/linux-headers-5.18.0-1001-kvm_5.18.0-1001.1_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm/linux-headers-5.18.0-1001-kvm_5.18.0-1001.1_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm/linux-kvm-headers-5.18.0-1001_5.18.0-1001.1_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm-5.18/linux-headers-5.18.0-1001-kvm_5.18.0-1001.1_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm-5.18/linux-headers-5.18.0-1001-kvm_5.18.0-1001.1_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm-5.18/linux-kvm-headers-5.18.0-1001_5.18.0-1001.1_all.deb"},
+			headersURLs: []string{"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm/linux-headers-5.19.0-1004-kvm_5.19.0-1004.4_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm/linux-kvm-headers-5.19.0-1004_5.19.0-1004.4_all.deb"},
+			urls:        []string{"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-5.19.0-1004-kvm_5.19.0-1004.4_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-5.19.0-1004-kvm_5.19.0-1004.4_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-kvm-headers-5.19.0-1004_5.19.0-1004.4_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm/linux-headers-5.19.0-1004-kvm_5.19.0-1004.4_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm/linux-headers-5.19.0-1004-kvm_5.19.0-1004.4_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm/linux-kvm-headers-5.19.0-1004_5.19.0-1004.4_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm-5.19/linux-headers-5.19.0-1004-kvm_5.19.0-1004.4_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm-5.19/linux-headers-5.19.0-1004-kvm_5.19.0-1004.4_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm-5.19/linux-kvm-headers-5.19.0-1004_5.19.0-1004.4_all.deb"},
 			gccVersion:  "11",
-			firstExtra:  "1001",
+			firstExtra:  "1004",
 			flavor:      "kvm",
 			err:         nil,
 		},
