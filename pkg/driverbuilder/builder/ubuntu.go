@@ -14,10 +14,6 @@ var ubuntuTemplate string
 // TargetTypeUbuntu identifies the Ubuntu target.
 const TargetTypeUbuntu Type = "ubuntu"
 
-// backwards compatibility
-const TargetTypeUbuntuGeneric Type = "ubuntu-generic"
-const TargetTypeUbuntuAWS Type = "ubuntu-aws"
-
 // We expect both a common "_all" package,
 // and an arch dependent package.
 const ubuntuRequiredURLs = 2
@@ -32,10 +28,6 @@ type ubuntuTemplateData struct {
 
 func init() {
 	BuilderByTarget[TargetTypeUbuntu] = &ubuntu{}
-
-	// backwards compatibility
-	BuilderByTarget[TargetTypeUbuntuGeneric] = &ubuntu{}
-	BuilderByTarget[TargetTypeUbuntuAWS] = &ubuntu{}
 }
 
 // ubuntu is a driverkit target.

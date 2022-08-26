@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-
 	"github.com/creasty/defaults"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
@@ -129,8 +128,7 @@ func RootOptionsLevelValidation(level validator.StructLevel) {
 		level.ReportError(opts.KernelConfigData, "kernelConfigData", "KernelConfigData", "required_kernelconfigdata_with_target_vanilla", "")
 	}
 
-	// UbuntuAWS and UbuntuGeneric should be deprecated in future in favor of just Ubuntu
-	if opts.KernelVersion == "" && (opts.Target == builder.TargetTypeUbuntu.String() || opts.Target == builder.TargetTypeUbuntuAWS.String() || opts.Target == builder.TargetTypeUbuntuGeneric.String()) {
+	if opts.KernelVersion == "" && (opts.Target == builder.TargetTypeUbuntu.String()) {
 		level.ReportError(opts.KernelVersion, "kernelVersion", "KernelVersion", "required_kernelversion_with_target_ubuntu", "")
 	}
 

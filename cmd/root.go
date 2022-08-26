@@ -71,6 +71,11 @@ func persistentValidateFunc(rootCommand *RootCmd, rootOpts *RootOptions) func(c 
 		// Avoid sensitive info into default values help line
 		rootCommand.StripSensitive()
 
+		// We just use ubuntu internally
+		if strings.HasPrefix(rootOpts.Target, "ubuntu") {
+			rootOpts.Target = "ubuntu"
+		}
+
 		// Do not block root or help command to exec disregarding the root flags validity
 		if c.Root() != c && c.Name() != "help" && c.Name() != "__complete" && c.Name() != "__completeNoDesc" && c.Name() != "completion" {
 			if errs := rootOpts.Validate(); errs != nil {
