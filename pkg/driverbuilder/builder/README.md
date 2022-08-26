@@ -38,7 +38,7 @@ Open your file and you will need to have something like this:
 ```go
 // TargetTypeArchLinux identifies the Arch Linux target.
 /// NOTE: the target name should exactly match the /etc/os-release ID value.
-const TargetTypeArchLinux Type = "archlinux"
+const TargetTypeArchLinux Type = "arch"
 
 type archLinux struct {
 }
@@ -142,9 +142,9 @@ From **driverkit-builder_bookworm** image:
 * /usr/bin/gcc-11
 * /usr/bin/gcc-12
 
-You can dynamically choose the one you prefer, likely switching on the kernel version,
+You can dynamically choose the one you prefer,
 by letting your builder implement the `builder.GCCVersionRequestor` interface.  
-A sane default is provided, switching on the kernel version.  
+A sane default is provided, selecting it switching on the kernel version.  
 Please note that requested gcc version is used to find the correct builder image to be used.  
 
 Moreover, Driverkit builder images support multiple clang versions:
@@ -164,7 +164,7 @@ From **driverkit-builder_bookworm** image:
 Note, however, that there is no mechanism to dynamically choose a clang version,  
 as changing it should not be needed.
 The build will use the one provided by the chosen builder image.  
-Any failure must be treated as a bug, and an issue opened on [libs](https://github.com/falcosecurity/libs) repository.
+Any failure must be treated as a bug, therefore and issue must be opened on [libs](https://github.com/falcosecurity/libs) repository.
 
 ### 5. kernel-crawler
 
