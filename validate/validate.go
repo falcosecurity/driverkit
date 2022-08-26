@@ -103,7 +103,7 @@ func init() {
 		"required_kernelversion_with_target_ubuntu",
 		T,
 		func(ut ut.Translator) error {
-			return ut.Add("required_kernelversion_with_target_ubuntu", "{0} is a required field when target is ubuntu-generic or ubuntu-aws", true)
+			return ut.Add("required_kernelversion_with_target_ubuntu", "{0} is a required field when target is ubuntu", true)
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
 			t, _ := ut.T("required_kernelversion_with_target_ubuntu", "kernel version") // fixme ? tag "name" does not work when used at struct level
