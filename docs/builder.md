@@ -1,21 +1,27 @@
 # Builders
 
-This folder contains all of the actual builders code, for each supported target.  
-Their bash-like build templates live in the [templates](templates) subfolder.
+The [builder](../pkg/driverbuilder/builder) package contains all of the actual builders code, for each supported target.  
+Their bash-like build templates live under the [templates](../pkg/driverbuilder/builder/templates) subfolder.
 
-## Creating a new Builder
+# Support a new distro
 
 You probably came here because you want to tell the [Falco Drivers Build Grid](https://github.com/falcosecurity/test-infra/tree/master/driverkit) to
 build drivers for a specific distro you care about.
 
-If that distribution is not supported by driverkit, the Falco Drivers Build Grid will not be able to just build it as it does for other distros.
+If that distribution is not yet supported by driverkit, the Falco Drivers Build Grid will not be able to just build it as it does for other distros.
 
-To add a new supported distribution, you need to create a specific file implementing the `builder.Builder` interface.
+Adding support for a new distro is a multiple-step work:
+* first of all, a new builder on driverkit must be created
+* secondly, [kernel-crawler](https://github.com/falcosecurity/kernel-crawler) must also be updated to support the new distro; see [below](#5-kernel-crawler) section
+* lastly, [test-infra](https://github.com/falcosecurity/test-infra) must be updated to add the new [prow config](https://github.com/falcosecurity/test-infra/tree/master/config/jobs/build-drivers) for new distro related jobs
 
-Here's the [archlinux](archlinux.go) one for reference.
+Here, we will only focus about driverkit part.
 
+## Creating a new Builder
+
+To add a new supported distribution, you need to create a specific file implementing the `builder.Builder` interface.  
+Here's the [archlinux](../pkg/driverbuilder/builder/archlinux.go) one for reference.  
 Following this simple set of instructions should help you while you implement a new `builder.Builder`.
-
 
 ### 1. Builder file
 
@@ -28,16 +34,14 @@ touch pkg/driverbuilder/builder/archlinux.go
 ### 2. Target name
 
 Your builder will need a constant for the target it implements. Usually that constant
-can just be the name of the distribution you are implementing. A builder can implement
-more than one target at time. For example, the minikube builder is just a vanilla one.
+can just be the ID of the distribution you are implementing, as taken reading `/etc/os-release` file.  
+A builder can implement more than one target at time. For example, the minikube builder is just a vanilla one.
 
-Once you have the constant, you will need to add it to the `BuilderByTarget` map.
-
-Open your file and you will need to have something like this:
+Once you have the constant, you will need to add it to the `BuilderByTarget` map.  
+Open your file and you will need to add something like this:
 
 ```go
 // TargetTypeArchLinux identifies the Arch Linux target.
-/// NOTE: the target name should exactly match the /etc/os-release ID value.
 const TargetTypeArchLinux Type = "arch"
 
 type archLinux struct {
@@ -90,8 +94,8 @@ func (c archlinux) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls
 ```
 
 Essentially, the various methods that you are implementing are needed to:
-* filling the script template (see below), that is a `bash` script that will be executed by driverkit at build time
-* fetching kernel headers urls that will later be downloaded inside the builder container, and used for the driver build
+* fill the script template (see below), that is a `bash` script that will be executed by driverkit at build time
+* fetch kernel headers urls that will later be downloaded inside the builder container, and used for the driver build
 
 Under `pkg/driverbuilder/builder/templates` folder, you can find all the template scripts for the supported builders.  
 Adding a new template there and using `go:embed` to include it in your builder, allows leaner code
@@ -145,7 +149,7 @@ From **driverkit-builder_bookworm** image:
 You can dynamically choose the one you prefer,
 by letting your builder implement the `builder.GCCVersionRequestor` interface.  
 A sane default is provided, selecting it switching on the kernel version.  
-Please note that requested gcc version is used to find the correct builder image to be used.  
+Please note that requested gcc version is used to find the correct builder image to be used.
 
 Moreover, Driverkit builder images support multiple clang versions:
 
@@ -162,9 +166,9 @@ From **driverkit-builder_bookworm** image:
 * /usr/bin/clang (clang-14)
 
 Note, however, that there is no mechanism to dynamically choose a clang version,  
-as changing it should not be needed.
-The build will use the one provided by the chosen builder image.  
-Any failure must be treated as a bug, therefore and issue must be opened on [libs](https://github.com/falcosecurity/libs) repository.
+because touching it should never be needed.  
+The build will use the one provided by the chosen builder image.    
+Any failure must be treated as a bug, and therefore an issue opened on [libs](https://github.com/falcosecurity/libs) repository.
 
 ### 5. kernel-crawler
 
