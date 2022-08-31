@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/falcosecurity/driverkit/pkg/signals"
-	"io"
 	"os"
 	"time"
 
@@ -93,6 +92,15 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 		return err
 	}
 
+	if builder.ModuleFullPath != "" {
+		res = fmt.Sprintf("%s\n%s", "touch "+moduleLockFile, res)
+		res = fmt.Sprintf("%s\n%s", res, "rm "+moduleLockFile)
+	}
+	if builder.ProbeFullPath != "" {
+		res = fmt.Sprintf("%s\n%s", "touch "+probeLockFile, res)
+		res = fmt.Sprintf("%s\n%s", res, "rm "+probeLockFile)
+	}
+
 	// Append a script to the entrypoint to wait
 	// for the module to be ready before exiting PID 1
 	res = fmt.Sprintf("%s\n%s", res, waitForLockScript)
@@ -136,7 +144,8 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 			"kernel.config":         string(configDecoded),
 			"module-Makefile":       bufMakefile.String(),
 			"fill-driver-config.sh": bufFillDriverConfig.String(),
-			"downloader.sh":         waitForFileAndCat,
+			"downloader.sh":         waitForLockAndCat,
+			"unlock.sh":             deleteLock,
 		},
 	}
 	// Construct environment variable array of corev1.EnvVar
@@ -224,24 +233,10 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 		return err
 	}
 	defer podClient.Delete(ctx, pod.Name, metav1.DeleteOptions{})
-
-	outModule, err := os.Create(build.ModuleFilePath)
-	if err != nil {
-		return err
-	}
-	defer outModule.Close()
-
-	outProbe, err := os.Create(build.ProbeFilePath)
-
-	if err != nil {
-		return err
-	}
-	defer outProbe.Close()
-
-	return bp.copyModuleAndProbeFromPodWithUID(ctx, outModule, outProbe, namespace, string(uid))
+	return bp.copyModuleAndProbeFromPodWithUID(ctx, build, namespace, string(uid))
 }
 
-func (bp *KubernetesBuildProcessor) copyModuleAndProbeFromPodWithUID(ctx context.Context, outModule io.Writer, outProbe io.Writer, namespace string, falcoBuilderUID string) error {
+func (bp *KubernetesBuildProcessor) copyModuleAndProbeFromPodWithUID(ctx context.Context, build *builder.Build, namespace string, falcoBuilderUID string) error {
 	namespacedClient := bp.coreV1Client.Pods(namespace)
 	watch, err := namespacedClient.Watch(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", falcoBuilderUIDLabel, falcoBuilderUID),
@@ -270,16 +265,18 @@ func (bp *KubernetesBuildProcessor) copyModuleAndProbeFromPodWithUID(ctx context
 			if p.Status.Phase == corev1.PodRunning {
 				logger.WithField(falcoBuilderUIDLabel, falcoBuilderUID).Info("start downloading module and probe from pod")
 				if builder.ModuleFullPath != "" {
-					err = copySingleFileFromPod(outModule, bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name, builder.ModuleFullPath)
+					err = copySingleFileFromPod(build.ModuleFilePath, bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name, builder.ModuleFullPath, moduleLockFile)
 					if err != nil {
 						return err
 					}
+					logger.Info("Kernel Module extraction successful")
 				}
 				if builder.ProbeFullPath != "" {
-					err = copySingleFileFromPod(outProbe, bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name, builder.ProbeFullPath)
+					err = copySingleFileFromPod(build.ProbeFilePath, bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name, builder.ProbeFullPath, probeLockFile)
 					if err != nil {
 						return err
 					}
+					logger.Info("Probe Module extraction successful")
 				}
 				err = unlockPod(bp.coreV1Client, bp.clientConfig, p)
 				if err != nil {
@@ -296,14 +293,21 @@ func unlockPod(podClient v1.PodsGetter, clientConfig *restclient.Config, pod *co
 	options := &exec.ExecOptions{
 		PodClient: podClient,
 		Config:    clientConfig,
-		Pod:       pod,
+		StreamOptions: exec.StreamOptions{
+			IOStreams: genericclioptions.IOStreams{
+				Out:    bytes.NewBuffer([]byte{}),
+				ErrOut: bytes.NewBuffer([]byte{}),
+			},
+			Stdin:     false,
+			Namespace: pod.Namespace,
+			PodName:   pod.Name,
+		},
 		Command: []string{
-			"rm",
-			"/tmp/download.lock",
+			"/bin/bash",
+			"/driverkit/unlock.sh",
 		},
 		Executor: &exec.DefaultRemoteExecutor{},
 	}
-
 	if err := options.Validate(); err != nil {
 		return err
 	}
@@ -314,7 +318,7 @@ func unlockPod(podClient v1.PodsGetter, clientConfig *restclient.Config, pod *co
 	return nil
 }
 
-func copySingleFileFromPod(out io.Writer, podClient v1.PodsGetter, clientConfig *restclient.Config, namespace string, podName string, fileNameToCopy string) error {
+func copySingleFileFromPod(dstFile string, podClient v1.PodsGetter, clientConfig *restclient.Config, namespace string, podName string, fileNameToCopy string, lockFilename string) error {
 	if len(namespace) == 0 {
 		return errors.New("need a namespace to copy from pod")
 	}
@@ -322,6 +326,12 @@ func copySingleFileFromPod(out io.Writer, podClient v1.PodsGetter, clientConfig 
 	if len(podName) == 0 {
 		return errors.New("need a podName to copy from pod")
 	}
+
+	out, err := os.Create(dstFile)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
 
 	options := &exec.ExecOptions{
 		PodClient: podClient,
@@ -340,10 +350,10 @@ func copySingleFileFromPod(out io.Writer, podClient v1.PodsGetter, clientConfig 
 			"/bin/bash",
 			"/driverkit/downloader.sh",
 			fileNameToCopy,
+			lockFilename,
 		},
 		Executor: &exec.DefaultRemoteExecutor{},
 	}
-
 	if err := options.Validate(); err != nil {
 		return err
 	}

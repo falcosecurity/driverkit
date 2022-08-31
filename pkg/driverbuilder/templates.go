@@ -18,11 +18,18 @@ while true; do
 done
 `
 
-// waitForFileAndCat MUST only output the file, any other output will break
+var deleteLock = `
+rm -f /tmp/download.lock
+`
+
+const moduleLockFile = "/tmp/module.lock"
+const probeLockFile = "/tmp/probe.lock"
+
+// waitForLockAndCat MUST only output the file, any other output will break
 // the download file itself because it goes trough stdout
-var waitForFileAndCat = `
+var waitForLockAndCat = `
 while true; do
-  if [ ! -f "$1" ]; then
+  if [ -f "$2" ]; then
 	sleep 10 1>&/dev/null
 	continue
   fi
