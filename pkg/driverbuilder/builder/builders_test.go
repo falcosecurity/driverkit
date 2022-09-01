@@ -43,7 +43,7 @@ var gccTests = []struct {
 			FullExtraversion: "-100",
 			Architecture:     "amd64",
 		},
-		expectedGCC: 5,
+		expectedGCC: 4.9,
 	},
 	{
 		config: kernelrelease.KernelRelease{
