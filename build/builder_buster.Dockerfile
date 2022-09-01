@@ -6,9 +6,16 @@ ARG TARGETARCH
 
 RUN cp /etc/skel/.bashrc /root && cp /etc/skel/.profile /root
 RUN echo 'deb http://deb.debian.org/debian buster-backports main' >>/etc/apt/sources.list
+RUN echo 'deb http://deb.debian.org/debian jessie main' >>/etc/apt/sources.list # gcc 4.9
 
-RUN apt-get update \
-	&& apt-get install -y --no-install-recommends \
+# jessie repo is unsigned therefore the APT options
+RUN apt-get \
+	-o Acquire::AllowInsecureRepositories=true \
+	-o Acquire::AllowDowngradeToInsecureRepositories=true \
+	update \
+	&& apt-get \
+	-o APT::Get::AllowUnauthenticated=true \
+	install -y --no-install-recommends \
 	bash-completion \
 	bc \
 	clang \
@@ -19,6 +26,7 @@ RUN apt-get update \
 	dwarves/buster-backports \
 	gnupg2 \
 	gcc \
+	gcc-4.9 \
 	jq \
 	libc6-dev \
 	libelf-dev \

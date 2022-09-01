@@ -123,7 +123,7 @@ type Image struct {
 
 var images = map[string]Image{
 	"buster": {
-		GCCVersion: []float64{4.8, 5, 6, 8},
+		GCCVersion: []float64{4.8, 4.9, 5, 6, 8},
 	},
 	"bullseye": {
 		GCCVersion: []float64{9, 10},
@@ -143,7 +143,10 @@ func defaultGCC(kr kernelrelease.KernelRelease) float64 {
 	case 4:
 		return 8
 	case 3:
-		return 5
+		if kr.PatchLevel >= 18 {
+			return 5
+		}
+		return 4.9
 	case 2:
 		return 4.8
 	default:
