@@ -55,7 +55,7 @@ that allows to specify a list of headers.
 
 A solution to crawl all supported kernels by multiple distro was recently developed,  
 and it provides a json output with aforementioned `kernelheaders`: https://github.com/falcosecurity/kernel-crawler.  
-Json for supported architectures can be found at https://github.com/falcosecurity/kernel-crawler/tree/main/kernels.
+Json for supported architectures can be found at https://falcosecurity.github.io/kernel-crawler/.
 
 ## How to use
 
@@ -103,7 +103,11 @@ For a comprehensive list of examples, heads to [example configs](Example_configs
 ## Support a new target
 
 To add support for a new target, a new builder must be added.  
-For more info, you can find specific docs under [pkg/driverbuilder/builder](/pkg/driverbuilder/builder) README file.
+For more info, you can find specific docs in [docs/builder.md](docs/builder.md) file.
+
+## Support a new builder image
+
+To add support for a new builder image, follow the doc at [docs/builder_images.md](docs/builder_images.md) file.
 
 ## Survey
 
