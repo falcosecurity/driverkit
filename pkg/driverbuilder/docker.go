@@ -120,7 +120,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	c := builder.Config{
 		DriverName:      b.ModuleDriverName,
 		DeviceName:      b.ModuleDeviceName,
-		DownloadBaseURL: "https://github.com/falcosecurity/libs/archive",
+		DownloadBaseURL: "https://github.com/falcosecurity/libs/archive", // TODO: make this configurable
 		Build:           b,
 	}
 
@@ -138,8 +138,12 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	}
 
 	// Prepare makefile template
+	objList, err := LoadMakefileObjList(c)
+	if err != nil {
+		return err
+	}
 	bufMakefile := bytes.NewBuffer(nil)
-	err = renderMakefile(bufMakefile, makefileData{ModuleName: c.DriverName, ModuleBuildDir: builder.DriverDirectory})
+	err = renderMakefile(bufMakefile, makefileData{ModuleName: c.DriverName, ModuleBuildDir: builder.DriverDirectory, MakeObjList: objList})
 	if err != nil {
 		return err
 	}

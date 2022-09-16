@@ -127,8 +127,12 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 	}
 
 	// Prepare makefile template
+	objList, err := LoadMakefileObjList(c)
+	if err != nil {
+		return err
+	}
 	bufMakefile := bytes.NewBuffer(nil)
-	err = renderMakefile(bufMakefile, makefileData{ModuleName: c.DriverName, ModuleBuildDir: builder.DriverDirectory})
+	err = renderMakefile(bufMakefile, makefileData{ModuleName: c.DriverName, ModuleBuildDir: builder.DriverDirectory, MakeObjList: objList})
 	if err != nil {
 		return err
 	}
