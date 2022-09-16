@@ -52,8 +52,8 @@ jobs:
           name: Test
           command: docker exec alpine_sh make test
       - run:
-           name: Integration tests
-           command: docker exec alpine_sh make integration_test
+          name: Integration tests
+          command: docker exec alpine_sh make integration_test
       - run:
           name: Prepare Artifacts
           command: |
