@@ -6,7 +6,7 @@ ARG TARGETARCH
 
 RUN cp /etc/skel/.bashrc /root && cp /etc/skel/.profile /root
 RUN echo 'deb http://deb.debian.org/debian buster-backports main' >>/etc/apt/sources.list
-RUN echo 'deb http://deb.debian.org/debian jessie main' >>/etc/apt/sources.list # gcc 4.9
+RUN echo 'deb http://deb.debian.org/debian jessie main' >>/etc/apt/sources.list # gcc 4.9 on x86_64
 
 # jessie repo is unsigned therefore the APT options
 RUN apt-get \
@@ -26,7 +26,6 @@ RUN apt-get \
 	dwarves/buster-backports \
 	gnupg2 \
 	gcc \
-	gcc-4.9 \
 	jq \
 	libc6-dev \
 	libelf-dev \
@@ -49,7 +48,7 @@ RUN apt-get \
 	zstd \
     && rm -rf /var/lib/apt/lists/*
 
-RUN if [ "$TARGETARCH" = "amd64" ] ; then apt-get install -y --no-install-recommends libmpx2; fi
+RUN if [ "$TARGETARCH" = "amd64" ] ; then apt-get install -y --no-install-recommends libmpx2 gcc-4.9; fi
 
 # gcc 6 is no longer included in debian stable, but we need it to
 # build kernel modules on the default debian-based ami used by
