@@ -1,7 +1,11 @@
 package driverbuilder
 
 import (
+	"fmt"
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"io"
+	"net/http"
+	"strings"
 	"text/template"
 )
 
@@ -41,10 +45,11 @@ cat "$1"
 type makefileData struct {
 	ModuleName     string
 	ModuleBuildDir string
+	MakeObjList    string
 }
 
 const makefileTemplate = `
-{{ .ModuleName }}-y += main.o dynamic_params_table.o fillers_table.o flags_table.o ppm_events.o ppm_fillers.o event_table.o syscall_table.o ppm_cputime.o
+{{ .ModuleName }}-y += {{ .MakeObjList }}
 obj-m += {{ .ModuleName }}.o
 KERNELDIR ?= /lib/modules/$(shell uname -r)/build
 
@@ -62,6 +67,27 @@ func renderMakefile(w io.Writer, md makefileData) error {
 	t := template.New("makefile")
 	t, _ = t.Parse(makefileTemplate)
 	return t.Execute(w, md)
+}
+
+func LoadMakefileObjList(c builder.Config) (string, error) {
+	// TODO: make this configurable
+	makefileUrl := fmt.Sprintf("https://raw.githubusercontent.com/falcosecurity/libs/%s/driver/Makefile.in", c.DriverVersion)
+	resp, err := http.Get(makefileUrl)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	parsedMakefile, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	lines := strings.Split(string(parsedMakefile), "\n")
+	for _, l := range lines {
+		if strings.HasPrefix(l, "@DRIVER_NAME@-y +=") {
+			return strings.Split(l, "@DRIVER_NAME@-y += ")[1], nil
+		}
+	}
+	return "", fmt.Errorf("obj list not found")
 }
 
 type driverConfigData struct {
