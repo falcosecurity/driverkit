@@ -118,18 +118,27 @@ type GCCVersionRequestor interface {
 }
 
 type Image struct {
-	GCCVersion []float64
+	GCCVersion map[kernelrelease.Architecture][]float64
 }
 
 var images = map[string]Image{
 	"buster": {
-		GCCVersion: []float64{4.8, 4.9, 5, 6, 8},
+		GCCVersion: map[kernelrelease.Architecture][]float64{
+			"amd64": {4.8, 4.9, 5, 6, 8},
+			"arm64": {4.8, 5, 6, 8}, // 4.9 is not present on arm64
+		},
 	},
 	"bullseye": {
-		GCCVersion: []float64{9, 10},
+		GCCVersion: map[kernelrelease.Architecture][]float64{
+			"amd64": {9, 10},
+			"arm64": {9, 10},
+		},
 	},
 	"bookworm": {
-		GCCVersion: []float64{11, 12},
+		GCCVersion: map[kernelrelease.Architecture][]float64{
+			"amd64": {11, 12},
+			"arm64": {11, 12},
+		},
 	},
 }
 
@@ -178,7 +187,7 @@ func (b *Build) SetGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 	for name, img := range images {
 		var foundGCC float64
 		d := math.MaxFloat64
-		for _, gcc := range img.GCCVersion {
+		for _, gcc := range img.GCCVersion[kr.Architecture] {
 			if math.Abs(gcc-targetGCC) < d {
 				// Find the nearest to targetGCC
 				// for this image
@@ -233,7 +242,7 @@ func (b *Build) GetBuilderImage() string {
 	}
 
 	for name, img := range images {
-		for _, gcc := range img.GCCVersion {
+		for _, gcc := range img.GCCVersion[kernelrelease.Architecture(b.Architecture)] {
 			if gcc == b.GCCVersion {
 				return names[0] + "_" + name + ":" + imageTag
 			}
