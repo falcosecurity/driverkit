@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/docker/docker/pkg/archive"
+	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"io"
 	"io/ioutil"
@@ -53,7 +54,7 @@ func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Cli
 		return
 	}
 
-	if runtime.GOARCH != "amd64" {
+	if runtime.GOARCH != kernelrelease.ArchitectureAmd64 {
 		log.Fatal("qemu-user-static image is only available for x86_64 hosts: https://github.com/multiarch/qemu-user-static#supported-host-architectures")
 	}
 

@@ -92,7 +92,7 @@ func (v ubuntu) GCCVersion(kr kernelrelease.KernelRelease) float64 {
 func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv string) ([]string, error) {
 	// decide which mirrors to use based on the architecture passed in
 	baseURLs := []string{}
-	if kr.Architecture.String() == "amd64" {
+	if kr.Architecture.String() == kernelrelease.ArchitectureAmd64 {
 		baseURLs = []string{
 			"https://mirrors.edge.kernel.org/ubuntu/pool/main/l",
 			"http://security.ubuntu.com/ubuntu/pool/main/l",

@@ -27,7 +27,7 @@ var tests = []struct {
 			Sublevel:         0,
 			Extraversion:     "188",
 			FullExtraversion: "-188",
-			Architecture:     "amd64",
+			Architecture:     kernelrelease.ArchitectureAmd64,
 		},
 		kernelversion: "199",
 		expected: struct {
@@ -54,7 +54,7 @@ var tests = []struct {
 			Sublevel:         0,
 			Extraversion:     "1140-aws",
 			FullExtraversion: "-1140-aws",
-			Architecture:     "arm64",
+			Architecture:     kernelrelease.ArchitectureArm64,
 		},
 		kernelversion: "151",
 		expected: struct {
@@ -81,7 +81,7 @@ var tests = []struct {
 			Sublevel:         0,
 			Extraversion:     "1004-intel-iotg",
 			FullExtraversion: "-1004-intel-iotg",
-			Architecture:     "amd64",
+			Architecture:     kernelrelease.ArchitectureAmd64,
 		},
 		kernelversion: "6",
 		expected: struct {
@@ -108,7 +108,7 @@ var tests = []struct {
 			Sublevel:         0,
 			Extraversion:     "24-lowlatency-hwe-5.15",
 			FullExtraversion: "-24-lowlatency-hwe-5.15",
-			Architecture:     "amd64",
+			Architecture:     kernelrelease.ArchitectureAmd64,
 		},
 		kernelversion: "24~20.04.3",
 		expected: struct {
@@ -135,7 +135,7 @@ var tests = []struct {
 			Sublevel:         0,
 			Extraversion:     "100",
 			FullExtraversion: "-100",
-			Architecture:     "amd64",
+			Architecture:     kernelrelease.ArchitectureAmd64,
 		},
 		kernelversion: "147",
 		expected: struct {
@@ -162,7 +162,7 @@ var tests = []struct {
 			Sublevel:         0,
 			Extraversion:     "38-lts-utopic",
 			FullExtraversion: "-38-lts-utopic",
-			Architecture:     "amd64",
+			Architecture:     kernelrelease.ArchitectureAmd64,
 		},
 		kernelversion: "52~14.04.1",
 		expected: struct {
@@ -189,7 +189,7 @@ var tests = []struct {
 			Sublevel:         0,
 			Extraversion:     "1004-kvm",
 			FullExtraversion: "-1004-kvm",
-			Architecture:     "amd64",
+			Architecture:     kernelrelease.ArchitectureAmd64,
 		},
 		kernelversion: "4",
 		expected: struct {
@@ -251,7 +251,7 @@ func TestFetchUbuntuKernelURL(t *testing.T) {
 
 		// setup baseURLs - leave out security for sake of simplicity
 		baseURLs := []string{}
-		if test.config.Architecture.String() == "amd64" {
+		if test.config.Architecture.String() == kernelrelease.ArchitectureAmd64 {
 			baseURLs = []string{
 				"https://mirrors.edge.kernel.org/ubuntu/pool/main/l",
 			}
