@@ -6,16 +6,9 @@ ARG TARGETARCH
 
 RUN cp /etc/skel/.bashrc /root && cp /etc/skel/.profile /root
 RUN echo 'deb http://deb.debian.org/debian buster-backports main' >>/etc/apt/sources.list
-RUN echo 'deb http://deb.debian.org/debian jessie main' >>/etc/apt/sources.list # gcc 4.9 on x86_64
 
-# jessie repo is unsigned therefore the APT options
-RUN apt-get \
-	-o Acquire::AllowInsecureRepositories=true \
-	-o Acquire::AllowDowngradeToInsecureRepositories=true \
-	update \
-	&& apt-get \
-	-o APT::Get::AllowUnauthenticated=true \
-	install -y --no-install-recommends \
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends \
 	bash-completion \
 	bc \
 	clang \
@@ -48,7 +41,13 @@ RUN apt-get \
 	zstd \
     && rm -rf /var/lib/apt/lists/*
 
-RUN if [ "$TARGETARCH" = "amd64" ] ; then apt-get install -y --no-install-recommends libmpx2 gcc-4.9; fi
+RUN if [ "$TARGETARCH" = "amd64" ] ; then apt-get install -y --no-install-recommends libmpx2; fi
+
+# gcc 4.9 is required on x86 to build some 3.10+ kernels
+# note: on arm gcc 4.9 could not be found.
+RUN echo 'deb http://deb.debian.org/debian jessie main' >>/etc/apt/sources.list # gcc 4.9 on x86_64
+# jessie repo is unsigned therefore the APT options
+RUN if [ "$TARGETARCH" = "amd64" ] ; then apt-get -o Acquire::AllowInsecureRepositories=true -o Acquire::AllowDowngradeToInsecureRepositories=true update && apt-get -o APT::Get::AllowUnauthenticated=true install -y --no-install-recommends gcc-4.9; fi
 
 # gcc 6 is no longer included in debian stable, but we need it to
 # build kernel modules on the default debian-based ami used by
