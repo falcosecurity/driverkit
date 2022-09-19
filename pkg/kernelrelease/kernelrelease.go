@@ -12,13 +12,18 @@ var (
 	kernelVersionPattern = regexp.MustCompile(`(?P<fullversion>^(?P<version>0|[1-9]\d*)\.(?P<patchlevel>0|[1-9]\d*)\.(?P<sublevel>0|[1-9]\d*))(?P<fullextraversion>[-|.](?P<extraversion>0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-_]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$`)
 )
 
+const (
+	ArchitectureAmd64 = "amd64"
+	ArchitectureArm64 = "arm64"
+)
+
 // Architectures is a Map [Architecture] -> non-deb-ArchitectureString
 type Architectures map[Architecture]string
 
 // SupportedArchs enforces the duality of architecture->non-deb one when adding a new one
 var SupportedArchs = Architectures{
-	"amd64": "x86_64",
-	"arm64": "aarch64",
+	ArchitectureAmd64: "x86_64",
+	ArchitectureArm64: "aarch64",
 }
 
 // Privately cached at startup for quicker access

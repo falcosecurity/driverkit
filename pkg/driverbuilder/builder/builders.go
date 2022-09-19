@@ -124,20 +124,20 @@ type Image struct {
 var images = map[string]Image{
 	"buster": {
 		GCCVersion: map[kernelrelease.Architecture][]float64{
-			"amd64": {4.8, 4.9, 5, 6, 8},
-			"arm64": {4.8, 5, 6, 8}, // 4.9 is not present on arm64
+			kernelrelease.ArchitectureAmd64: {4.8, 4.9, 5, 6, 8},
+			kernelrelease.ArchitectureArm64: {4.8, 5, 6, 8}, // 4.9 is not present on arm64
 		},
 	},
 	"bullseye": {
 		GCCVersion: map[kernelrelease.Architecture][]float64{
-			"amd64": {9, 10},
-			"arm64": {9, 10},
+			kernelrelease.ArchitectureAmd64: {9, 10},
+			kernelrelease.ArchitectureArm64: {9, 10},
 		},
 	},
 	"bookworm": {
 		GCCVersion: map[kernelrelease.Architecture][]float64{
-			"amd64": {11, 12},
-			"arm64": {11, 12},
+			kernelrelease.ArchitectureAmd64: {11, 12},
+			kernelrelease.ArchitectureArm64: {11, 12},
 		},
 	},
 }

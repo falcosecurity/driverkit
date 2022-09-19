@@ -36,7 +36,7 @@ func (c archlinux) TemplateScript() string {
 func (c archlinux) URLs(cfg Config, kr kernelrelease.KernelRelease) ([]string, error) {
 	urls := []string{}
 
-	if kr.Architecture == "amd64" {
+	if kr.Architecture == kernelrelease.ArchitectureAmd64 {
 		urls = append(urls, fmt.Sprintf(
 			"https://archive.archlinux.org/packages/l/linux-headers/linux-headers-%s.%s-%s.pkg.tar.xz",
 			kr.Fullversion,
