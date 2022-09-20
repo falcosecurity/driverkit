@@ -3,6 +3,8 @@ package builder
 import (
 	_ "embed"
 	"fmt"
+	"strings"
+
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
@@ -37,16 +39,47 @@ func (c archlinux) URLs(cfg Config, kr kernelrelease.KernelRelease) ([]string, e
 	urls := []string{}
 
 	if kr.Architecture == kernelrelease.ArchitectureAmd64 {
-		urls = append(urls, fmt.Sprintf(
-			"https://archive.archlinux.org/packages/l/linux-headers/linux-headers-%s.%s-%s.pkg.tar.xz",
-			kr.Fullversion,
-			kr.Extraversion,
-			kr.Architecture.ToNonDeb()))
-		urls = append(urls, fmt.Sprintf(
-			"https://archive.archlinux.org/packages/l/linux-headers/linux-headers-%s.%s-%s.pkg.tar.zst",
-			kr.Fullversion,
-			kr.Extraversion,
-			kr.Architecture.ToNonDeb()))
+		// Archlinux officially support 4 kernel versions: stable, lts, hardened and zen
+		// see: https://wiki.archlinux.org/title/Kernel#Officially_supported_kernels
+		var archKernelVersion string
+		var customVersion string
+		var baseurl string
+		switch {
+		case strings.Contains(kr.Extraversion, "-lts"):
+			archKernelVersion = "-lts"
+			customVersion = strings.ReplaceAll(kr.Extraversion, archKernelVersion, "")
+			baseurl = fmt.Sprintf("https://archive.archlinux.org/packages/l/linux%s-headers/linux%s-headers-%s-%s-%s.pkg.tar",
+				archKernelVersion,
+				archKernelVersion,
+				kr.Fullversion,
+				customVersion,
+				kr.Architecture.ToNonDeb())
+		case strings.Contains(kr.Extraversion, "-hardened"):
+			archKernelVersion = "-hardened"
+			customVersion = strings.ReplaceAll(kr.Extraversion, archKernelVersion, "")
+			baseurl = fmt.Sprintf("https://archive.archlinux.org/packages/l/linux%s-headers/linux%s-headers-%s.%s-%s.pkg.tar",
+				archKernelVersion,
+				archKernelVersion,
+				kr.Fullversion,
+				customVersion,
+				kr.Architecture.ToNonDeb())
+		case strings.Contains(kr.Extraversion, "-zen"):
+			archKernelVersion = "-zen"
+			customVersion = strings.ReplaceAll(kr.Extraversion, archKernelVersion, "")
+			baseurl = fmt.Sprintf("https://archive.archlinux.org/packages/l/linux%s-headers/linux%s-headers-%s.%s-%s.pkg.tar",
+				archKernelVersion,
+				archKernelVersion,
+				kr.Fullversion,
+				customVersion,
+				kr.Architecture.ToNonDeb())
+		default:
+			baseurl = fmt.Sprintf("https://archive.archlinux.org/packages/l/linux-headers/linux-headers-%s.%s-%s.pkg.tar",
+				kr.Fullversion,
+				kr.Extraversion,
+				kr.Architecture.ToNonDeb())
+		}
+		urls = append(urls, fmt.Sprintf("%s%s", baseurl, ".xz"))
+		urls = append(urls, fmt.Sprintf("%s%s", baseurl, ".zst"))
 	} else {
 		urls = append(urls, fmt.Sprintf(
 			"http://tardis.tiny-vps.com/aarm/packages/l/linux-%s-headers/linux-%s-headers-%s-%s-%s.pkg.tar.xz",

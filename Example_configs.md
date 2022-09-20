@@ -156,14 +156,14 @@ kernelconfigdata: Q09ORklHX0ZBTk9USUZZPXkKQ09ORklHX0t...
 
 Example configuration file to build both the Kernel module and eBPF probe for Archlinux.
 Note: archlinux target uses the [Arch Linux Archive](https://wiki.archlinux.org/title/Arch_Linux_Archive) to fetch
-all ever supported kernel releases.  
-For arm64, it uses an user-provided mirror, as no official mirror is available: http://tardis.tiny-vps.com/aarm/.  
+all ever supported kernel releases.
+For arm64, it uses an user-provided mirror, as no official mirror is available: http://tardis.tiny-vps.com/aarm/.
 The mirror has been up and updated since 2015.
 
 ```yaml
 kernelversion: 1
-kernelrelease: 4.20.3-arch1
-target: archlinux
+kernelrelease: 5.19.8-arch1-1
+target: arch
 output:
   module: /tmp/falco-arch.ko
   probe: /tmp/falco-arch.o
