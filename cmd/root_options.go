@@ -15,6 +15,11 @@ type OutputOptions struct {
 	Probe  string `validate:"required_without=Module,filepath,omitempty,endswith=.o" name:"output probe path"`
 }
 
+type RepoOptions struct {
+	Org  string `default:"falcosecurity" name:"organization name"`
+	Name string `default:"libs" name:"repo name"`
+}
+
 // RootOptions ...
 type RootOptions struct {
 	Architecture     string   `validate:"required,architecture" name:"architecture"`
@@ -28,6 +33,7 @@ type RootOptions struct {
 	BuilderImage     string   `validate:"imagename" name:"builder image"`
 	GCCVersion       float64  `name:"gcc version"`
 	KernelUrls       []string `name:"kernel header urls"`
+	Repo             RepoOptions
 	Output           OutputOptions
 }
 
@@ -86,6 +92,8 @@ func (ro *RootOptions) Log() {
 	if len(ro.KernelUrls) > 0 {
 		fields["kernelurls"] = ro.KernelUrls
 	}
+	fields["repo-org"] = ro.Repo.Org
+	fields["repo-name"] = ro.Repo.Name
 
 	logger.WithFields(fields).Debug("running with options")
 }
@@ -110,6 +118,8 @@ func (ro *RootOptions) toBuild() *builder.Build {
 		GCCVersion:         ro.GCCVersion,
 		CustomBuilderImage: ro.BuilderImage,
 		KernelUrls:         ro.KernelUrls,
+		RepoOrg:            ro.Repo.Org,
+		RepoName:           ro.Repo.Name,
 	}
 }
 

@@ -148,6 +148,9 @@ func NewRootCmd() *RootCmd {
 
 	flags.StringSliceVar(&rootOpts.KernelUrls, "kernelurls", nil, "list of kernel header urls (e.g. --kernelurls <URL1> --kernelurls <URL2> --kernelurls \"<URL3>,<URL4>\")")
 
+	flags.StringVar(&rootOpts.Repo.Org, "repo-org", rootOpts.Repo.Org, "repository github organization")
+	flags.StringVar(&rootOpts.Repo.Name, "repo-name", rootOpts.Repo.Name, "repository github name")
+
 	viper.BindPFlags(flags)
 
 	// Flag annotations and custom completions

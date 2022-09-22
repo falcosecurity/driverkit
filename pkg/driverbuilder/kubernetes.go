@@ -63,7 +63,7 @@ func (bp *KubernetesBuildProcessor) Start(b *builder.Build) error {
 	return bp.buildModule(b)
 }
 
-func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
+func (bp *KubernetesBuildProcessor) buildModule(b *builder.Build) error {
 	deadline := int64(bp.timeout)
 	namespace := bp.namespace
 	uid := uuid.NewUUID()
@@ -72,20 +72,15 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 	podClient := bp.coreV1Client.Pods(namespace)
 	configClient := bp.coreV1Client.ConfigMaps(namespace)
 
-	kr := build.KernelReleaseFromBuildConfig()
+	kr := b.KernelReleaseFromBuildConfig()
 
 	// create a builder based on the chosen build type
-	v, err := builder.Factory(build.TargetType)
+	v, err := builder.Factory(b.TargetType)
 	if err != nil {
 		return err
 	}
 
-	c := builder.Config{
-		DriverName:      build.ModuleDriverName,
-		DeviceName:      build.ModuleDeviceName,
-		DownloadBaseURL: "https://github.com/falcosecurity/libs/archive", // TODO: make this configurable
-		Build:           build,
-	}
+	c := b.ToConfig()
 
 	// generate the build script from the builder
 	res, err := builder.Script(v, c, kr)
@@ -137,7 +132,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 		return err
 	}
 
-	configDecoded, err := base64.StdEncoding.DecodeString(build.KernelConfigData)
+	configDecoded, err := base64.StdEncoding.DecodeString(b.KernelConfigData)
 	if err != nil {
 		return err
 	}
@@ -169,7 +164,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 		)
 	}
 
-	builderImage := build.GetBuilderImage()
+	builderImage := b.GetBuilderImage()
 
 	secuContext := corev1.PodSecurityContext{
 		RunAsUser: &bp.runAsUser,
@@ -235,7 +230,7 @@ func (bp *KubernetesBuildProcessor) buildModule(build *builder.Build) error {
 		return err
 	}
 	defer podClient.Delete(ctx, pod.Name, metav1.DeleteOptions{})
-	return bp.copyModuleAndProbeFromPodWithUID(ctx, build, namespace, string(uid))
+	return bp.copyModuleAndProbeFromPodWithUID(ctx, b, namespace, string(uid))
 }
 
 func (bp *KubernetesBuildProcessor) copyModuleAndProbeFromPodWithUID(ctx context.Context, build *builder.Build, namespace string, falcoBuilderUID string) error {

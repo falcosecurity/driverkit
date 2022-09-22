@@ -118,12 +118,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	if err != nil {
 		return err
 	}
-	c := builder.Config{
-		DriverName:      b.ModuleDriverName,
-		DeviceName:      b.ModuleDeviceName,
-		DownloadBaseURL: "https://github.com/falcosecurity/libs/archive", // TODO: make this configurable
-		Build:           b,
-	}
+	c := b.ToConfig()
 
 	// Generate the build script from the builder
 	driverkitScript, err := builder.Script(v, c, kr)
