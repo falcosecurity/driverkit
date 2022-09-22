@@ -70,8 +70,7 @@ func renderMakefile(w io.Writer, md makefileData) error {
 }
 
 func LoadMakefileObjList(c builder.Config) (string, error) {
-	// TODO: make this configurable
-	makefileUrl := fmt.Sprintf("https://raw.githubusercontent.com/falcosecurity/libs/%s/driver/Makefile.in", c.DriverVersion)
+	makefileUrl := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s/driver/Makefile.in", c.RepoOrg, c.RepoName, c.DriverVersion)
 	resp, err := http.Get(makefileUrl)
 	if err != nil {
 		return "", err
