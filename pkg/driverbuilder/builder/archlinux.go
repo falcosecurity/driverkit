@@ -27,15 +27,15 @@ type archlinuxTemplateData struct {
 	KernelDownloadURL string
 }
 
-func (c archlinux) Name() string {
+func (c *archlinux) Name() string {
 	return TargetTypeArchlinux.String()
 }
 
-func (c archlinux) TemplateScript() string {
+func (c *archlinux) TemplateScript() string {
 	return archlinuxTemplate
 }
 
-func (c archlinux) URLs(cfg Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (c *archlinux) URLs(cfg Config, kr kernelrelease.KernelRelease) ([]string, error) {
 	urls := []string{}
 
 	if kr.Architecture == kernelrelease.ArchitectureAmd64 {
@@ -92,9 +92,9 @@ func (c archlinux) URLs(cfg Config, kr kernelrelease.KernelRelease) ([]string, e
 	return urls, nil
 }
 
-func (c archlinux) TemplateData(cfg Config, _ kernelrelease.KernelRelease, urls []string) interface{} {
+func (c *archlinux) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
 	return archlinuxTemplateData{
-		commonTemplateData: cfg.toTemplateData(),
+		commonTemplateData: cfg.toTemplateData(c, kr),
 		KernelDownloadURL:  urls[0],
 	}
 }

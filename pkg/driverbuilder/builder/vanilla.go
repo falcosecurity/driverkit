@@ -26,21 +26,21 @@ type vanillaTemplateData struct {
 	KernelLocalVersion string
 }
 
-func (v vanilla) Name() string {
+func (v *vanilla) Name() string {
 	return TargetTypeVanilla.String()
 }
 
-func (v vanilla) TemplateScript() string {
+func (v *vanilla) TemplateScript() string {
 	return vanillaTemplate
 }
 
-func (v vanilla) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (v *vanilla) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
 	return []string{fetchVanillaKernelURLFromKernelVersion(kr)}, nil
 }
 
-func (v vanilla) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (v *vanilla) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
 	return vanillaTemplateData{
-		commonTemplateData: c.toTemplateData(),
+		commonTemplateData: c.toTemplateData(v, kr),
 		KernelDownloadURL:  urls[0],
 		KernelLocalVersion: kr.FullExtraversion,
 	}

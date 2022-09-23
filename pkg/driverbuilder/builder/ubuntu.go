@@ -32,23 +32,23 @@ func init() {
 // ubuntu is a driverkit target.
 type ubuntu struct{}
 
-func (v ubuntu) Name() string {
+func (v *ubuntu) Name() string {
 	return TargetTypeUbuntu.String()
 }
 
-func (v ubuntu) TemplateScript() string {
+func (v *ubuntu) TemplateScript() string {
 	return ubuntuTemplate
 }
 
-func (v ubuntu) URLs(c Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (v *ubuntu) URLs(c Config, kr kernelrelease.KernelRelease) ([]string, error) {
 	return ubuntuHeadersURLFromRelease(kr, c.Build.KernelVersion)
 }
 
-func (v ubuntu) MinimumURLs() int {
+func (v *ubuntu) MinimumURLs() int {
 	return ubuntuRequiredURLs
 }
 
-func (v ubuntu) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (v *ubuntu) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
 	// parse the flavor out of the kernelrelease extraversion
 	_, flavor := parseUbuntuExtraVersion(kr.Extraversion)
 
@@ -62,14 +62,14 @@ func (v ubuntu) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []st
 	}
 
 	return ubuntuTemplateData{
-		commonTemplateData:   c.toTemplateData(),
+		commonTemplateData:   c.toTemplateData(v, kr),
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
 		KernelHeadersPattern: headersPattern,
 	}
 }
 
-func (v ubuntu) GCCVersion(kr kernelrelease.KernelRelease) float64 {
+func (v *ubuntu) GCCVersion(kr kernelrelease.KernelRelease) float64 {
 	switch kr.Version {
 	case 3:
 		switch {

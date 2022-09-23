@@ -62,26 +62,26 @@ type amazonlinuxTemplateData struct {
 	KernelDownloadURLs []string
 }
 
-func (a amazonlinux) Name() string {
+func (a *amazonlinux) Name() string {
 	return TargetTypeAmazonLinux.String()
 }
 
-func (a amazonlinux) TemplateScript() string {
+func (a *amazonlinux) TemplateScript() string {
 	return amazonlinuxTemplate
 }
 
-func (a amazonlinux) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (a *amazonlinux) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchAmazonLinuxPackagesURLs(a, kr)
 }
 
-func (a amazonlinux) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (a *amazonlinux) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
 	return amazonlinuxTemplateData{
-		commonTemplateData: c.toTemplateData(),
+		commonTemplateData: c.toTemplateData(a, kr),
 		KernelDownloadURLs: urls,
 	}
 }
 
-func (a amazonlinux) repos() []string {
+func (a *amazonlinux) repos() []string {
 	return []string{
 		"latest/updates",
 		"latest/main",
@@ -94,46 +94,46 @@ func (a amazonlinux) repos() []string {
 	}
 }
 
-func (a amazonlinux) baseUrl() string {
+func (a *amazonlinux) baseUrl() string {
 	return "http://repo.us-east-1.amazonaws.com"
 }
 
-func (a amazonlinux) ext() string {
+func (a *amazonlinux) ext() string {
 	return "bz2"
 }
 
-func (a amazonlinux2022) Name() string {
+func (a *amazonlinux2022) Name() string {
 	return TargetTypeAmazonLinux2022.String()
 }
 
-func (a amazonlinux2022) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (a *amazonlinux2022) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchAmazonLinuxPackagesURLs(a, kr)
 }
 
-func (a amazonlinux2022) repos() []string {
+func (a *amazonlinux2022) repos() []string {
 	return []string{
 		"2022.0.20220202",
 		"2022.0.20220315",
 	}
 }
 
-func (a amazonlinux2022) baseUrl() string {
+func (a *amazonlinux2022) baseUrl() string {
 	return "https://al2022-repos-us-east-1-9761ab97.s3.dualstack.us-east-1.amazonaws.com/core/mirrors"
 }
 
-func (a amazonlinux2022) ext() string {
+func (a *amazonlinux2022) ext() string {
 	return "gz"
 }
 
-func (a amazonlinux2) Name() string {
+func (a *amazonlinux2) Name() string {
 	return TargetTypeAmazonLinux2.String()
 }
 
-func (a amazonlinux2) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (a *amazonlinux2) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchAmazonLinuxPackagesURLs(a, kr)
 }
 
-func (a amazonlinux2) repos() []string {
+func (a *amazonlinux2) repos() []string {
 	return []string{
 		"core/2.0",
 		"core/latest",
@@ -142,22 +142,22 @@ func (a amazonlinux2) repos() []string {
 	}
 }
 
-func (a amazonlinux2) baseUrl() string {
+func (a *amazonlinux2) baseUrl() string {
 	return "http://amazonlinux.us-east-1.amazonaws.com/2"
 }
 
-func (a amazonlinux2) ext() string {
+func (a *amazonlinux2) ext() string {
 	return "gz"
 }
 
 func buildMirror(a amazonBuilder, r string, kv kernelrelease.KernelRelease) (string, error) {
 	var baseURL string
 	switch a.(type) {
-	case amazonlinux:
+	case *amazonlinux:
 		baseURL = fmt.Sprintf("%s/%s", a.baseUrl(), r)
-	case amazonlinux2:
+	case *amazonlinux2:
 		baseURL = fmt.Sprintf("%s/%s/%s", a.baseUrl(), r, kv.Architecture.ToNonDeb())
-	case amazonlinux2022:
+	case *amazonlinux2022:
 		baseURL = fmt.Sprintf("%s/%s/%s", a.baseUrl(), r, kv.Architecture.ToNonDeb())
 	default:
 		return "", fmt.Errorf("unsupported target")

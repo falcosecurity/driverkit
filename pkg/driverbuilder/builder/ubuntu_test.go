@@ -297,7 +297,7 @@ func TestFetchUbuntuKernelURL(t *testing.T) {
 }
 
 func TestUbuntuGCCVersionFromKernelRelease(t *testing.T) {
-	b := ubuntu{}
+	b := &ubuntu{}
 	for _, test := range tests {
 		input := test.config
 		gotGCCVersion := b.GCCVersion(input)

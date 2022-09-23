@@ -6,7 +6,6 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -23,66 +22,68 @@ func init() {
 type flatcarTemplateData struct {
 	commonTemplateData
 	KernelDownloadURL string
-	FlatcarVersion    string
-	FlatcarChannel    string
-	KernelConfigURL   string
 }
 
 // flatcar is a driverkit target.
 type flatcar struct {
-	version   string
-	info      *flatcarReleaseInfo
-	kconfUrls []string
+	info *flatcarReleaseInfo
 }
 
-func (f flatcar) Name() string {
+func (f *flatcar) Name() string {
 	return TargetTypeFlatcar.String()
 }
 
-func (f flatcar) TemplateScript() string {
+func (f *flatcar) TemplateScript() string {
 	return flatcarTemplate
 }
 
-func (f flatcar) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
-	if kr.Extraversion != "" {
-		return nil, fmt.Errorf("unexpected extraversion: %s", kr.Extraversion)
-	}
-
-	// convert string to int
-	if kr.Version < 1500 {
-		return nil, fmt.Errorf("not a valid flatcar release version: %d", kr.Version)
-	}
-	f.version = kr.Fullversion
-
-	var err error
-	f.info, err = fetchFlatcarMetadata(kr)
-	if err != nil {
-		return nil, err
-	}
-
-	f.kconfUrls, err = getResolvingURLs(fetchFlatcarKernelConfigURL(kr.Architecture, f.info.Channel, kr.Fullversion))
-	if err != nil {
+func (f *flatcar) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+	if err := f.fillFlatcarInfos(kr); err != nil {
 		return nil, err
 	}
 	return fetchFlatcarKernelURLS(f.info.KernelVersion), nil
 }
 
-func (f flatcar) TemplateData(c Config, _ kernelrelease.KernelRelease, urls []string) interface{} {
+func (f *flatcar) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+	// This happens when `kernelurls` option is passed,
+	// therefore URLs() method is not called.
+	if f.info == nil {
+		if err := f.fillFlatcarInfos(kr); err != nil {
+			return err
+		}
+	}
+
 	return flatcarTemplateData{
-		commonTemplateData: c.toTemplateData(),
+		commonTemplateData: c.toTemplateData(f, kr),
 		KernelDownloadURL:  urls[0],
-		FlatcarVersion:     f.version,
-		FlatcarChannel:     f.info.Channel,
-		KernelConfigURL:    f.kconfUrls[0],
 	}
 }
 
-func (f flatcar) GCCVersion(_ kernelrelease.KernelRelease) float64 {
-	v, err := strconv.ParseFloat(f.info.GCCVersion, 64)
-	if err != nil {
-		return 8
+func (f *flatcar) GCCVersion(_ kernelrelease.KernelRelease) float64 {
+	// Parse maj,min,patch
+	gccV := kernelrelease.FromString(f.info.GCCVersion)
+	targetV := float64(gccV.Version) + float64(gccV.PatchLevel)/10
+	return targetV
+}
+
+func (f *flatcar) fillFlatcarInfos(kr kernelrelease.KernelRelease) error {
+	if kr.Extraversion != "" {
+		return fmt.Errorf("unexpected extraversion: %s", kr.Extraversion)
 	}
-	return v
+
+	// convert string to int
+	if kr.Version < 1500 {
+		return fmt.Errorf("not a valid flatcar release version: %d", kr.Version)
+	}
+
+	var err error
+	f.info, err = fetchFlatcarMetadata(kr)
+	return err
+}
+
+func fetchFlatcarKernelURLS(kernelVersion string) []string {
+	kv := kernelrelease.FromString(kernelVersion)
+	return []string{fetchVanillaKernelURLFromKernelVersion(kv)}
 }
 
 func fetchFlatcarMetadata(kr kernelrelease.KernelRelease) (*flatcarReleaseInfo, error) {
@@ -141,15 +142,6 @@ func fetchFlatcarPackageListURL(architecture kernelrelease.Architecture, flatcar
 		urls = append(urls, fmt.Sprintf(pattern, channel, architecture.String(), flatcarVersion))
 	}
 	return urls
-}
-
-func fetchFlatcarKernelConfigURL(architecture kernelrelease.Architecture, flatcarChannel, flatcarVersion string) []string {
-	return []string{fmt.Sprintf("https://%s.release.flatcar-linux.net/%s-usr/%s/flatcar_production_image_kernel_config.txt", flatcarChannel, architecture.String(), flatcarVersion)}
-}
-
-func fetchFlatcarKernelURLS(kernelVersion string) []string {
-	kv := kernelrelease.FromString(kernelVersion)
-	return []string{fmt.Sprintf("https://cdn.kernel.org/pub/linux/kernel/v%d.x/linux-%s.tar.xz", kv.Version, kv.Fullversion)}
 }
 
 type flatcarReleaseInfo struct {

@@ -58,7 +58,7 @@ type Builder interface {
 	Name() string
 	TemplateScript() string
 	URLs(c Config, kr kernelrelease.KernelRelease) ([]string, error)
-	TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{}
+	TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} // error return type is managed
 }
 
 // MinimumURLsBuilder is an optional interface
@@ -68,8 +68,6 @@ type MinimumURLsBuilder interface {
 }
 
 func Script(b Builder, c Config, kr kernelrelease.KernelRelease) (string, error) {
-	c.SetGCCVersion(b, kr)
-
 	t := template.New(b.Name())
 	parsed, err := t.Parse(b.TemplateScript())
 	if err != nil {
@@ -105,6 +103,10 @@ func Script(b Builder, c Config, kr kernelrelease.KernelRelease) (string, error)
 	}
 
 	td := b.TemplateData(c, kr, urls)
+	if tdErr, ok := td.(error); ok {
+		return "", tdErr
+	}
+
 	buf := bytes.NewBuffer(nil)
 	err = parsed.Execute(buf, td)
 	if err != nil {
@@ -163,7 +165,7 @@ func defaultGCC(kr kernelrelease.KernelRelease) float64 {
 	}
 }
 
-func (b *Build) SetGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
+func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 	if b.GCCVersion != 0 {
 		// If set from user, go on
 		return
@@ -260,7 +262,8 @@ func Factory(target Type) (Builder, error) {
 	return b, nil
 }
 
-func (c Config) toTemplateData() commonTemplateData {
+func (c Config) toTemplateData(b Builder, kr kernelrelease.KernelRelease) commonTemplateData {
+	c.setGCCVersion(b, kr)
 	return commonTemplateData{
 		DriverBuildDir:    DriverDirectory,
 		ModuleDownloadURL: fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.DriverVersion),

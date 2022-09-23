@@ -25,15 +25,15 @@ type centosTemplateData struct {
 	KernelDownloadURL string
 }
 
-func (c centos) Name() string {
+func (c *centos) Name() string {
 	return TargetTypeCentos.String()
 }
 
-func (c centos) TemplateScript() string {
+func (c *centos) TemplateScript() string {
 	return centosTemplate
 }
 
-func (c centos) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (c *centos) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
 	vaultReleases := []string{
 		"6.0/os",
 		"6.0/updates",
@@ -160,9 +160,9 @@ func (c centos) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error)
 	return urls, nil
 }
 
-func (c centos) TemplateData(cfg Config, _ kernelrelease.KernelRelease, urls []string) interface{} {
+func (c *centos) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
 	return centosTemplateData{
-		commonTemplateData: cfg.toTemplateData(),
+		commonTemplateData: cfg.toTemplateData(c, kr),
 		KernelDownloadURL:  urls[0],
 	}
 }

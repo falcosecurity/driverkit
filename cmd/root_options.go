@@ -129,8 +129,12 @@ func (ro *RootOptions) toBuild() *builder.Build {
 func RootOptionsLevelValidation(level validator.StructLevel) {
 	opts := level.Current().Interface().(RootOptions)
 
-	if len(opts.KernelConfigData) == 0 && opts.Target == builder.TargetTypeVanilla.String() {
-		level.ReportError(opts.KernelConfigData, "kernelConfigData", "KernelConfigData", "required_kernelconfigdata_with_target_vanilla", "")
+	if opts.Target == builder.TargetTypeVanilla.String() ||
+		opts.Target == builder.TargetTypeMinikube.String() ||
+		opts.Target == builder.TargetTypeFlatcar.String() {
+		if len(opts.KernelConfigData) == 0 {
+			level.ReportError(opts.KernelConfigData, "kernelConfigData", "KernelConfigData", "required_kernelconfigdata_with_target_vanilla", "")
+		}
 	}
 
 	if opts.KernelVersion == "" && (opts.Target == builder.TargetTypeUbuntu.String()) {
