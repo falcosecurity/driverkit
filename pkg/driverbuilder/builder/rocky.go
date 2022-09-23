@@ -25,21 +25,21 @@ type rockyTemplateData struct {
 type rocky struct {
 }
 
-func (c rocky) Name() string {
+func (c *rocky) Name() string {
 	return TargetTypeRocky.String()
 }
 
-func (c rocky) TemplateScript() string {
+func (c *rocky) TemplateScript() string {
 	return rockyTemplate
 }
 
-func (c rocky) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (c *rocky) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchRockyKernelURLS(kr), nil
 }
 
-func (c rocky) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (c *rocky) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
 	return rockyTemplateData{
-		commonTemplateData: cfg.toTemplateData(),
+		commonTemplateData: cfg.toTemplateData(c, kr),
 		KernelDownloadURL:  urls[0],
 	}
 }

@@ -128,7 +128,8 @@ driverversion: master
 ## flatcar
 
 Example configuration file to build both the Kernel module and eBPF probe for Flatcar.
-The Flatcar release version needs to be provided in the `kernelrelease` field instead of the kernel version.
+The Flatcar release version needs to be provided in the `kernelrelease` field instead of the kernel version;
+moreover, kernelconfigdata must be provided.
 
 ```yaml
 kernelrelease: 3185.0.0
@@ -137,6 +138,7 @@ output:
   module: /tmp/falco-flatcar-3185.0.0.ko
   probe: /tmp/falco-flatcar-3185.0.0.o
 driverversion: master
+kernelconfigdata: Q09ORklHX0ZBTk9USUZZPXkKQ09ORklHX0t...
 ```
 
 ## minikube

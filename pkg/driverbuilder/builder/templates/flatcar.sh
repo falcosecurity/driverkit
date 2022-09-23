@@ -20,9 +20,10 @@ rm -Rf /tmp/kernel
 mkdir -p /tmp/kernel
 mv /tmp/kernel-download/*/* /tmp/kernel
 
-curl --silent -o /tmp/kernel.config -SL {{ .KernelConfigURL }}
-
+# Prepare the kernel
 cd /tmp/kernel
+cp /driverkit/kernel.config /tmp/kernel.config
+
 sed -i -e 's|^\(EXTRAVERSION =\).*|\1 -flatcar|' Makefile
 make KCONFIG_CONFIG=/tmp/kernel.config oldconfig
 make KCONFIG_CONFIG=/tmp/kernel.config modules_prepare

@@ -25,21 +25,21 @@ type photonTemplateData struct {
 	KernelDownloadURL string
 }
 
-func (p photon) Name() string {
+func (p *photon) Name() string {
 	return TargetTypePhoton.String()
 }
 
-func (p photon) TemplateScript() string {
+func (p *photon) TemplateScript() string {
 	return photonTemplate
 }
 
-func (p photon) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (p *photon) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchPhotonKernelURLS(kr), nil
 }
 
-func (p photon) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (p *photon) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
 	return photonTemplateData{
-		commonTemplateData: cfg.toTemplateData(),
+		commonTemplateData: cfg.toTemplateData(p, kr),
 		KernelDownloadURL:  urls[0],
 	}
 }

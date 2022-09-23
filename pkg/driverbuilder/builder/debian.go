@@ -37,28 +37,28 @@ type debianTemplateData struct {
 type debian struct {
 }
 
-func (v debian) Name() string {
+func (v *debian) Name() string {
 	return TargetTypeDebian.String()
 }
 
-func (v debian) TemplateScript() string {
+func (v *debian) TemplateScript() string {
 	return debianTemplate
 }
 
-func (v debian) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (v *debian) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchDebianKernelURLs(kr)
 }
 
-func (v debian) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (v *debian) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
 	return debianTemplateData{
-		commonTemplateData: c.toTemplateData(),
+		commonTemplateData: c.toTemplateData(v, kr),
 		KernelDownloadURLS: urls,
 		KernelLocalVersion: kr.FullExtraversion,
 		KernelArch:         kr.Architecture.String(),
 	}
 }
 
-func (v debian) MinimumURLs() int {
+func (v *debian) MinimumURLs() int {
 	return debianRequiredURLs
 }
 
