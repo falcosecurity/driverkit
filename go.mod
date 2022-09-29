@@ -3,8 +3,8 @@ module github.com/falcosecurity/driverkit
 go 1.16
 
 require (
-	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
+	github.com/blang/semver v3.5.1+incompatible
 	github.com/containerd/containerd v1.6.6 // indirect
 	github.com/creasty/defaults v1.6.0
 	github.com/docker/distribution v2.8.1+incompatible // indirect

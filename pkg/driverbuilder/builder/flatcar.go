@@ -3,6 +3,7 @@ package builder
 import (
 	_ "embed"
 	"fmt"
+	"github.com/blang/semver"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"io/ioutil"
 	"net/http"
@@ -59,11 +60,8 @@ func (f *flatcar) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []
 	}
 }
 
-func (f *flatcar) GCCVersion(_ kernelrelease.KernelRelease) float64 {
-	// Parse maj,min,patch
-	gccV := kernelrelease.FromString(f.info.GCCVersion)
-	targetV := float64(gccV.Version) + float64(gccV.PatchLevel)/10
-	return targetV
+func (f *flatcar) GCCVersion(_ kernelrelease.KernelRelease) semver.Version {
+	return f.info.GCCVersion
 }
 
 func (f *flatcar) fillFlatcarInfos(kr kernelrelease.KernelRelease) error {
@@ -72,8 +70,8 @@ func (f *flatcar) fillFlatcarInfos(kr kernelrelease.KernelRelease) error {
 	}
 
 	// convert string to int
-	if kr.Version < 1500 {
-		return fmt.Errorf("not a valid flatcar release version: %d", kr.Version)
+	if kr.Major < 1500 {
+		return fmt.Errorf("not a valid flatcar release version: %d", kr.Major)
 	}
 
 	var err error
@@ -124,7 +122,7 @@ func fetchFlatcarMetadata(kr kernelrelease.KernelRelease) (*flatcarReleaseInfo, 
 			kernelVersion = strings.Split(kernelVersion, "-")[0]
 		}
 	}
-	flatcarInfo.GCCVersion = gccVersion
+	flatcarInfo.GCCVersion = semver.MustParse(gccVersion)
 	flatcarInfo.KernelVersion = kernelVersion
 
 	return &flatcarInfo, nil
@@ -146,6 +144,6 @@ func fetchFlatcarPackageListURL(architecture kernelrelease.Architecture, flatcar
 
 type flatcarReleaseInfo struct {
 	Channel       string
-	GCCVersion    string
+	GCCVersion    semver.Version
 	KernelVersion string
 }

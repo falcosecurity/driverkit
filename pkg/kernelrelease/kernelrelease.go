@@ -2,6 +2,7 @@ package kernelrelease
 
 import (
 	"fmt"
+	"github.com/blang/semver"
 	"log"
 	"regexp"
 	"strconv"
@@ -65,13 +66,11 @@ func (a Architecture) String() string {
 // Instead, rely on the global option
 // (it it set for builders in kernelReleaseFromBuildConfig())
 type KernelRelease struct {
-	Fullversion      string       `json:"full_version"`
-	Version          int          `json:"version"`
-	PatchLevel       int          `json:"patch_level"`
-	Sublevel         int          `json:"sublevel"`
-	Extraversion     string       `json:"extra_version"`
-	FullExtraversion string       `json:"full_extra_version"`
-	Architecture     Architecture `json:"architecture"`
+	Fullversion string
+	semver.Version
+	Extraversion     string
+	FullExtraversion string
+	Architecture     Architecture
 }
 
 // FromString extracts a KernelRelease object from string.
@@ -87,11 +86,11 @@ func FromString(kernelVersionStr string) KernelRelease {
 			case "fullversion":
 				kv.Fullversion = match[i]
 			case "version":
-				kv.Version, err = strconv.Atoi(match[i])
+				kv.Major, err = strconv.ParseUint(match[i], 10, 64)
 			case "patchlevel":
-				kv.PatchLevel, err = strconv.Atoi(match[i])
+				kv.Minor, err = strconv.ParseUint(match[i], 10, 64)
 			case "sublevel":
-				kv.Sublevel, err = strconv.Atoi(match[i])
+				kv.Patch, err = strconv.ParseUint(match[i], 10, 64)
 			case "extraversion":
 				kv.Extraversion = match[i]
 			case "fullextraversion":
@@ -103,6 +102,5 @@ func FromString(kernelVersionStr string) KernelRelease {
 			}
 		}
 	}
-
 	return kv
 }

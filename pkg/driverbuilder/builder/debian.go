@@ -125,12 +125,12 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 	bodyStr := string(body)
 
 	// look for kernel headers
-	fullregex := fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel, kr.Sublevel,
+	fullregex := fmt.Sprintf(rmatch, kr.Major, kr.Minor, kr.Patch,
 		extraVersionPartial, matchExtraGroup, kr.Architecture.String())
 	pattern := regexp.MustCompile(fullregex)
 	matches := pattern.FindStringSubmatch(bodyStr)
 	if len(matches) < 1 {
-		fullregex = fmt.Sprintf(rmatchNew, matchExtraGroup, kr.Version, kr.PatchLevel, kr.Sublevel,
+		fullregex = fmt.Sprintf(rmatchNew, matchExtraGroup, kr.Major, kr.Minor, kr.Patch,
 			extraVersionPartial, kr.Architecture.String())
 		pattern = regexp.MustCompile(fullregex)
 		matches = pattern.FindStringSubmatch(bodyStr)
@@ -140,12 +140,12 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 	}
 
 	// look for kernel headers common
-	fullregexCommon := fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel, kr.Sublevel,
+	fullregexCommon := fmt.Sprintf(rmatch, kr.Major, kr.Minor, kr.Patch,
 		extraVersionPartial, matchExtraGroupCommon, kr.Architecture.String())
 	patternCommon := regexp.MustCompile(fullregexCommon)
 	matchesCommon := patternCommon.FindStringSubmatch(bodyStr)
 	if len(matchesCommon) < 1 {
-		fullregexCommon = fmt.Sprintf(rmatchNew, matchExtraGroupCommon, kr.Version, kr.PatchLevel, kr.Sublevel,
+		fullregexCommon = fmt.Sprintf(rmatchNew, matchExtraGroupCommon, kr.Major, kr.Minor, kr.Patch,
 			extraVersionPartial, kr.Architecture.String())
 		patternCommon = regexp.MustCompile(fullregexCommon)
 		matchesCommon = patternCommon.FindStringSubmatch(bodyStr)
@@ -163,9 +163,9 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 func debianKbuildURLFromRelease(kr kernelrelease.KernelRelease) (string, error) {
 	rmatch := `href="(linux-kbuild-%d\.%d.*%s\.deb)"`
 
-	kbuildPattern := regexp.MustCompile(fmt.Sprintf(rmatch, kr.Version, kr.PatchLevel, kr.Architecture.String()))
+	kbuildPattern := regexp.MustCompile(fmt.Sprintf(rmatch, kr.Major, kr.Minor, kr.Architecture.String()))
 	baseURL := "http://mirrors.kernel.org/debian/pool/main/l/linux/"
-	if kr.Version == 3 {
+	if kr.Major == 3 {
 		baseURL = "http://mirrors.kernel.org/debian/pool/main/l/linux-tools/"
 	}
 

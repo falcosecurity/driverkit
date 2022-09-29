@@ -47,5 +47,5 @@ func (v *vanilla) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []
 }
 
 func fetchVanillaKernelURLFromKernelVersion(kv kernelrelease.KernelRelease) string {
-	return fmt.Sprintf("https://cdn.kernel.org/pub/linux/kernel/v%d.x/linux-%s.tar.xz", kv.Version, kv.Fullversion)
+	return fmt.Sprintf("https://cdn.kernel.org/pub/linux/kernel/v%d.x/linux-%s.tar.xz", kv.Major, kv.Fullversion)
 }

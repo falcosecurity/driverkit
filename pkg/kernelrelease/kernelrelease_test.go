@@ -1,33 +1,11 @@
 package kernelrelease
 
 import (
-	"encoding/json"
+	"github.com/blang/semver"
 	"testing"
 
 	"gotest.tools/assert"
 )
-
-func TestFromKrToJson(t *testing.T) {
-	test := struct {
-		kernelRelease KernelRelease
-		want          string
-	}{
-		kernelRelease: KernelRelease{
-			Fullversion:      "5.16.5",
-			Version:          5,
-			PatchLevel:       16,
-			Sublevel:         5,
-			Extraversion:     "arch1-1",
-			FullExtraversion: "-arch1-1",
-			Architecture:     ArchitectureAmd64,
-		},
-		want: `{"full_version":"5.16.5","version":5,"patch_level":16,"sublevel":5,"extra_version":"arch1-1","full_extra_version":"-arch1-1","architecture":"amd64"}`,
-	}
-	t.Run("version with local version", func(t *testing.T) {
-		got, _ := json.Marshal(test.kernelRelease)
-		assert.Equal(t, test.want, string(got))
-	})
-}
 
 func TestFromString(t *testing.T) {
 	tests := map[string]struct {
@@ -37,10 +15,12 @@ func TestFromString(t *testing.T) {
 		"version with local version": {
 			kernelVersionStr: "5.5.2-arch1-1",
 			want: KernelRelease{
-				Fullversion:      "5.5.2",
-				Version:          5,
-				PatchLevel:       5,
-				Sublevel:         2,
+				Fullversion: "5.5.2",
+				Version: semver.Version{
+					Major: 5,
+					Minor: 5,
+					Patch: 2,
+				},
 				Extraversion:     "arch1-1",
 				FullExtraversion: "-arch1-1",
 			},
@@ -48,10 +28,12 @@ func TestFromString(t *testing.T) {
 		"just kernel version": {
 			kernelVersionStr: "5.5.2",
 			want: KernelRelease{
-				Fullversion:      "5.5.2",
-				Version:          5,
-				PatchLevel:       5,
-				Sublevel:         2,
+				Fullversion: "5.5.2",
+				Version: semver.Version{
+					Major: 5,
+					Minor: 5,
+					Patch: 2,
+				},
 				Extraversion:     "",
 				FullExtraversion: "",
 			},
@@ -59,10 +41,12 @@ func TestFromString(t *testing.T) {
 		"an empty string": {
 			kernelVersionStr: "",
 			want: KernelRelease{
-				Fullversion:      "",
-				Version:          0,
-				PatchLevel:       0,
-				Sublevel:         0,
+				Fullversion: "",
+				Version: semver.Version{
+					Major: 0,
+					Minor: 0,
+					Patch: 0,
+				},
 				Extraversion:     "",
 				FullExtraversion: "",
 			},
@@ -70,10 +54,12 @@ func TestFromString(t *testing.T) {
 		"version with aws local version": {
 			kernelVersionStr: "4.15.0-1057-aws",
 			want: KernelRelease{
-				Fullversion:      "4.15.0",
-				Version:          4,
-				PatchLevel:       15,
-				Sublevel:         0,
+				Fullversion: "4.15.0",
+				Version: semver.Version{
+					Major: 4,
+					Minor: 15,
+					Patch: 0,
+				},
 				Extraversion:     "1057-aws",
 				FullExtraversion: "-1057-aws",
 			},
@@ -81,10 +67,12 @@ func TestFromString(t *testing.T) {
 		"centos version updates": {
 			kernelVersionStr: "3.10.0-957.12.2.el7.aarch64",
 			want: KernelRelease{
-				Fullversion:      "3.10.0",
-				Version:          3,
-				PatchLevel:       10,
-				Sublevel:         0,
+				Fullversion: "3.10.0",
+				Version: semver.Version{
+					Major: 3,
+					Minor: 10,
+					Patch: 0,
+				},
 				Extraversion:     "957",
 				FullExtraversion: "-957.12.2.el7.aarch64",
 			},
@@ -92,10 +80,12 @@ func TestFromString(t *testing.T) {
 		"centos version os": {
 			kernelVersionStr: "2.6.32-754.el6.x86_64",
 			want: KernelRelease{
-				Fullversion:      "2.6.32",
-				Version:          2,
-				PatchLevel:       6,
-				Sublevel:         32,
+				Fullversion: "2.6.32",
+				Version: semver.Version{
+					Major: 2,
+					Minor: 6,
+					Patch: 32,
+				},
 				Extraversion:     "754",
 				FullExtraversion: "-754.el6.x86_64",
 			},
@@ -103,10 +93,12 @@ func TestFromString(t *testing.T) {
 		"debian jessie version": {
 			kernelVersionStr: "3.16.0-10-amd64",
 			want: KernelRelease{
-				Fullversion:      "3.16.0",
-				Version:          3,
-				PatchLevel:       16,
-				Sublevel:         0,
+				Fullversion: "3.16.0",
+				Version: semver.Version{
+					Major: 3,
+					Minor: 16,
+					Patch: 0,
+				},
 				Extraversion:     "10-amd64",
 				FullExtraversion: "-10-amd64",
 			},
@@ -114,10 +106,12 @@ func TestFromString(t *testing.T) {
 		"debian buster version": {
 			kernelVersionStr: "4.19.0-6-amd64",
 			want: KernelRelease{
-				Fullversion:      "4.19.0",
-				Version:          4,
-				PatchLevel:       19,
-				Sublevel:         0,
+				Fullversion: "4.19.0",
+				Version: semver.Version{
+					Major: 4,
+					Minor: 19,
+					Patch: 0,
+				},
 				Extraversion:     "6-amd64",
 				FullExtraversion: "-6-amd64",
 			},
@@ -125,10 +119,12 @@ func TestFromString(t *testing.T) {
 		"amazon linux 2 version": {
 			kernelVersionStr: "4.14.171-136.231.amzn2.x86_64",
 			want: KernelRelease{
-				Fullversion:      "4.14.171",
-				Version:          4,
-				PatchLevel:       14,
-				Sublevel:         171,
+				Fullversion: "4.14.171",
+				Version: semver.Version{
+					Major: 4,
+					Minor: 14,
+					Patch: 171,
+				},
 				Extraversion:     "136",
 				FullExtraversion: "-136.231.amzn2.x86_64",
 			},
@@ -136,10 +132,12 @@ func TestFromString(t *testing.T) {
 		"gke version": {
 			kernelVersionStr: "4.15.0-1044-gke",
 			want: KernelRelease{
-				Fullversion:      "4.15.0",
-				Version:          4,
-				PatchLevel:       15,
-				Sublevel:         0,
+				Fullversion: "4.15.0",
+				Version: semver.Version{
+					Major: 4,
+					Minor: 15,
+					Patch: 0,
+				},
 				Extraversion:     "1044-gke",
 				FullExtraversion: "-1044-gke",
 			},
@@ -147,10 +145,12 @@ func TestFromString(t *testing.T) {
 		"arch version": {
 			kernelVersionStr: "5.19.3.arch1-1",
 			want: KernelRelease{
-				Fullversion:      "5.19.3",
-				Version:          5,
-				PatchLevel:       19,
-				Sublevel:         3,
+				Fullversion: "5.19.3",
+				Version: semver.Version{
+					Major: 5,
+					Minor: 19,
+					Patch: 3,
+				},
 				Extraversion:     "arch1-1",
 				FullExtraversion: ".arch1-1",
 			},
@@ -159,7 +159,7 @@ func TestFromString(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			got := FromString(tt.kernelVersionStr)
-			assert.Equal(t, tt.want, got)
+			assert.DeepEqual(t, tt.want, got)
 		})
 	}
 }

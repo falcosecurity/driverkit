@@ -30,8 +30,8 @@ type RootOptions struct {
 	KernelRelease    string   `validate:"required,ascii" name:"kernel release"`
 	Target           string   `validate:"required,target" name:"target"`
 	KernelConfigData string   `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level
-	BuilderImage     string   `validate:"imagename" name:"builder image"`
-	GCCVersion       float64  `name:"gcc version"`
+	BuilderImage     string   `validate:"omitempty,imagename" name:"builder image"`
+	GCCVersion       string   `validate:"omitempty,semver" name:"gcc version"`
 	KernelUrls       []string `name:"kernel header urls"`
 	Repo             RepoOptions
 	Output           OutputOptions

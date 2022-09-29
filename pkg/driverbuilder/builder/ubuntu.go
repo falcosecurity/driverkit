@@ -3,6 +3,7 @@ package builder
 import (
 	_ "embed"
 	"fmt"
+	"github.com/blang/semver"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"regexp"
 	"strings"
@@ -69,24 +70,24 @@ func (v *ubuntu) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []s
 	}
 }
 
-func (v *ubuntu) GCCVersion(kr kernelrelease.KernelRelease) float64 {
-	switch kr.Version {
+func (v *ubuntu) GCCVersion(kr kernelrelease.KernelRelease) semver.Version {
+	switch kr.Major {
 	case 3:
 		switch {
-		case kr.PatchLevel == 13 || kr.PatchLevel == 2:
-			return 4.8
+		case kr.Minor == 13 || kr.Minor == 2:
+			return semver.Version{Major: 4, Minor: 8}
 		default:
-			return 6
+			return semver.Version{Major: 6}
 		}
 	case 5:
 		switch {
-		case kr.PatchLevel >= 18:
-			return 12
-		case kr.PatchLevel >= 11:
-			return 11
+		case kr.Minor >= 18:
+			return semver.Version{Major: 12}
+		case kr.Minor >= 11:
+			return semver.Version{Major: 11}
 		}
 	}
-	return 8
+	return semver.Version{Major: 8}
 }
 
 func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv string) ([]string, error) {
@@ -136,7 +137,7 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 	possibleSubDirs := []string{
 		"linux",                               // default subdir, where generic etc. are stored
 		fmt.Sprintf("linux-%s", ubuntuFlavor), // ex: linux-aws
-		fmt.Sprintf("linux-%s-%d.%d", ubuntuFlavor, kr.Version, kr.PatchLevel), // ex: linux-azure-5.15
+		fmt.Sprintf("linux-%s-%d.%d", ubuntuFlavor, kr.Major, kr.Minor), // ex: linux-azure-5.15
 	}
 
 	// build all possible full URLs with the flavor subdirs
