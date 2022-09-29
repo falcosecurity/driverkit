@@ -122,7 +122,10 @@ func fetchFlatcarMetadata(kr kernelrelease.KernelRelease) (*flatcarReleaseInfo, 
 			kernelVersion = strings.Split(kernelVersion, "-")[0]
 		}
 	}
-	flatcarInfo.GCCVersion = semver.MustParse(gccVersion)
+	flatcarInfo.GCCVersion, err = semver.ParseTolerant(gccVersion)
+	if err != nil {
+		return nil, err
+	}
 	flatcarInfo.KernelVersion = kernelVersion
 
 	return &flatcarInfo, nil
