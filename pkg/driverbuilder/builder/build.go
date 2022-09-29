@@ -19,7 +19,7 @@ type Build struct {
 	ModuleDeviceName   string
 	CustomBuilderImage string
 	KernelUrls         []string
-	GCCVersion         float64
+	GCCVersion         string
 	RepoOrg            string
 	RepoName           string
 }

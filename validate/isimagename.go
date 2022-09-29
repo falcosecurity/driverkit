@@ -13,11 +13,6 @@ const alphabet = letters + digits + separators
 func isImageName(fl validator.FieldLevel) bool {
 	name := fl.Field().String()
 
-	// default value
-	if name == "" {
-		return true
-	}
-
 	for _, c := range name {
 		if !strings.ContainsRune(alphabet, c) {
 			return false
