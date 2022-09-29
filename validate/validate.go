@@ -39,6 +39,7 @@ func init() {
 	V.RegisterValidation("target", isTargetSupported)
 	V.RegisterValidation("architecture", isArchitectureSupported)
 	V.RegisterValidation("semver", isSemVer)
+	V.RegisterValidation("semvertolerant", isSemVerTolerant)
 	V.RegisterValidation("proxy", isProxy)
 	V.RegisterValidation("imagename", isImageName)
 
