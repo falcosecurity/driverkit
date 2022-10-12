@@ -2,11 +2,12 @@ package driverbuilder
 
 import (
 	"fmt"
-	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"io"
 	"net/http"
 	"strings"
 	"text/template"
+
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 )
 
 var waitForLockScript = `
@@ -86,7 +87,7 @@ func LoadMakefileObjList(c builder.Config) (string, error) {
 			return strings.Split(l, "@DRIVER_NAME@-y += ")[1], nil
 		}
 		if strings.HasPrefix(l, "@PROBE_NAME@-y +=") {
-            return strings.Split(l, "@PROBE_NAME@-y += ")[1], nil
+			return strings.Split(l, "@PROBE_NAME@-y += ")[1], nil
 		}
 	}
 	return "", fmt.Errorf("obj list not found")
