@@ -85,6 +85,9 @@ func LoadMakefileObjList(c builder.Config) (string, error) {
 		if strings.HasPrefix(l, "@DRIVER_NAME@-y +=") {
 			return strings.Split(l, "@DRIVER_NAME@-y += ")[1], nil
 		}
+		if strings.HasPrefix(l, "@PROBE_NAME@-y +=") {
+            return strings.Split(l, "@PROBE_NAME@-y += ")[1], nil
+		}
 	}
 	return "", fmt.Errorf("obj list not found")
 }
