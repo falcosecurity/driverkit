@@ -14,17 +14,23 @@ Moreover, the new image $osname must also be added to the static map of images, 
 ```go
 var images = map[string]Image{
 	"buster": {
-		GCCVersion: []float64{4.8, 5, 6, 8},
+		GCCVersion: map[kernelrelease.Architecture][]string{
+			kernelrelease.ArchitectureAmd64: {"4.8", "4.9", "5", "6", "8"},
+			kernelrelease.ArchitectureArm64: {"4.8", "5", "6", "8"}, // 4.9 is not present on arm64
+		},
 	},
 	"bullseye": {
-		GCCVersion: []float64{9, 10},
+		GCCVersion: map[kernelrelease.Architecture][]string{
+			kernelrelease.ArchitectureAmd64: {"9", "10"},
+			kernelrelease.ArchitectureArm64: {"9", "10"},
+		},
 	},
 	"bookworm": {
-		GCCVersion: []float64{11, 12},
+		GCCVersion: map[kernelrelease.Architecture][]string{
+			kernelrelease.ArchitectureAmd64: {"11", "12"},
+			kernelrelease.ArchitectureArm64: {"11", "12"},
+		},
 	},
-	"stretch": {
-        GCCVersion: []float64{6},
-    },
 }
 ```
 
