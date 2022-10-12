@@ -2,8 +2,9 @@ package builder
 
 import (
 	"fmt"
-	"github.com/blang/semver"
 	"testing"
+
+	"github.com/blang/semver"
 
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
@@ -322,22 +323,6 @@ func TestFetchUbuntuKernelURL(t *testing.T) {
 					t.Fatalf("Slice values don't match! Test Input: '%v' | Got: '%v' / Want: '%v'", input, gotURLs, expected)
 				}
 			}
-		}
-	}
-}
-
-func TestUbuntuGCCVersionFromKernelRelease(t *testing.T) {
-	b := &ubuntu{}
-	for _, test := range tests {
-		input := test.config
-		gotGCCVersion := b.GCCVersion(input)
-		if gotGCCVersion.NE(test.expected.gccVersion) {
-			t.Errorf(
-				"Test Input: [ '%v' ] | Got: [ '%s' ] / Want: [ '%s' ]",
-				input,
-				gotGCCVersion,
-				test.expected.gccVersion,
-			)
 		}
 	}
 }
