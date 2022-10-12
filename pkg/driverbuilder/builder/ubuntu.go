@@ -3,10 +3,10 @@ package builder
 import (
 	_ "embed"
 	"fmt"
-	"github.com/blang/semver"
-	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"regexp"
 	"strings"
+
+	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
 //go:embed templates/ubuntu.sh
@@ -68,26 +68,6 @@ func (v *ubuntu) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []s
 		KernelLocalVersion:   kr.FullExtraversion,
 		KernelHeadersPattern: headersPattern,
 	}
-}
-
-func (v *ubuntu) GCCVersion(kr kernelrelease.KernelRelease) semver.Version {
-	switch kr.Major {
-	case 3:
-		switch {
-		case kr.Minor == 13 || kr.Minor == 2:
-			return semver.Version{Major: 4, Minor: 8}
-		default:
-			return semver.Version{Major: 6}
-		}
-	case 5:
-		switch {
-		case kr.Minor >= 18:
-			return semver.Version{Major: 12}
-		case kr.Minor >= 11:
-			return semver.Version{Major: 11}
-		}
-	}
-	return semver.Version{Major: 8}
 }
 
 func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv string) ([]string, error) {
