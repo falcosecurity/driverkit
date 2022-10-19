@@ -22,6 +22,7 @@ tar -xf data.tar.*
 {{end}}
 
 cd /tmp/kernel-download/usr/src/
+ls -altr
 sourcedir=$(find . -type d -name "{{ .KernelHeadersPattern }}" | head -n 1 | xargs readlink -f)
 
 {{ if .BuildModule }}
