@@ -61,7 +61,7 @@ func (v *ubuntu) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []s
 	} else {
 		// some flavors (ex: lowlatency-hwe) only contain the first part of the flavor in the directory extracted from the .deb
 		// splitting a flavor without a "-" should just return the original flavor back	
-		headersPattern = fmt.Sprintf("linux-headers*%s", strings.Split(flavor, "-")[0])
+		headersPattern = fmt.Sprintf("linux-headers*%s*", strings.Split(flavor, "-")[0])
 	}
 
 	return ubuntuTemplateData{
