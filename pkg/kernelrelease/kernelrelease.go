@@ -2,11 +2,12 @@ package kernelrelease
 
 import (
 	"fmt"
-	"github.com/blang/semver"
 	"log"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/blang/semver"
 )
 
 var (
@@ -30,6 +31,14 @@ var SupportedArchs = Architectures{
 // Privately cached at startup for quicker access
 var supportedArchsSlice []string
 
+// Represents the minimum kernel version for which building the module
+// is supported, depending on the architecture
+var moduleMinKernelVersion map[Architecture]semver.Version
+
+// Represents the minimum kernel version for which building the probe
+// is supported, depending on the architecture
+var probeMinKernelVersion map[Architecture]semver.Version
+
 func init() {
 	i := 0
 	supportedArchsSlice = make([]string, len(SupportedArchs))
@@ -37,6 +46,17 @@ func init() {
 		supportedArchsSlice[i] = k.String()
 		i++
 	}
+
+	// see compatibility matrix: https://falco.org/docs/event-sources/drivers/
+	// note: this does not make much sense for flatcar, which has a much
+	// higher major version. In that case, we assume that the module/probe
+	// is always supported, and eventually fail while building
+	moduleMinKernelVersion = make(map[Architecture]semver.Version)
+	probeMinKernelVersion = make(map[Architecture]semver.Version)
+	moduleMinKernelVersion[ArchitectureAmd64] = semver.MustParse("2.6.0")
+	moduleMinKernelVersion[ArchitectureArm64] = semver.MustParse("3.4.0")
+	probeMinKernelVersion[ArchitectureAmd64] = semver.MustParse("4.14.0")
+	probeMinKernelVersion[ArchitectureArm64] = semver.MustParse("4.17.0")
 }
 
 func (aa Architectures) String() string {
@@ -103,4 +123,12 @@ func FromString(kernelVersionStr string) KernelRelease {
 		}
 	}
 	return kv
+}
+
+func (k *KernelRelease) SupportsModule() bool {
+	return k.Compare(moduleMinKernelVersion[k.Architecture]) >= 0
+}
+
+func (k *KernelRelease) SupportsProbe() bool {
+	return k.Compare(probeMinKernelVersion[k.Architecture]) >= 0
 }
