@@ -1,8 +1,9 @@
 package kernelrelease
 
 import (
-	"github.com/blang/semver"
 	"testing"
+
+	"github.com/blang/semver"
 
 	"gotest.tools/assert"
 )
@@ -161,5 +162,133 @@ func TestFromString(t *testing.T) {
 			got := FromString(tt.kernelVersionStr)
 			assert.DeepEqual(t, tt.want, got)
 		})
+	}
+}
+
+func TestSupportsModule(t *testing.T) {
+	unsupported := []KernelRelease{
+		{
+			Version:      semver.Version{Major: 2, Minor: 5, Patch: 0},
+			Architecture: ArchitectureAmd64,
+		},
+		{
+			Version:      semver.Version{Major: 2, Minor: 5, Patch: 99},
+			Architecture: ArchitectureAmd64,
+		},
+		{
+			Version:      semver.Version{Major: 2, Minor: 6, Patch: 0},
+			Architecture: ArchitectureArm64,
+		},
+		{
+			Version:      semver.Version{Major: 3, Minor: 3, Patch: 99},
+			Architecture: ArchitectureArm64,
+		},
+		{
+			Version:      semver.Version{Major: 3, Minor: 3, Patch: 99},
+			Architecture: ArchitectureArm64,
+		},
+	}
+	supported := []KernelRelease{
+		{
+			Version:      semver.Version{Major: 2, Minor: 6, Patch: 0},
+			Architecture: ArchitectureAmd64,
+		},
+		{
+			Version:      semver.Version{Major: 2, Minor: 6, Patch: 1},
+			Architecture: ArchitectureAmd64,
+		},
+		{
+			Version:      semver.Version{Major: 3, Minor: 0, Patch: 0},
+			Architecture: ArchitectureAmd64,
+		},
+		{
+			Version:      semver.Version{Major: 5, Minor: 0, Patch: 0},
+			Architecture: ArchitectureAmd64,
+		},
+		{
+			Version:      semver.Version{Major: 3, Minor: 4, Patch: 0},
+			Architecture: ArchitectureArm64,
+		},
+		{
+			Version:      semver.Version{Major: 3, Minor: 4, Patch: 1},
+			Architecture: ArchitectureArm64,
+		},
+		{
+			Version:      semver.Version{Major: 5, Minor: 0, Patch: 0},
+			Architecture: ArchitectureArm64,
+		},
+	}
+
+	for _, r := range unsupported {
+		if r.SupportsModule() {
+			t.Errorf("building module should not be supported in kernel version %s", r.String())
+		}
+	}
+	for _, r := range supported {
+		if !r.SupportsModule() {
+			t.Errorf("building module should be supported in kernel version %s", r.String())
+		}
+	}
+}
+
+func TestSupportsProbe(t *testing.T) {
+	unsupported := []KernelRelease{
+		{
+			Version:      semver.Version{Major: 4, Minor: 13, Patch: 0},
+			Architecture: ArchitectureAmd64,
+		},
+		{
+			Version:      semver.Version{Major: 4, Minor: 13, Patch: 99},
+			Architecture: ArchitectureAmd64,
+		},
+		{
+			Version:      semver.Version{Major: 4, Minor: 14, Patch: 0},
+			Architecture: ArchitectureArm64,
+		},
+		{
+			Version:      semver.Version{Major: 4., Minor: 16, Patch: 0},
+			Architecture: ArchitectureArm64,
+		},
+		{
+			Version:      semver.Version{Major: 4, Minor: 16, Patch: 99},
+			Architecture: ArchitectureArm64,
+		},
+	}
+	supported := []KernelRelease{
+		{
+			Version:      semver.Version{Major: 4, Minor: 14, Patch: 0},
+			Architecture: ArchitectureAmd64,
+		},
+		{
+			Version:      semver.Version{Major: 4, Minor: 14, Patch: 1},
+			Architecture: ArchitectureAmd64,
+		},
+		{
+			Version:      semver.Version{Major: 5, Minor: 0, Patch: 0},
+			Architecture: ArchitectureAmd64,
+		},
+		{
+			Version:      semver.Version{Major: 4, Minor: 17, Patch: 0},
+			Architecture: ArchitectureArm64,
+		},
+		{
+			Version:      semver.Version{Major: 4, Minor: 17, Patch: 1},
+			Architecture: ArchitectureArm64,
+		},
+		{
+			Version:      semver.Version{Major: 5, Minor: 0, Patch: 0},
+			Architecture: ArchitectureArm64,
+		},
+	}
+
+	for _, r := range unsupported {
+		if r.SupportsProbe() {
+			t.Errorf("building probe should not be supported in kernel version %s", r.String())
+		}
+	}
+	for _, r := range supported {
+		if !r.SupportsProbe() {
+			t.Errorf("building probe should be supported in kernel version %s", r.String())
+		}
 	}
 }
