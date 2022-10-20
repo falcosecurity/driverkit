@@ -2,8 +2,9 @@ package builder
 
 import (
 	"fmt"
-	"github.com/blang/semver"
 	"testing"
+
+	"github.com/blang/semver"
 
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
@@ -228,7 +229,7 @@ var tests = []struct {
 			flavor      string
 			err         error
 		}{
-			headersURLs: []string{"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm/linux-headers-5.19.0-1006-kvm_5.19.0-1006.6_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm/linux-kvm-headers-5.19.0-1006_5.19.0-1006.6_all.deb"},
+			headersURLs: []string{},
 			urls:        []string{"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-5.19.0-1006-kvm_5.19.0-1006.6_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-5.19.0-1006-kvm_5.19.0-1006.6_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-kvm-headers-5.19.0-1006_5.19.0-1006.6_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm/linux-headers-5.19.0-1006-kvm_5.19.0-1006.6_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm/linux-headers-5.19.0-1006-kvm_5.19.0-1006.6_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm/linux-kvm-headers-5.19.0-1006_5.19.0-1006.6_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm-5.19/linux-headers-5.19.0-1006-kvm_5.19.0-1006.6_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm-5.19/linux-headers-5.19.0-1006-kvm_5.19.0-1006.6_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-kvm-5.19/linux-kvm-headers-5.19.0-1006_5.19.0-1006.6_all.deb"},
 			gccVersion: semver.Version{
 				Major: 12,
