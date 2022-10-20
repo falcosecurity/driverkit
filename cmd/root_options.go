@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/creasty/defaults"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
+	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"github.com/falcosecurity/driverkit/validate"
 	"github.com/go-playground/validator/v10"
 	logger "github.com/sirupsen/logrus"
@@ -61,6 +63,14 @@ func (ro *RootOptions) Validate() []error {
 		}
 		return errArr
 	}
+
+	// check that the kernel versions supports at least one of probe and module
+	kr := kernelrelease.FromString(ro.KernelRelease)
+	kr.Architecture = kernelrelease.Architecture(ro.Architecture)
+	if !kr.SupportsModule() && !kr.SupportsProbe() {
+		return []error{fmt.Errorf("both module and probe are not supported by given options")}
+	}
+
 	return nil
 }
 
@@ -104,7 +114,7 @@ func (ro *RootOptions) toBuild() *builder.Build {
 		kernelConfigData = "bm8tZGF0YQ==" // no-data
 	}
 
-	return &builder.Build{
+	build := &builder.Build{
 		TargetType:         builder.Type(ro.Target),
 		DriverVersion:      ro.DriverVersion,
 		KernelVersion:      ro.KernelVersion,
@@ -121,6 +131,19 @@ func (ro *RootOptions) toBuild() *builder.Build {
 		RepoOrg:            ro.Repo.Org,
 		RepoName:           ro.Repo.Name,
 	}
+
+	// attempt the build in case it comes from an invalid config
+	kr := build.KernelReleaseFromBuildConfig()
+	if len(build.ModuleFilePath) > 0 && !kr.SupportsModule() {
+		build.ModuleFilePath = ""
+		logger.Warningf("Skipping build attempt of module for unsupported kernel version %s", kr.String())
+	}
+	if len(build.ProbeFilePath) > 0 && !kr.SupportsProbe() {
+		build.ProbeFilePath = ""
+		logger.Warningf("Skipping build attempt of probe for unsupported kernel version %s", kr.String())
+	}
+
+	return build
 }
 
 // RootOptionsLevelValidation validates KernelConfigData and Target at the same time.
