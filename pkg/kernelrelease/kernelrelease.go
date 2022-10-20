@@ -32,12 +32,20 @@ var SupportedArchs = Architectures{
 var supportedArchsSlice []string
 
 // Represents the minimum kernel version for which building the module
-// is supported, depending on the architecture
-var moduleMinKernelVersion map[Architecture]semver.Version
+// is supported, depending on the architecture.
+// See compatibility matrix: https://falco.org/docs/event-sources/drivers/
+var moduleMinKernelVersion = map[Architecture]semver.Version{
+	ArchitectureAmd64: semver.MustParse("2.6.0"),
+	ArchitectureArm64: semver.MustParse("3.4.0"),
+}
 
 // Represents the minimum kernel version for which building the probe
-// is supported, depending on the architecture
-var probeMinKernelVersion map[Architecture]semver.Version
+// is supported, depending on the architecture.
+// See compatibility matrix: https://falco.org/docs/event-sources/drivers/
+var probeMinKernelVersion = map[Architecture]semver.Version{
+	ArchitectureAmd64: semver.MustParse("4.14.0"),
+	ArchitectureArm64: semver.MustParse("4.17.0"),
+}
 
 func init() {
 	i := 0
@@ -46,17 +54,6 @@ func init() {
 		supportedArchsSlice[i] = k.String()
 		i++
 	}
-
-	// see compatibility matrix: https://falco.org/docs/event-sources/drivers/
-	// note: this does not make much sense for flatcar, which has a much
-	// higher major version. In that case, we assume that the module/probe
-	// is always supported, and eventually fail while building
-	moduleMinKernelVersion = make(map[Architecture]semver.Version)
-	probeMinKernelVersion = make(map[Architecture]semver.Version)
-	moduleMinKernelVersion[ArchitectureAmd64] = semver.MustParse("2.6.0")
-	moduleMinKernelVersion[ArchitectureArm64] = semver.MustParse("3.4.0")
-	probeMinKernelVersion[ArchitectureAmd64] = semver.MustParse("4.14.0")
-	probeMinKernelVersion[ArchitectureArm64] = semver.MustParse("4.17.0")
 }
 
 func (aa Architectures) String() string {
@@ -126,9 +123,9 @@ func FromString(kernelVersionStr string) KernelRelease {
 }
 
 func (k *KernelRelease) SupportsModule() bool {
-	return k.Compare(moduleMinKernelVersion[k.Architecture]) >= 0
+	return k.GTE(moduleMinKernelVersion[k.Architecture])
 }
 
 func (k *KernelRelease) SupportsProbe() bool {
-	return k.Compare(probeMinKernelVersion[k.Architecture]) >= 0
+	return k.GTE(probeMinKernelVersion[k.Architecture])
 }
