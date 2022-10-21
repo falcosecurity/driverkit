@@ -2,6 +2,8 @@
 
 [![Latest](https://img.shields.io/github/v/release/falcosecurity/driverkit?style=for-the-badge)](https://github.com/falcosecurity/driverkit/releases/latest)
 ![Architectures](https://img.shields.io/badge/ARCHS-x86__64%7Caarch64-blueviolet?style=for-the-badge)
+[![Go Report Card](https://goreportcard.com/badge/github.com/falcosecurity/driverkit?style=for-the-badge)](https://goreportcard.com/report/github.com/falcosecurity/driverkit)
+[![Docker pulls](https://img.shields.io/docker/pulls/falcosecurity/driverkit?style=for-the-badge)](https://hub.docker.com/r/falcosecurity/driverkit)
 
 A command line tool that can be used to build the [Falco](https://github.com/falcosecurity/falco) kernel module and eBPF probe.
 
