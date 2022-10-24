@@ -9,8 +9,8 @@ import (
 //go:embed templates/almalinux.sh
 var almaTemplate string
 
-// TargetTypeAlma identifies the Alma target.
-const TargetTypeAlma Type = "alma"
+// TargetTypeAlma identifies the AlmaLinux target.
+const TargetTypeAlma Type = "almalinux"
 
 func init() {
 	BuilderByTarget[TargetTypeAlma] = &alma{}
