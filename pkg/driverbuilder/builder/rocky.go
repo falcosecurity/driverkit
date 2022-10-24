@@ -48,17 +48,30 @@ func fetchRockyKernelURLS(kr kernelrelease.KernelRelease) []string {
 	rockyReleases := []string{
 		"8",
 		"8.5",
+		"8.6",
+		"9",
+		"9.0",
 	}
 
 	urls := []string{}
 	for _, r := range rockyReleases {
-		urls = append(urls, fmt.Sprintf(
-			"https://download.rockylinux.org/pub/rocky/%s/BaseOS/%s/os/Packages/k/kernel-devel-%s%s.rpm",
-			r,
-			kr.Architecture.ToNonDeb(),
-			kr.Fullversion,
-			kr.FullExtraversion,
-		))
+		if r >= "9" {
+			urls = append(urls, fmt.Sprintf(
+				"https://download.rockylinux.org/pub/rocky/%s/AppStream/%s/os/Packages/k/kernel-devel-%s%s.rpm",
+				r,
+				kr.Architecture.ToNonDeb(),
+				kr.Fullversion,
+				kr.FullExtraversion,
+			))
+		}else{
+			urls = append(urls, fmt.Sprintf(
+				"https://download.rockylinux.org/pub/rocky/%s/BaseOS/%s/os/Packages/k/kernel-devel-%s%s.rpm",
+				r,
+				kr.Architecture.ToNonDeb(),
+				kr.Fullversion,
+				kr.FullExtraversion,
+			))
+		}
 	}
 	return urls
 }
