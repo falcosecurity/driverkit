@@ -156,6 +156,45 @@ func TestFromString(t *testing.T) {
 				FullExtraversion: ".arch1-1",
 			},
 		},
+		"strange Debian version": {
+			kernelVersionStr: "4.9.65-2+grsecunoff1~bpo9+1-amd6",
+			want: KernelRelease{
+				Fullversion: "4.9.65",
+				Version: semver.Version{
+					Major: 4,
+					Minor: 9,
+					Patch: 65,
+				},
+				Extraversion:     "2",
+				FullExtraversion: "-2+grsecunoff1~bpo9+1-amd6",
+			},
+		},
+		"strange Debian version 2": {
+			kernelVersionStr: "4.19.118-2+deb10u1~bpo9+1-amd64",
+			want: KernelRelease{
+				Fullversion: "4.19.118",
+				Version: semver.Version{
+					Major: 4,
+					Minor: 19,
+					Patch: 118,
+				},
+				Extraversion:     "2",
+				FullExtraversion: "-2+deb10u1~bpo9+1-amd64",
+			},
+		},
+		"strange Debian version 3": {
+			kernelVersionStr: "5.10.136-1~deb10u3-amd64",
+			want: KernelRelease{
+				Fullversion: "5.10.136",
+				Version: semver.Version{
+					Major: 5,
+					Minor: 10,
+					Patch: 136,
+				},
+				Extraversion:     "1",
+				FullExtraversion: "-1~deb10u3-amd64",
+			},
+		},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
