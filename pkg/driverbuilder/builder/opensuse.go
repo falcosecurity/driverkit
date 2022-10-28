@@ -14,7 +14,7 @@ var opensuseTemplate string
 // TargetTypeOpenSUSE identifies the OpenSUSE target.
 const TargetTypeOpenSUSE Type = "opensuse"
 
-// base URLs
+// base URLs to begin searches
 var baseURLs []string = []string{
 	// general releases, leap releases
 	"https://mirrors.edge.kernel.org/opensuse/distribution",
@@ -24,6 +24,7 @@ var baseURLs []string = []string{
 	"http://download.opensuse.org",
 }
 
+// all known releases - will need to expand as more are added
 var releases []string = []string{
 	// openSUSE leap
 	"43.2",
@@ -31,6 +32,9 @@ var releases []string = []string{
 	"15.1",
 	"15.2",
 	"15.3",
+	"15.4",
+	"15.5",
+	"15.6",
 	// other releases
 	"HEAD",
 	"stable",
@@ -71,7 +75,7 @@ func (o *opensuse) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, err
 	// get all possible URLs
 	possibleURLs := buildURLs(kr, kernelDefaultDevelPattern, kernelDevelNoArchPattern)
 
-	// try to resolve the URLs
+	// trim the list to only resolving URLs
 	urls, err := getResolvingURLs(possibleURLs)
 	if err != nil {
 		return nil, err
