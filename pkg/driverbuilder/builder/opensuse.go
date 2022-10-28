@@ -82,7 +82,7 @@ func (o *opensuse) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, err
 		return urls, nil
 	} else {
 		return nil, fmt.Errorf(
-			"URLs found, but not one of each required type: [ kernel-default-devel, kernel-devel*noarch ]: %v",
+			"missing one of the required package types: [ kernel-default-devel, kernel-devel*noarch ]: %v",
 			urls,
 		)
 	}
@@ -117,7 +117,7 @@ func buildURLs(kr kernelrelease.KernelRelease, kernelDefaultDevelPattern string,
 					baseURL,
 					release,
 					kr.Architecture.ToNonDeb(),
-					kernelDevelNoArchPattern,
+					kernelDefaultDevelPattern,
 				),
 				fmt.Sprintf( // noarch
 					"%s/%s/repo/oss/noarch/%s",
@@ -154,6 +154,20 @@ func buildURLs(kr kernelrelease.KernelRelease, kernelDefaultDevelPattern string,
 					kr.Architecture.ToNonDeb(),
 					kernelDefaultDevelPattern,
 				),
+				fmt.Sprintf(
+					"%s/%s/Submit/standard/%s/%s",
+					baseURL,
+					release,
+					kr.Architecture.ToNonDeb(),
+					kernelDefaultDevelPattern,
+				),
+				fmt.Sprintf(
+					"%s/%s/standard/%s/%s",
+					baseURL,
+					release,
+					kr.Architecture.ToNonDeb(),
+					kernelDefaultDevelPattern,
+				),
 				// weird opensuse site urls - kernel-devel*noarch edition
 				fmt.Sprintf(
 					"%s/openSUSE-%s/Submit/standard/noarch/%s",
@@ -175,6 +189,18 @@ func buildURLs(kr kernelrelease.KernelRelease, kernelDefaultDevelPattern string,
 				),
 				fmt.Sprintf(
 					"%s/openSUSE-%s:/standard/noarch/%s",
+					baseURL,
+					release,
+					kernelDevelNoArchPattern,
+				),
+				fmt.Sprintf(
+					"%s/%s/Submit/standard/noarch/%s",
+					baseURL,
+					release,
+					kernelDevelNoArchPattern,
+				),
+				fmt.Sprintf(
+					"%s/%s/standard/noarch/%s",
 					baseURL,
 					release,
 					kernelDevelNoArchPattern,
