@@ -14,6 +14,11 @@ var opensuseTemplate string
 // TargetTypeOpenSUSE identifies the OpenSUSE target.
 const TargetTypeOpenSUSE Type = "opensuse"
 
+// We need:
+// kernel-default-devel-*-{arch}
+// kernel-devel-*-noarch
+const opensuseMinimumURLs = 2
+
 // base URLs to begin searches
 var baseURLs []string = []string{
 	// general releases, leap releases
@@ -52,6 +57,10 @@ type opensuse struct {
 type opensuseTemplateData struct {
 	commonTemplateData
 	KernelDownloadURLs []string
+}
+
+func (o *opensuse) MinimumURLs() int {
+	return opensuseMinimumURLs
 }
 
 func (o *opensuse) Name() string {
