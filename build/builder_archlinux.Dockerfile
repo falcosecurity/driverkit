@@ -1,5 +1,5 @@
-# For building ArchLinux kernels requiring gcc-11 and gcc-12
-# Arch Linux is a rolling release, the gcc versions and such will change over time
+## For building ArchLinux kernels requiring gcc-11 and gcc-12
+# ArchLinux is a rolling release, the gcc versions and such will change over time
 # pinned for now for gcc 11/12
 FROM archlinux:base-20221030.0.98412
 
