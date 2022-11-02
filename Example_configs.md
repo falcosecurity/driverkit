@@ -162,14 +162,30 @@ all ever supported kernel releases.
 For arm64, it uses an user-provided mirror, as no official mirror is available: http://tardis.tiny-vps.com/aarm/.
 The mirror has been up and updated since 2015.
 
+NOTE: ArchLinux has updated to Linux Kernel 6.0+, which appears to enforce generation of BTF for kmod too. The typical Debian container builders in the repo currently do not work for building ArchLinux drivers as a result. While an agreement is being reached on how to handle this upstream, using a custom `--builderimage` with ArchLinux drivers works for now. For example:
+```Dockerfile
+# archlinux builder example
+# Note: ArchLinux is a rolling release, the gcc versions and such will change over time
+# pinned for now for gcc 11/12
+FROM archlinux:base-20221030.0.98412
+
+RUN pacman -Sy && pacman -Sy --noconfirm \
+    make   \
+    pahole \
+    gcc11  \
+    gcc && \
+    ln -s /usr/bin/gcc /usr/bin/gcc-12
+```
+
 ```yaml
 kernelversion: 1
-kernelrelease: 5.19.8-arch1-1
+kernelrelease: 6.0.6.arch1-1
 target: arch
 output:
   module: /tmp/falco-arch.ko
   probe: /tmp/falco-arch.o
 driverversion: master
+builderimage: ${ARCH_BUILD_IMAGE_HERE}
 ```
 
 ## redhat 7
