@@ -60,6 +60,13 @@ func (c *fedora) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error
 			kr.Fullversion,
 			kr.FullExtraversion,
 		),
+		fmt.Sprintf( // releases
+			"https://mirrors.kernel.org/fedora/development/%s/Everything/%s/os/Packages/k/kernel-devel-%s%s.rpm",
+			version,
+			kr.Architecture.ToNonDeb(),
+			kr.Fullversion,
+			kr.FullExtraversion,
+		),
 	}
 
 	// return out all possible urls
