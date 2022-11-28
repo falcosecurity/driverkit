@@ -261,6 +261,8 @@ func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 func (b *Build) GetBuilderImage() string {
 	var imageTag string
 
+	fmt.Println("len(b.CustomBuilderImage)=", len(b.CustomBuilderImage))
+
 	// One can pass "auto:tag/latest" to choose the automatic
 	// image selection but forcing an imagetag
 	if len(b.CustomBuilderImage) > 0 {

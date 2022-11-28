@@ -19,6 +19,8 @@ const TargetTypeUbuntu Type = "ubuntu"
 // and an arch dependent package.
 const ubuntuRequiredURLs = 2
 
+const ubuntuBuilderImage = "falcosecurity/ubuntu-driver-builder:latest"
+
 type ubuntuTemplateData struct {
 	commonTemplateData
 	KernelDownloadURLS   []string
@@ -47,6 +49,10 @@ func (v *ubuntu) URLs(c Config, kr kernelrelease.KernelRelease) ([]string, error
 
 func (v *ubuntu) MinimumURLs() int {
 	return ubuntuRequiredURLs
+}
+
+func (v *ubuntu) CustomBuilderImage() string {
+	return ubuntuBuilderImage
 }
 
 func (v *ubuntu) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {

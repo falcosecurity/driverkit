@@ -17,6 +17,9 @@ rm -Rf /tmp/kernel-download
 mkdir /tmp/kernel-download
 cd /tmp/kernel-download
 yum install -y --downloadonly --downloaddir=/tmp/kernel-download kernel-devel-0:{{ .KernelPackage }}
+if [ $? -ne 0 ]; then
+	yum install -y --downloadonly --downloaddir=/tmp/kernel-download kernel-devel:{{ .KernelPackage }}
+fi
 rpm2cpio kernel-devel-{{ .KernelPackage }}.rpm | cpio --extract --make-directories
 
 rm -Rf /tmp/kernel

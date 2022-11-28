@@ -12,6 +12,8 @@ var centosTemplate string
 // TargetTypeCentos identifies the Centos target.
 const TargetTypeCentos Type = "centos"
 
+var centosBuilderImage = "falcosecurity/centos-driverkit-builder:latest"
+
 func init() {
 	BuilderByTarget[TargetTypeCentos] = &centos{}
 }
@@ -31,6 +33,10 @@ func (c *centos) Name() string {
 
 func (c *centos) TemplateScript() string {
 	return centosTemplate
+}
+
+func CustomBuilderImage() string {
+	return centosBuilderImage
 }
 
 func (c *centos) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {

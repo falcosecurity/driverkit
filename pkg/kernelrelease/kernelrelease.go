@@ -64,6 +64,8 @@ func (aa Architectures) Strings() []string {
 	return supportedArchsSlice
 }
 
+type CustomBuilderImage string
+
 type Architecture string
 
 func (a Architecture) ToNonDeb() string {
