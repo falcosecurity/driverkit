@@ -28,9 +28,9 @@ func init() {
 
 type debianTemplateData struct {
 	commonTemplateData
-	KernelDownloadURLS []string
-	KernelLocalVersion string
-	KernelArch         string
+	KernelDownloadURLS   []string
+	KernelLocalVersion   string
+	KernelHeadersPattern string
 }
 
 // debian is a driverkit target.
@@ -50,11 +50,18 @@ func (v *debian) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error
 }
 
 func (v *debian) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+	var KernelHeadersPattern string
+	if strings.HasSuffix(kr.Extraversion, "pve") {
+		KernelHeadersPattern = "linux-headers-*pve"
+	} else {
+		KernelHeadersPattern = "linux-headers-*" + kr.Architecture.String()
+	}
+
 	return debianTemplateData{
-		commonTemplateData: c.toTemplateData(v, kr),
-		KernelDownloadURLS: urls,
-		KernelLocalVersion: kr.FullExtraversion,
-		KernelArch:         kr.Architecture.String(),
+		commonTemplateData:   c.toTemplateData(v, kr),
+		KernelDownloadURLS:   urls,
+		KernelLocalVersion:   kr.FullExtraversion,
+		KernelHeadersPattern: KernelHeadersPattern,
 	}
 }
 

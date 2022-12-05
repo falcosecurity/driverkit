@@ -27,7 +27,7 @@ cp -r usr/* /usr
 cp -r lib/* /lib
 
 cd /usr/src
-sourcedir=$(find . -type d -name "linux-headers-*{{ .KernelArch }}" | head -n 1 | xargs readlink -f)
+sourcedir=$(find . -type d -name "{{ .KernelHeadersPattern }}" | head -n 1 | xargs readlink -f)
 
 {{ if .BuildModule }}
 # Build the module
