@@ -144,6 +144,7 @@ func NewRootCmd() *RootCmd {
 	flags.StringVar(&rootOpts.ModuleDeviceName, "moduledevicename", rootOpts.ModuleDeviceName, "kernel module device name (the default is falco, so the device will be under /dev/falco*)")
 	flags.StringVar(&rootOpts.ModuleDriverName, "moduledrivername", rootOpts.ModuleDriverName, "kernel module driver name, i.e. the name you see when you check installed modules via lsmod")
 	flags.StringVar(&rootOpts.BuilderImage, "builderimage", rootOpts.BuilderImage, "docker image to be used to build the kernel module and eBPF probe. If not provided, an automatically selected image will be used.")
+	flags.StringVar(&rootOpts.BuilderImageBase, "builderimagebase", rootOpts.BuilderImageBase, "base docker image to be used to build the kernel module and eBPF probe. If not provided, an automatically selected image will be used.")
 	flags.StringVar(&rootOpts.GCCVersion, "gccversion", rootOpts.GCCVersion, "enforce a specific gcc version for the build")
 
 	flags.StringSliceVar(&rootOpts.KernelUrls, "kernelurls", nil, "list of kernel header urls (e.g. --kernelurls <URL1> --kernelurls <URL2> --kernelurls \"<URL3>,<URL4>\")")

@@ -132,6 +132,6 @@ ${driverkit_docgen}: ${PWD}/docgen
 
 .PHONY: docs
 docs: ${driverkit_docgen}
-	$(RM) -R docs/*
+	$(RM) -R docs/driverkit*
 	@mkdir -p docs
 	${driverkit_docgen}

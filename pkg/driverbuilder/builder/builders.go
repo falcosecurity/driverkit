@@ -280,7 +280,14 @@ func (b *Build) GetBuilderImage() string {
 
 	// A bit complicated because we must check that
 	// "auto:tag" custom builder image was not passed
-	builderImage := BaseImage
+	var builderImage string
+
+	if len(b.CustomBuilderImageBase) != 0 {
+		builderImage = b.CustomBuilderImageBase
+	} else {
+		builderImage = BaseImage
+	}
+
 	names := strings.Split(builderImage, ":")
 	// Updated image tag if no "auto" custom builder image was passed
 	if imageTag == "" {
