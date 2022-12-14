@@ -56,8 +56,8 @@ that allows to specify a list of headers.
 > **NOTE:** the internal headers fetching logic should be considered a fallback that will be, sooner or later, deprecated.  
 
 A solution to crawl all supported kernels by multiple distro was recently developed,  
-and it provides a json output with aforementioned `kernelheaders`: https://github.com/falcosecurity/kernel-crawler.  
-Json for supported architectures can be found at https://falcosecurity.github.io/kernel-crawler/.
+and it provides a yaml output with aforementioned `kernelheaders`: https://github.com/falcosecurity/kernel-crawler.  
+List of supported architectures can be found at https://falcosecurity.github.io/kernel-crawler/.
 
 ## How to use
 
