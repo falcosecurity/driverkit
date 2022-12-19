@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	kernelVersionPattern = regexp.MustCompile(`(?P<fullversion>^(?P<version>0|[1-9]\d*)\.(?P<patchlevel>0|[1-9]\d*)\.(?P<sublevel>0|[1-9]\d*))(?P<fullextraversion>[-|.](?P<extraversion>0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)([\.+~](0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-_]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$`)
+	kernelVersionPattern = regexp.MustCompile(`(?P<fullversion>^(?P<version>0|[1-9]\d*)\.(?P<patchlevel>0|[1-9]\d*)\.?(?P<sublevel>0|[1-9]\d*)?)(?P<fullextraversion>[-|.](?P<extraversion>0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)([\.+~](0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-_]*))*)?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$`)
 )
 
 const (
@@ -107,7 +107,11 @@ func FromString(kernelVersionStr string) KernelRelease {
 			case "patchlevel":
 				kv.Minor, err = strconv.ParseUint(match[i], 10, 64)
 			case "sublevel":
-				kv.Patch, err = strconv.ParseUint(match[i], 10, 64)
+				if len(match[i]) > 0 {
+					// We accept a missing sublevel (defaulting to 0)
+					// eg: 6.1.arch1-1
+					kv.Patch, err = strconv.ParseUint(match[i], 10, 64)
+				}
 			case "extraversion":
 				kv.Extraversion = match[i]
 			case "fullextraversion":
