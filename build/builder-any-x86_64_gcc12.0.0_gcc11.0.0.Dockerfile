@@ -1,4 +1,4 @@
-FROM debian:bullseye
+FROM debian:bookworm
 
 LABEL maintainer="cncf-falco-dev@lists.cncf.io"
 
@@ -18,11 +18,11 @@ RUN apt-get update \
 	dwarves \
 	gnupg2 \
 	gcc \
-    gcc-9 \
+    gcc-11 \
 	jq \
 	libc6-dev \
 	libelf-dev \
-	netcat \
+	netcat-openbsd \
 	xz-utils \
 	rpm2cpio \
 	cpio \
@@ -39,4 +39,8 @@ RUN apt-get update \
 	software-properties-common \
 	gpg \
 	zstd \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+
+# Properly create soft links
+RUN ln -s /usr/bin/gcc-11 /usr/bin/gcc-11.0.0
+RUN ln -s /usr/bin/gcc-12 /usr/bin/gcc-12.0.0
