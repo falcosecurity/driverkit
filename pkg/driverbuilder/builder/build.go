@@ -23,6 +23,7 @@ type Build struct {
 	GCCVersion             string
 	RepoOrg                string
 	RepoName               string
+	Images                 map[string]Image
 }
 
 func (b *Build) KernelReleaseFromBuildConfig() kernelrelease.KernelRelease {
