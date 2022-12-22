@@ -2,14 +2,18 @@ package builder
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"github.com/blang/semver"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/client"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"log"
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -119,36 +123,6 @@ type GCCVersionRequestor interface {
 	GCCVersion(kr kernelrelease.KernelRelease) semver.Version
 }
 
-type Image struct {
-	GCCVersion map[kernelrelease.Architecture][]string
-}
-
-// We cannot use semver.Version here, because we need to know the
-// actual gcc-$version string that will be used by template scripts,
-// like: make CC=/usr/bin/gcc-{{ .GCCVersion }}
-// When using semver.Version, gcc like semver.Version { Major: 5 }.String() -> "5.0.0"
-// and that would break our scripts, because the real name is just "5"
-var images = map[string]Image{
-	"buster": {
-		GCCVersion: map[kernelrelease.Architecture][]string{
-			kernelrelease.ArchitectureAmd64: {"4.8", "4.9", "5", "6", "8"},
-			kernelrelease.ArchitectureArm64: {"4.8", "5", "6", "8"}, // 4.9 is not present on arm64
-		},
-	},
-	"bullseye": {
-		GCCVersion: map[kernelrelease.Architecture][]string{
-			kernelrelease.ArchitectureAmd64: {"9", "10"},
-			kernelrelease.ArchitectureArm64: {"9", "10"},
-		},
-	},
-	"bookworm": {
-		GCCVersion: map[kernelrelease.Architecture][]string{
-			kernelrelease.ArchitectureAmd64: {"11", "12"},
-			kernelrelease.ArchitectureArm64: {"11", "12"},
-		},
-	},
-}
-
 func defaultGCC(kr kernelrelease.KernelRelease) semver.Version {
 	switch kr.Major {
 	case 5:
@@ -178,33 +152,57 @@ func mustParseTolerant(gccStr string) semver.Version {
 	return g
 }
 
-// Simple algorithm:
-// sort versions passed as first params,
-// then, find the higher gcc version which is also lower than target.
-// Moreover, try harder to keep same major gcc version.
-func findNearestGCCVersion(gccs []semver.Version, target semver.Version) semver.Version {
-	semver.Sort(gccs)
-	foundGCC := gccs[0]
-	for _, gcc := range gccs {
-		if gcc.GT(target) {
-			// Be smarter trying to find the proper gcc version
-			if gcc.Major == target.Major && foundGCC.Major < target.Major {
-				foundGCC = gcc
+func loadImages() map[string]Image {
+	var nameReg = regexp.MustCompile("^falcosecurity/driverkit-builder-(?P<target>[a-z0-9]+)-(?P<arch>x86_64|aarch64)(?P<gccVers>(_gcc[0-9].[0-9].[0-9])+)$")
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		log.Fatal(err)
+	}
+	imgs, err := cli.ImageSearch(context.Background(), "falcosecurity/driverkit-", types.ImageSearchOptions{Limit: 100})
+	if err != nil {
+		log.Fatal(err)
+	}
+	images := make(map[string]Image)
+	for _, img := range imgs {
+		match := nameReg.FindStringSubmatch(img.Name)
+		var gccVers []string
+		var target string
+		var arch string
+		for i, name := range nameReg.SubexpNames() {
+			if i > 0 && i <= len(match) {
+				switch name {
+				case "target":
+					target = match[i]
+				case "arch":
+					arch = match[i]
+				case "gccVers":
+					gccVers = strings.Split(match[i], "_gcc")
+				}
 			}
-			break
 		}
-		foundGCC = gcc
-	}
-	return foundGCC
-}
 
-// Given an image, returns the list of semvers for its supported gccs
-func buildGCCSemvers(img Image, arch kernelrelease.Architecture) []semver.Version {
-	gccs := make([]semver.Version, 0)
-	for _, gccStr := range img.GCCVersion[arch] {
-		gccs = append(gccs, mustParseTolerant(gccStr))
+		if len(target) == 0 || len(arch) == 0 || len(gccVers) == 0 {
+			logger.Warn("Malformed image name: ", img.Name)
+			continue
+		}
+
+		typeTarget := Type(target)
+		if _, ok := BuilderByTarget[typeTarget]; !ok && target != "any" {
+			logger.Warn("Skipping builder image for unsupported target: ", target)
+			continue
+		}
+
+		for _, gccVer := range gccVers {
+			buildImage := Image{
+				Target:     typeTarget,
+				Arch:       kernelrelease.Architecture(arch),
+				GCCVersion: mustParseTolerant(gccVer),
+				Name:       img.Name,
+			}
+			images[buildImage.toKey()] = buildImage
+		}
 	}
-	return gccs
+	return images
 }
 
 func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
@@ -222,38 +220,60 @@ func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 	var targetGCC semver.Version
 	if bb, ok := builder.(GCCVersionRequestor); ok {
 		targetGCC = bb.GCCVersion(kr)
-	} else {
+	}
+	if targetGCC.EQ(semver.Version{}) {
 		targetGCC = defaultGCC(kr)
 	}
 
+	b.Images = loadImages()
+
+	targetImage := Image{
+		Target:     b.TargetType,
+		Arch:       kr.Architecture,
+		GCCVersion: targetGCC,
+	}
+
+	// Try to find specific image for specific target first
+	if img, ok := b.Images[targetImage.toKey()]; ok {
+		b.GCCVersion = img.GCCVersion.String()
+		return
+	}
+
+	// Fallback at "any" target that offers specific gcc
+	targetImage.Target = "any"
+	if img, ok := b.Images[targetImage.toKey()]; ok {
+		b.GCCVersion = img.GCCVersion.String()
+		return
+	}
+
+	// Finally: list all images to find nearest gcc
+
+	// Step 1:
 	// Build the list of "proposed" GCC versions,
-	// that is, the nearest-to-target GCC version
+	// that is, the list of available gccs from images
 	// for each builder image.
 	proposedGCCs := make([]semver.Version, 0)
-	for name, img := range images {
-		gccs := buildGCCSemvers(img, kr.Architecture)
-		foundGCC := findNearestGCCVersion(gccs, targetGCC)
-		proposedGCCs = append(proposedGCCs, foundGCC)
-		logger.WithField("image", name).
-			WithField("targetGCC", targetGCC.String()).
-			Debug("proposedGCC=", foundGCC.String())
-	}
-
-	// Now, find the nearest-to-target GCC version
-	// from the proposed GCCs from the builder images.
-	foundGCC := findNearestGCCVersion(proposedGCCs, targetGCC)
-
-	// Finally, discover the right gcc version string
-	// for the final GCC that will be used by scripts.
-	for _, img := range images {
-		for _, gccStr := range img.GCCVersion[kr.Architecture] {
-			gccSemVer := mustParseTolerant(gccStr)
-			if gccSemVer.EQ(foundGCC) {
-				b.GCCVersion = gccStr
-			}
+	for _, img := range b.Images {
+		if img.Arch != kr.Architecture {
+			continue
 		}
+		proposedGCCs = append(proposedGCCs, img.GCCVersion)
+		logger.WithField("image", img.Name).
+			WithField("targetGCC", targetGCC.String()).
+			Debug("proposedGCC=", img.GCCVersion.String())
 	}
 
+	// Now, sort versions and fetch
+	// the nearest gcc, that is also < targetGCC
+	semver.Sort(proposedGCCs)
+	lastGCC := proposedGCCs[0]
+	for _, gcc := range proposedGCCs {
+		if gcc.GT(targetGCC) {
+			break
+		}
+		lastGCC = gcc
+	}
+	b.GCCVersion = lastGCC.String()
 	logger.WithField("targetGCC", targetGCC.String()).
 		Debug("foundGCC=", b.GCCVersion)
 }
@@ -298,14 +318,19 @@ func (b *Build) GetBuilderImage() string {
 		}
 	}
 
-	for name, img := range images {
-		for _, gccStr := range img.GCCVersion[kernelrelease.Architecture(b.Architecture)] {
-			if gccStr == b.GCCVersion {
-				return names[0] + "_" + name + ":" + imageTag
-			}
-		}
+	// Try to find target specific given targetGCC
+	targetImage := Image{
+		Target:     b.TargetType,
+		Arch:       kernelrelease.Architecture(b.Architecture),
+		GCCVersion: mustParseTolerant(b.GCCVersion),
 	}
-	return builderImage
+	if image, ok := b.Images[targetImage.toKey()]; ok {
+		return image.Name
+	}
+
+	// Fallback at "any"
+	targetImage.Target = "any"
+	return b.Images[targetImage.toKey()].Name
 }
 
 // Factory returns a builder for the given target.

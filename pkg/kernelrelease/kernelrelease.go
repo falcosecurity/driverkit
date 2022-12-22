@@ -94,11 +94,9 @@ type KernelRelease struct {
 func FromString(kernelVersionStr string) KernelRelease {
 	kv := KernelRelease{}
 	match := kernelVersionPattern.FindStringSubmatch(kernelVersionStr)
-	identifiers := make(map[string]string)
 	for i, name := range kernelVersionPattern.SubexpNames() {
 		if i > 0 && i <= len(match) {
 			var err error
-			identifiers[name] = match[i]
 			switch name {
 			case "fullversion":
 				kv.Fullversion = match[i]
