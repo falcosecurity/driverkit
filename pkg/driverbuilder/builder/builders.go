@@ -196,7 +196,7 @@ func (b *Build) loadImages() {
 
 			architecture := kernelrelease.Architecture(b.Architecture).ToNonDeb()
 			if arch != architecture {
-				logger.Debug("Skipping image with arch: %s, different than build target: %s\n", arch, architecture)
+				logger.Debugf("Skipping image with arch: %s, different than build target: %s\n", arch, architecture)
 				continue
 			}
 
