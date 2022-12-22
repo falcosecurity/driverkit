@@ -192,10 +192,22 @@ func loadImages() map[string]Image {
 			continue
 		}
 
+		var architecture kernelrelease.Architecture
+		for key, val := range kernelrelease.SupportedArchs {
+			if val == arch {
+				architecture = key
+				break
+			}
+		}
+		if architecture.String() == "" {
+			logger.Warn("Unsupported image architecture: ", arch)
+			continue
+		}
+
 		for _, gccVer := range gccVers {
 			buildImage := Image{
 				Target:     typeTarget,
-				Arch:       kernelrelease.Architecture(arch),
+				Arch:       architecture,
 				GCCVersion: mustParseTolerant(gccVer),
 				Name:       img.Name,
 			}
