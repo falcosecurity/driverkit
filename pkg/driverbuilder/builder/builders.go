@@ -156,7 +156,7 @@ func (b *Build) loadImages() {
 		log.Fatal(err)
 	}
 
-	b.Images = make(map[string]Image)
+	b.Images = make(ImagesMap)
 	for _, repo := range b.DockerRepos {
 		nameReg := regexp.MustCompile("driverkit-builder-(?P<target>[a-z0-9]+)-(?P<arch>x86_64|aarch64)(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)$")
 		imgs, err := cli.ImageSearch(context.Background(), repo, types.ImageSearchOptions{Limit: 100})
@@ -245,25 +245,15 @@ func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 
 	b.loadImages()
 
-	targetImage := Image{
-		Target:     b.TargetType,
-		GCCVersion: targetGCC,
+	// If we are able to either find a specific-target image,
+	// or "any" target image that provide desired gcc,
+	// we are over.
+	image, ok := b.Images.findImage(b.TargetType, targetGCC)
+	if ok {
+		b.GCCVersion = image.GCCVersion.String()
 	}
 
-	// Try to find specific image for specific target first
-	if img, ok := b.Images[targetImage.toKey()]; ok {
-		b.GCCVersion = img.GCCVersion.String()
-		return
-	}
-
-	// Fallback at "any" target that offers specific gcc
-	targetImage.Target = "any"
-	if img, ok := b.Images[targetImage.toKey()]; ok {
-		b.GCCVersion = img.GCCVersion.String()
-		return
-	}
-
-	// Finally: list all images to find nearest gcc
+	// List all images to find nearest gcc
 
 	// Step 1:
 	// Build the list of "proposed" GCC versions,
@@ -313,19 +303,8 @@ func (b *Build) GetBuilderImage() string {
 	// to find an image, because setGCCVersion()
 	// has already set an existent gcc version
 	// (ie: one provided by an image) for us
-
-	// Try to find target specific given targetGCC
-	targetImage := Image{
-		Target:     b.TargetType,
-		GCCVersion: mustParseTolerant(b.GCCVersion),
-	}
-	if image, ok := b.Images[targetImage.toKey()]; ok {
-		return image.Name + ":" + imageTag
-	}
-
-	// Fallback at "any"
-	targetImage.Target = "any"
-	return b.Images[targetImage.toKey()].Name + ":" + imageTag
+	image, _ := b.Images.findImage(b.TargetType, mustParseTolerant(b.GCCVersion))
+	return image.Name + ":" + imageTag
 }
 
 // Factory returns a builder for the given target.
