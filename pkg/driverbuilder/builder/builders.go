@@ -20,8 +20,6 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
-var BaseImage = "placeholder" // This is overwritten when using the Makefile to build
-
 // DriverDirectory is the directory the processor uses to store the driver.
 const DriverDirectory = "/tmp/driver"
 
@@ -152,69 +150,77 @@ func mustParseTolerant(gccStr string) semver.Version {
 	return g
 }
 
-func loadImages() map[string]Image {
-	var nameReg = regexp.MustCompile("^falcosecurity/driverkit-builder-(?P<target>[a-z0-9]+)-(?P<arch>x86_64|aarch64)(?P<gccVers>(_gcc[0-9].[0-9].[0-9])+)$")
+func (b *Build) loadImages() {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		log.Fatal(err)
 	}
-	imgs, err := cli.ImageSearch(context.Background(), "falcosecurity/driverkit-", types.ImageSearchOptions{Limit: 100})
-	if err != nil {
-		log.Fatal(err)
-	}
-	images := make(map[string]Image)
-	for _, img := range imgs {
-		match := nameReg.FindStringSubmatch(img.Name)
-		var gccVers []string
-		var target string
-		var arch string
-		for i, name := range nameReg.SubexpNames() {
-			if i > 0 && i <= len(match) {
-				switch name {
-				case "target":
-					target = match[i]
-				case "arch":
-					arch = match[i]
-				case "gccVers":
-					gccVers = strings.Split(match[i], "_gcc")
+
+	b.Images = make(map[string]Image)
+	for _, repo := range b.DockerRepos {
+		nameReg := regexp.MustCompile("driverkit-builder-(?P<target>[a-z0-9]+)-(?P<arch>x86_64|aarch64)(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)$")
+		imgs, err := cli.ImageSearch(context.Background(), repo, types.ImageSearchOptions{Limit: 100})
+		if err != nil {
+			logger.Warnf("Skipping repo %s: %s\n", repo, err.Error())
+			continue
+		}
+		for _, img := range imgs {
+			match := nameReg.FindStringSubmatch(img.Name)
+			var gccVers []string
+			var target string
+			var arch string
+			for i, name := range nameReg.SubexpNames() {
+				if i > 0 && i <= len(match) {
+					switch name {
+					case "target":
+						target = match[i]
+					case "arch":
+						arch = match[i]
+					case "gccVers":
+						gccVers = strings.Split(match[i], "_gcc")
+						gccVers = gccVers[1:] // remove initial whitespace
+					}
+				}
+			}
+
+			if len(target) == 0 || len(arch) == 0 || len(gccVers) == 0 {
+				logger.Debug("Malformed image name: ", img.Name)
+				continue
+			}
+
+			typeTarget := Type(target)
+			if _, ok := BuilderByTarget[typeTarget]; !ok && target != "any" {
+				logger.Debug("Skipping builder image for unsupported target: ", target)
+				continue
+			}
+
+			architecture := kernelrelease.Architecture(b.Architecture).ToNonDeb()
+			if arch != architecture {
+				logger.Debug("Skipping image with arch: %s, different than build target: %s\n", arch, architecture)
+				continue
+			}
+
+			// Note: we store "any" target images as "any",
+			// instead of adding them once to each target,
+			// because we always prefer specific target images,
+			// and we cannot guarantee here that any subsequent docker repos
+			// does not provide a target-specific image that offers same gcc version
+			for _, gccVer := range gccVers {
+				buildImage := Image{
+					Target:     typeTarget,
+					GCCVersion: mustParseTolerant(gccVer),
+					Name:       img.Name,
+				}
+				// Skip if key already exists: we have a descending prio list of docker repos!
+				if _, ok := b.Images[buildImage.toKey()]; !ok {
+					b.Images[buildImage.toKey()] = buildImage
 				}
 			}
 		}
-
-		if len(target) == 0 || len(arch) == 0 || len(gccVers) == 0 {
-			logger.Warn("Malformed image name: ", img.Name)
-			continue
-		}
-
-		typeTarget := Type(target)
-		if _, ok := BuilderByTarget[typeTarget]; !ok && target != "any" {
-			logger.Warn("Skipping builder image for unsupported target: ", target)
-			continue
-		}
-
-		var architecture kernelrelease.Architecture
-		for key, val := range kernelrelease.SupportedArchs {
-			if val == arch {
-				architecture = key
-				break
-			}
-		}
-		if architecture.String() == "" {
-			logger.Warn("Unsupported image architecture: ", arch)
-			continue
-		}
-
-		for _, gccVer := range gccVers {
-			buildImage := Image{
-				Target:     typeTarget,
-				Arch:       architecture,
-				GCCVersion: mustParseTolerant(gccVer),
-				Name:       img.Name,
-			}
-			images[buildImage.toKey()] = buildImage
-		}
 	}
-	return images
+	if len(b.Images) == 0 {
+		log.Fatal("Could not load any builder image. Leaving.")
+	}
 }
 
 func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
@@ -237,11 +243,10 @@ func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 		targetGCC = defaultGCC(kr)
 	}
 
-	b.Images = loadImages()
+	b.loadImages()
 
 	targetImage := Image{
 		Target:     b.TargetType,
-		Arch:       kr.Architecture,
 		GCCVersion: targetGCC,
 	}
 
@@ -266,9 +271,6 @@ func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 	// for each builder image.
 	proposedGCCs := make([]semver.Version, 0)
 	for _, img := range b.Images {
-		if img.Arch != kr.Architecture {
-			continue
-		}
 		proposedGCCs = append(proposedGCCs, img.GCCVersion)
 		logger.WithField("image", img.Name).
 			WithField("targetGCC", targetGCC.String()).
@@ -291,10 +293,7 @@ func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 }
 
 func (b *Build) GetBuilderImage() string {
-	var imageTag string
-
-	// One can pass "auto:tag/latest" to choose the automatic
-	// image selection but forcing an imagetag
+	imageTag := "latest"
 	if len(b.CustomBuilderImage) > 0 {
 		customNames := strings.Split(b.CustomBuilderImage, ":")
 		if customNames[0] != "auto" {
@@ -310,39 +309,23 @@ func (b *Build) GetBuilderImage() string {
 		}
 	}
 
-	// A bit complicated because we must check that
-	// "auto:tag" custom builder image was not passed
-	var builderImage string
-
-	if len(b.CustomBuilderImageBase) != 0 {
-		builderImage = b.CustomBuilderImageBase
-	} else {
-		builderImage = BaseImage
-	}
-
-	names := strings.Split(builderImage, ":")
-	// Updated image tag if no "auto" custom builder image was passed
-	if imageTag == "" {
-		if len(names) > 1 {
-			imageTag = names[1]
-		} else {
-			imageTag = "latest"
-		}
-	}
+	// NOTE: here below we are already sure that we are going
+	// to find an image, because setGCCVersion()
+	// has already set an existent gcc version
+	// (ie: one provided by an image) for us
 
 	// Try to find target specific given targetGCC
 	targetImage := Image{
 		Target:     b.TargetType,
-		Arch:       kernelrelease.Architecture(b.Architecture),
 		GCCVersion: mustParseTolerant(b.GCCVersion),
 	}
 	if image, ok := b.Images[targetImage.toKey()]; ok {
-		return image.Name
+		return image.Name + ":" + imageTag
 	}
 
 	// Fallback at "any"
 	targetImage.Target = "any"
-	return b.Images[targetImage.toKey()].Name
+	return b.Images[targetImage.toKey()].Name + ":" + imageTag
 }
 
 // Factory returns a builder for the given target.
