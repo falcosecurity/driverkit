@@ -14,7 +14,6 @@ driverkit kubernetes [flags]
       --as-group stringArray           group to impersonate for the operation, this flag can be repeated to specify multiple groups
       --as-uid string                  uID to impersonate for the operation
       --builderimage string            docker image to be used to build the kernel module and eBPF probe. If not provided, an automatically selected image will be used.
-      --builderimagebase string        base docker image to be used to build the kernel module and eBPF probe. If not provided, an automatically selected image will be used.
       --cache-dir string               default cache directory (default "$HOME/.kube/cache")
       --certificate-authority string   path to a cert file for the certificate authority
       --client-certificate string      path to a client certificate file for TLS
@@ -22,6 +21,7 @@ driverkit kubernetes [flags]
       --cluster string                 the name of the kubeconfig cluster to use
   -c, --config string                  config file path (default $HOME/.driverkit.yaml if exists)
       --context string                 the name of the kubeconfig context to use
+      --dockerrepo strings             list of docker repositories in descending priority order, used to search for builder images. Default falcosecurity/driverkit will always be enforced as lowest priority repo. eg: --dockerrepo myorg/driverkit --dockerrepo falcosecurity/driverkit
       --driverversion string           driver version as a git commit hash or as a git tag (default "master")
       --dryrun                         do not actually perform the action
       --gccversion string              enforce a specific gcc version for the build
@@ -45,7 +45,7 @@ driverkit kubernetes [flags]
       --request-timeout string         the length of time to wait before giving up on a single server request, non-zero values should contain a corresponding time unit (e.g, 1s, 2m, 3h), a value of zero means don't timeout requests (default "0")
       --run-as-user int                Pods runner user
   -s, --server string                  the address and port of the Kubernetes API server
-  -t, --target string                  the system to target the build for, one of [almalinux,amazonlinux,amazonlinux2,amazonlinux2022,arch,centos,debian,fedora,flatcar,minikube,opensuse,photon,redhat,rocky,ubuntu,vanilla]
+  -t, --target string                  the system to target the build for, one of [almalinux,amazonlinux,amazonlinux2,amazonlinux2022,arch,bottlerocket,centos,debian,fedora,flatcar,minikube,opensuse,photon,redhat,rocky,ubuntu,vanilla]
       --timeout int                    timeout in seconds (default 120)
       --tls-server-name string         server name to use for server certificate validation, if it is not provided, the hostname used to contact the server is used
       --token string                   bearer token for authentication to the API server
