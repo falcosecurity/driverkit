@@ -11,8 +11,8 @@ driverkit kubernetes-in-cluster [flags]
 ```
       --architecture string        target architecture for the built driver, one of [amd64,arm64] (default "amd64")
       --builderimage string        docker image to be used to build the kernel module and eBPF probe. If not provided, an automatically selected image will be used.
-      --builderimagebase string    base docker image to be used to build the kernel module and eBPF probe. If not provided, an automatically selected image will be used.
   -c, --config string              config file path (default $HOME/.driverkit.yaml if exists)
+      --dockerrepo strings         list of docker repositories in descending priority order, used to search for builder images. Default falcosecurity/driverkit will always be enforced as lowest priority repo. eg: --dockerrepo myorg/driverkit --dockerrepo falcosecurity/driverkit
       --driverversion string       driver version as a git commit hash or as a git tag (default "master")
       --dryrun                     do not actually perform the action
       --gccversion string          enforce a specific gcc version for the build
@@ -32,7 +32,7 @@ driverkit kubernetes-in-cluster [flags]
       --repo-name string           repository github name (default "libs")
       --repo-org string            repository github organization (default "falcosecurity")
       --run-as-user int            Pods runner user
-  -t, --target string              the system to target the build for, one of [almalinux,amazonlinux,amazonlinux2,amazonlinux2022,arch,centos,debian,fedora,flatcar,minikube,opensuse,photon,redhat,rocky,ubuntu,vanilla]
+  -t, --target string              the system to target the build for, one of [almalinux,amazonlinux,amazonlinux2,amazonlinux2022,arch,bottlerocket,centos,debian,fedora,flatcar,minikube,opensuse,photon,redhat,rocky,ubuntu,vanilla]
       --timeout int                timeout in seconds (default 120)
 ```
 
