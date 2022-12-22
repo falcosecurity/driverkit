@@ -258,13 +258,17 @@ func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 	// Step 1:
 	// Build the list of "proposed" GCC versions,
 	// that is, the list of available gccs from images
-	// for each builder image.
+	// for each builder image
+	// whose target is the requested one
+	// or the "any" one.
 	proposedGCCs := make([]semver.Version, 0)
 	for _, img := range b.Images {
-		proposedGCCs = append(proposedGCCs, img.GCCVersion)
-		logger.WithField("image", img.Name).
-			WithField("targetGCC", targetGCC.String()).
-			Debug("proposedGCC=", img.GCCVersion.String())
+		if img.Target == b.TargetType || img.Target.String() == "any" {
+			proposedGCCs = append(proposedGCCs, img.GCCVersion)
+			logger.WithField("image", img.Name).
+				WithField("targetGCC", targetGCC.String()).
+				Debug("proposedGCC=", img.GCCVersion.String())
+		}
 	}
 
 	// Now, sort versions and fetch
