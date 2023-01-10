@@ -156,64 +156,59 @@ func (b *Build) loadImages() {
 		log.Fatal(err)
 	}
 
+	// Create the proper regexes to load "any" and target-specific images for requested arch
+	arch := kernelrelease.Architecture(b.Architecture).ToNonDeb()
+	regs := make([]*regexp.Regexp, 0)
+	targetFmt := fmt.Sprintf("driverkit-builder-%s-%s(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)$", b.TargetType.String(), arch)
+	regs = append(regs, regexp.MustCompile(targetFmt))
+	genericFmt := fmt.Sprintf("driverkit-builder-any-%s(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)$", arch)
+	regs = append(regs, regexp.MustCompile(genericFmt))
+
 	b.Images = make(ImagesMap)
 	for _, repo := range b.DockerRepos {
-		nameReg := regexp.MustCompile("driverkit-builder-(?P<target>[a-z0-9]+)-(?P<arch>x86_64|aarch64)(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)$")
 		imgs, err := cli.ImageSearch(context.Background(), repo, types.ImageSearchOptions{Limit: 100})
 		if err != nil {
 			logger.Warnf("Skipping repo %s: %s\n", repo, err.Error())
 			continue
 		}
 		for _, img := range imgs {
-			match := nameReg.FindStringSubmatch(img.Name)
-			var gccVers []string
-			var target string
-			var arch string
-			for i, name := range nameReg.SubexpNames() {
-				if i > 0 && i <= len(match) {
-					switch name {
-					case "target":
-						target = match[i]
-					case "arch":
-						arch = match[i]
-					case "gccVers":
-						gccVers = strings.Split(match[i], "_gcc")
-						gccVers = gccVers[1:] // remove initial whitespace
+			for regIdx, reg := range regs {
+				match := reg.FindStringSubmatch(img.Name)
+				var gccVers []string
+				for i, name := range reg.SubexpNames() {
+					if i > 0 && i <= len(match) {
+						switch name {
+						case "gccVers":
+							gccVers = strings.Split(match[i], "_gcc")
+							gccVers = gccVers[1:] // remove initial whitespace
+						}
 					}
 				}
-			}
 
-			if len(target) == 0 || len(arch) == 0 || len(gccVers) == 0 {
-				logger.Debug("Malformed image name: ", img.Name)
-				continue
-			}
-
-			typeTarget := Type(target)
-			if _, ok := BuilderByTarget[typeTarget]; !ok && target != "any" {
-				logger.Debug("Skipping builder image for unsupported target: ", target)
-				continue
-			}
-
-			architecture := kernelrelease.Architecture(b.Architecture).ToNonDeb()
-			if arch != architecture {
-				logger.Debugf("Skipping image with arch: %s, different than build target: %s\n", arch, architecture)
-				continue
-			}
-
-			// Note: we store "any" target images as "any",
-			// instead of adding them once to each target,
-			// because we always prefer specific target images,
-			// and we cannot guarantee here that any subsequent docker repos
-			// does not provide a target-specific image that offers same gcc version
-			for _, gccVer := range gccVers {
-				buildImage := Image{
-					Target:     typeTarget,
-					GCCVersion: mustParseTolerant(gccVer),
-					Name:       img.Name,
+				if len(gccVers) == 0 {
+					logger.Debug("Malformed image name: ", img.Name)
+					continue
 				}
-				// Skip if key already exists: we have a descending prio list of docker repos!
-				if _, ok := b.Images[buildImage.toKey()]; !ok {
-					b.Images[buildImage.toKey()] = buildImage
+
+				// Note: we store "any" target images as "any",
+				// instead of adding them to the target,
+				// because we always prefer specific target images,
+				// and we cannot guarantee here that any subsequent docker repos
+				// does not provide a target-specific image that offers same gcc version
+				for _, gccVer := range gccVers {
+					buildImage := Image{
+						GCCVersion: mustParseTolerant(gccVer),
+						Name:       img.Name,
+					}
+					if regIdx == 0 {
+						buildImage.Target = b.TargetType
+					} else {
+						buildImage.Target = Type("any")
+					}
+					// Skip if key already exists: we have a descending prio list of docker repos!
+					if _, ok := b.Images[buildImage.toKey()]; !ok {
+						b.Images[buildImage.toKey()] = buildImage
+					}
 				}
 			}
 		}
