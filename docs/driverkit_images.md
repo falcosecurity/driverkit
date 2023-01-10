@@ -1,9 +1,9 @@
-## driverkit
+## driverkit images
 
-A command line tool to build Falco kernel modules and eBPF probes.
+List builder images
 
 ```
-driverkit
+driverkit images [flags]
 ```
 
 ### Options
@@ -16,7 +16,7 @@ driverkit
       --driverversion string      driver version as a git commit hash or as a git tag (default "master")
       --dryrun                    do not actually perform the action
       --gccversion string         enforce a specific gcc version for the build
-  -h, --help                      help for driverkit
+  -h, --help                      help for images
       --kernelconfigdata string   base64 encoded kernel config data: in some systems it can be found under the /boot directory, in other it is gzip compressed under /proc
       --kernelrelease string      kernel release to build the module for, it can be found by executing 'uname -v'
       --kernelurls strings        list of kernel header urls (e.g. --kernelurls <URL1> --kernelurls <URL2> --kernelurls "<URL3>,<URL4>")
@@ -35,9 +35,5 @@ driverkit
 
 ### SEE ALSO
 
-* [driverkit completion](driverkit_completion.md)	 - Generates completion scripts.
-* [driverkit docker](driverkit_docker.md)	 - Build Falco kernel modules and eBPF probes against a docker daemon.
-* [driverkit images](driverkit_images.md)	 - List builder images
-* [driverkit kubernetes](driverkit_kubernetes.md)	 - Build Falco kernel modules and eBPF probes against a Kubernetes cluster.
-* [driverkit kubernetes-in-cluster](driverkit_kubernetes-in-cluster.md)	 - Build Falco kernel modules and eBPF probes against a Kubernetes cluster inside a Kubernetes cluster.
+* [driverkit](driverkit.md)	 - A command line tool to build Falco kernel modules and eBPF probes.
 
