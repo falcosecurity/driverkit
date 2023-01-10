@@ -167,6 +167,7 @@ func NewRootCmd() *RootCmd {
 	rootCmd.AddCommand(NewKubernetesCmd(rootOpts, flags))
 	rootCmd.AddCommand(NewKubernetesInClusterCmd(rootOpts, flags))
 	rootCmd.AddCommand(NewDockerCmd(rootOpts, flags))
+	rootCmd.AddCommand(NewImagesCmd(rootOpts, flags))
 	rootCmd.AddCommand(NewCompletionCmd())
 
 	ret.StripSensitive()

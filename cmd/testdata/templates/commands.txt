@@ -2,5 +2,6 @@ Available Commands:
   completion            Generates completion scripts.
   docker                Build Falco kernel modules and eBPF probes against a docker daemon.
   help                  Help about any command
+  images                List builder images
   kubernetes            Build Falco kernel modules and eBPF probes against a Kubernetes cluster.
   kubernetes-in-cluster Build Falco kernel modules and eBPF probes against a Kubernetes cluster inside a Kubernetes cluster.
