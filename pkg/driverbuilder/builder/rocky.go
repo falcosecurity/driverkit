@@ -47,10 +47,17 @@ func (c *rocky) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []
 func fetchRockyKernelURLS(kr kernelrelease.KernelRelease) []string {
 	rockyReleases := []string{
 		"8",
+		"8.7",
+		"9",
+		"9.1",
+	}
+
+	rockyVaultReleases := []string{
+		"8.3",
+		"8.4",
 		"8.5",
 		"8.6",
-		"9",
-		"9.0",
+		"9.1",
 	}
 
 	urls := []string{}
@@ -63,9 +70,28 @@ func fetchRockyKernelURLS(kr kernelrelease.KernelRelease) []string {
 				kr.Fullversion,
 				kr.FullExtraversion,
 			))
-		}else{
+		} else {
 			urls = append(urls, fmt.Sprintf(
 				"https://download.rockylinux.org/pub/rocky/%s/BaseOS/%s/os/Packages/k/kernel-devel-%s%s.rpm",
+				r,
+				kr.Architecture.ToNonDeb(),
+				kr.Fullversion,
+				kr.FullExtraversion,
+			))
+		}
+	}
+	for _, r := range rockyVaultReleases {
+		if r >= "9" {
+			urls = append(urls, fmt.Sprintf(
+				"https://download.rockylinux.org/vault/rocky/%s/AppStream/%s/os/Packages/k/kernel-devel-%s%s.rpm",
+				r,
+				kr.Architecture.ToNonDeb(),
+				kr.Fullversion,
+				kr.FullExtraversion,
+			))
+		} else {
+			urls = append(urls, fmt.Sprintf(
+				"https://download.rockylinux.org/vault/rocky/%s/BaseOS/%s/os/Packages/k/kernel-devel-%s%s.rpm",
 				r,
 				kr.Architecture.ToNonDeb(),
 				kr.Fullversion,
