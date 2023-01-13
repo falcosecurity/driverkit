@@ -195,6 +195,19 @@ func TestFromString(t *testing.T) {
 				FullExtraversion: "-1~deb10u3-amd64",
 			},
 		},
+		"strange Debian version 4": {
+			kernelVersionStr: "4.19+105+deb10u4~bpo9+1",
+			want: KernelRelease{
+				Fullversion: "4.19+105",
+				Version: semver.Version{
+					Major: 4,
+					Minor: 19,
+					Patch: 105,
+				},
+				Extraversion:     "deb10u4",
+				FullExtraversion: "+deb10u4~bpo9+1",
+			},
+		},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
