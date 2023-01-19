@@ -20,7 +20,7 @@ DOCKER_ORG ?= falcosecurity
 
 ARCH := $(shell uname -m)
 
-BUILDERS := $(patsubst build/builder-%.Dockerfile,%,$(wildcard build/builder-*-$(ARCH)*.Dockerfile))
+BUILDERS := $(patsubst docker/builders/builder-%.Dockerfile,%,$(wildcard docker/builders/builder*$(ARCH)*.Dockerfile))
 
 IMAGE_NAME_BUILDER_BASE ?= docker.io/$(DOCKER_ORG)/driverkit-builder
 
@@ -62,31 +62,31 @@ image/all: image/builder image/driverkit
 .PHONY: image/builder
 image/builder:
 	$(foreach b,$(BUILDERS),\
-		$(DOCKER) buildx build -o type=image,push="false" -f build/builder-$b.Dockerfile . ; \
+		$(DOCKER) buildx build -o type=image,push="false" -f docker/builders/builder-$b.Dockerfile . ; \
     )
 
 .PHONY: image/driverkit
 image/driverkit:
-	$(DOCKER) buildx build -o type=image,push="false" -f build/driverkit.Dockerfile .
+	$(DOCKER) buildx build -o type=image,push="false" -f docker/driverkit.Dockerfile .
 
 push/all: push/builder push/driverkit
 
 .PHONY: push/builder
 push/builder:
 	$(foreach b,$(BUILDERS),\
-		$(DOCKER) buildx build --push -t "$(IMAGE_NAME_BUILDER_BASE)-$b$(IMAGE_NAME_SUFFIX_REF)" -t "$(IMAGE_NAME_BUILDER_BASE)-$b$(IMAGE_NAME_SUFFIX_COMMIT)" -f build/builder-$b.Dockerfile . ; \
+		$(DOCKER) buildx build --push -t "$(IMAGE_NAME_BUILDER_BASE)-$b$(IMAGE_NAME_SUFFIX_REF)" -t "$(IMAGE_NAME_BUILDER_BASE)-$b$(IMAGE_NAME_SUFFIX_COMMIT)" -f docker/builders/builder-$b.Dockerfile . ; \
 	)
 
 .PHONY: push/driverkit
 push/driverkit:
-	$(DOCKER) buildx build --push -t "$(IMAGE_NAME_DRIVERKIT_REF)" -t "$(IMAGE_NAME_DRIVERKIT_COMMIT)" -f build/driverkit.Dockerfile .
+	$(DOCKER) buildx build --push -t "$(IMAGE_NAME_DRIVERKIT_REF)" -t "$(IMAGE_NAME_DRIVERKIT_COMMIT)" -f docker/driverkit.Dockerfile .
 
 .PHONY: push/latest
 push/latest:
 	$(foreach b,$(BUILDERS),\
-		$(DOCKER) buildx build --push -t "$(IMAGE_NAME_BUILDER_BASE)-$b$(IMAGE_NAME_SUFFIX_LATEST)" -f build/builder-$b.Dockerfile . ; \
+		$(DOCKER) buildx build --push -t "$(IMAGE_NAME_BUILDER_BASE)-$b$(IMAGE_NAME_SUFFIX_LATEST)" -f docker/builders/builder-$b.Dockerfile . ; \
 	)
-	$(DOCKER) buildx build --push -t "$(IMAGE_NAME_DRIVERKIT_LATEST)" -f build/driverkit.Dockerfile .
+	$(DOCKER) buildx build --push -t "$(IMAGE_NAME_DRIVERKIT_LATEST)" -f docker/driverkit.Dockerfile .
 
 manifest/all: manifest/builder manifest/driverkit
 
