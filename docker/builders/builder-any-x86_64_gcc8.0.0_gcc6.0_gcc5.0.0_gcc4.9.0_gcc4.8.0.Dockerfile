@@ -122,7 +122,7 @@ RUN curl -L -o binutils_2.30-22_${TARGETARCH}.deb https://download.falco.org/dep
 	&& rm -f *binutils*.deb
 
 # Properly create soft link
-RUN ln -s /usr/bin/gcc-4.8 /usr/bin/gcc-4.8-0
+RUN ln -s /usr/bin/gcc-4.8 /usr/bin/gcc-4.8.0
 RUN if [ "$TARGETARCH" = "amd64" ] ; then ln -s /usr/bin/gcc-4.9 /usr/bin/gcc-4.9.0; fi;
 RUN ln -s /usr/bin/gcc-5 /usr/bin/gcc-5.0.0
 RUN ln -s /usr/bin/gcc-6 /usr/bin/gcc-6.0.0

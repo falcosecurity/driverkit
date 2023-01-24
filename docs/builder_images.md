@@ -5,36 +5,45 @@ A builder image is the docker image used to build the drivers.
 
 ## Adding a builder image
 
-Adding a builder image is just a matter of adding a new dockerfile under the [build](../build) folder,  
-with a name matching: `builder_$osname.Dockerfile` (like: `builder_stretch.Dockerfile`).  
+Adding a builder image is just a matter of adding a new dockerfile under the [docker/builders](../docker/builders) folder,  
+with a name matching the following regex: `builder-(?P<target>[a-z0-9]+)-(?P<arch>x86_64|aarch64)(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+).Dockerfile$`.    
+For example: `builder-centos-x86_64_gcc5.8.0_gcc6.0.0.Dockerfile`.
+
+> **NOTE:** `any` is also a valid target, and means "apply as fallback for any target"
+
+The image **MUST** symlink all of its provided GCC versions to their full semver name, like:
+* `/usr/bin/gcc5` must be linked to `/usr/bin/gcc-5.0.0`
+* `/usr/bin/gcc-4.8` must be linked to `/usr/bin/gcc-4.8.0`
+
+This is needed because driverkit logic must be able to differentiate between  
+an image that provides gcc4 and one that provides 4.8, in a reliable manner.
 
 The makefile will be then automatically able to collect the new docker images and pushing it as part of the CI.  
 
-Moreover, the new image $osname must also be added to the static map of images, kept in [builders.go source file](../pkg/driverbuilder/builder/builders.go):  
-```go
-var images = map[string]Image{
-	"buster": {
-		GCCVersion: map[kernelrelease.Architecture][]string{
-			kernelrelease.ArchitectureAmd64: {"4.8", "4.9", "5", "6", "8"},
-			kernelrelease.ArchitectureArm64: {"4.8", "5", "6", "8"}, // 4.9 is not present on arm64
-		},
-	},
-	"bullseye": {
-		GCCVersion: map[kernelrelease.Architecture][]string{
-			kernelrelease.ArchitectureAmd64: {"9", "10"},
-			kernelrelease.ArchitectureArm64: {"9", "10"},
-		},
-	},
-	"bookworm": {
-		GCCVersion: map[kernelrelease.Architecture][]string{
-			kernelrelease.ArchitectureAmd64: {"11", "12"},
-			kernelrelease.ArchitectureArm64: {"11", "12"},
-		},
-	},
-}
-```
+## Selection algorithm
 
-Then, the new image's shipped gcc is now available to various builder using the `defaultGCC` method's algorithm,  
-or chosen by each builder by implementing the `builder.GCCVersionRequestor` interface.  
+Once pushed, driverkit will be able to correctly load the image during startup, using a `docker search`.  
+Then, it will map images whose target and architecture are correct for the current build, storing the provided GCCs list.  
+The algorithm goes as follows:
+* load any image for the build arch and build target
+* load any image for the build arch and "any" target
+* if any of the target-specific image provides the targetGCC for the build, we are over
+* if any of the "any" fallback image provides the targetGCC for the build, we are over
+* else, find the image between target-specific and fallback ones, that provides nearest GCC.  
+In this latest step, there is no distinction between/different priority given to target specific or fallback images.
 
-Finally, the [builder](builder.md) doc file should be updated with the new available GCC (section 3.).
+## Customize docker repo
+
+Moreover, users can also ship their own builder images in their own docker repositories, by using `--dockerrepo` CLI option.  
+Docker repos are a priority first list of repositories that can provide up to 100 builder images.  
+Note that default falcosecurity repo will always be enforced as lowest priority repo.  
+
+## Force use a builder image
+
+Users can also force-specify the builder image to be used for the current build,  
+instead of relying on the internal algorithm,  
+by using `--builderimage` CLI option.  
+It can also be used in conjunction with `--dockerrepo` to use a builder image from a non-default docker repo.  
+
+A special value for builder image is available:
+* `auto:$tag`, that is used to tell driverkit to use the automatic algorithm, but forcing a certain image tag

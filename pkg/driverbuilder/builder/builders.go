@@ -114,6 +114,8 @@ func Script(b Builder, c Config, kr kernelrelease.KernelRelease) (string, error)
 }
 
 type GCCVersionRequestor interface {
+	// GCCVersion returns the GCC version to be used.
+	// If the returned value is empty, the default algorithm will be enforced.
 	GCCVersion(kr kernelrelease.KernelRelease) semver.Version
 }
 
