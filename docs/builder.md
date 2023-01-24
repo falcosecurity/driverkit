@@ -127,43 +127,10 @@ Indeed, the hardest part is fetching the kernel headers urls for each distro.
 
 ### 3. Customize GCC version
 
-Driverkit builder images support multiple gcc versions:
-
-From **driverkit-builder_buster** image:
-
-* /usr/bin/gcc-8
-* /usr/bin/gcc-6 (6.3.0)
-* /usr/bin/gcc-5 (5.5.0)
-* /usr/bin/gcc-4.8 (4.8.4)
-
-From **driverkit-builder_bullseye** image:
-
-* /usr/bin/gcc-9
-* /usr/bin/gcc-10
-
-From **driverkit-builder_bookworm** image:
-
-* /usr/bin/gcc-11
-* /usr/bin/gcc-12
-
-You can dynamically choose the one you prefer,
-by letting your builder implement the `builder.GCCVersionRequestor` interface.  
-A sane default is provided, selecting it switching on the kernel version.  
-Please note that requested gcc version is used to find the correct builder image to be used.
-
-Moreover, Driverkit builder images support multiple clang versions:
-
-From **driverkit-builder_buster** image:
-
-* /usr/bin/clang (clang-7)
-
-From **driverkit-builder_bullseye** image:
-
-* /usr/bin/clang (clang-11)
-
-From **driverkit-builder_bookworm** image:
-
-* /usr/bin/clang (clang-14)
+A builder can enforce a GCC selection algorithm,  
+by implementing the `builder.GCCVersionRequestor` interface.  
+A sane default algorithm is provided, that selects a GCC version based on the kernel version.   
+Please note that requested gcc version is then used to find the correct builder image to be used.
 
 Note, however, that there is no mechanism to dynamically choose a clang version,  
 because touching it should never be needed.  
