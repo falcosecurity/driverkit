@@ -36,7 +36,7 @@ var supportedArchsSlice []string
 // See compatibility matrix: https://falco.org/docs/event-sources/drivers/
 var moduleMinKernelVersion = map[Architecture]semver.Version{
 	ArchitectureAmd64: semver.MustParse("2.6.0"),
-	ArchitectureArm64: semver.MustParse("3.4.0"),
+	ArchitectureArm64: semver.MustParse("3.16.0"),
 }
 
 // Represents the minimum kernel version for which building the probe
