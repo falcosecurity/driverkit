@@ -232,11 +232,7 @@ func TestSupportsModule(t *testing.T) {
 			Architecture: ArchitectureArm64,
 		},
 		{
-			Version:      semver.Version{Major: 3, Minor: 3, Patch: 99},
-			Architecture: ArchitectureArm64,
-		},
-		{
-			Version:      semver.Version{Major: 3, Minor: 3, Patch: 99},
+			Version:      semver.Version{Major: 3, Minor: 15, Patch: 99},
 			Architecture: ArchitectureArm64,
 		},
 	}
@@ -258,11 +254,11 @@ func TestSupportsModule(t *testing.T) {
 			Architecture: ArchitectureAmd64,
 		},
 		{
-			Version:      semver.Version{Major: 3, Minor: 4, Patch: 0},
+			Version:      semver.Version{Major: 3, Minor: 16, Patch: 0},
 			Architecture: ArchitectureArm64,
 		},
 		{
-			Version:      semver.Version{Major: 3, Minor: 4, Patch: 1},
+			Version:      semver.Version{Major: 3, Minor: 16, Patch: 1},
 			Architecture: ArchitectureArm64,
 		},
 		{
