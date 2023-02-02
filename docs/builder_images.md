@@ -47,3 +47,5 @@ It can also be used in conjunction with `--dockerrepo` to use a builder image fr
 
 A special value for builder image is available:
 * `auto:$tag`, that is used to tell driverkit to use the automatic algorithm, but forcing a certain image tag
+
+> **NOTE**: since `docker search` has no way to differentiate between image tags, all builder images are expected to be tagged together.
