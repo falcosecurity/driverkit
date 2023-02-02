@@ -39,7 +39,7 @@ RUN apt-get update \
 	software-properties-common \
 	gpg \
 	zstd \
-    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /var/lib/apt/lists/*
 
 # Properly create soft links
 RUN ln -s /usr/bin/gcc-11 /usr/bin/gcc-11.0.0
