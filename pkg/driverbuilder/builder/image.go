@@ -95,6 +95,10 @@ func (b *Build) LoadImages() {
 				// and we cannot guarantee here that any subsequent docker repos
 				// does not provide a target-specific image that offers same gcc version
 				for _, gccVer := range gccVers {
+					// If user set a fixed gcc version, only load images that provide it.
+					if b.GCCVersion != "" && b.GCCVersion != gccVer {
+						continue
+					}
 					buildImage := Image{
 						GCCVersion: mustParseTolerant(gccVer),
 						Name:       img.Name,
