@@ -148,7 +148,14 @@ func mustParseTolerant(gccStr string) semver.Version {
 	return g
 }
 
+// Algorithm.
+// * always load images (note that it loads only images that provide gccversion, if set by user)
+// * if user set a fixed gccversion, we are good to go
+// * otherwise, try to fix the best-match gcc version provided by any of the loaded images;
+// see below for algorithm explanation
 func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
+	b.LoadImages()
+
 	if len(b.GCCVersion) > 0 {
 		// If set from user, go on
 		return
@@ -164,12 +171,14 @@ func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 	if bb, ok := builder.(GCCVersionRequestor); ok {
 		targetGCC = bb.GCCVersion(kr)
 	}
+	// If builder implements GCCVersionRequestor but returns an empty semver.Version
+	// it means that it does not want to manage this kernelrelease,
+	// and instead wants to fallback to default algorithm
 	if targetGCC.EQ(semver.Version{}) {
 		targetGCC = defaultGCC(kr)
 	}
 
-	b.LoadImages()
-
+	// Step 1:
 	// If we are able to either find a specific-target image,
 	// or "any" target image that provide desired gcc,
 	// we are over.
@@ -178,22 +187,16 @@ func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 		b.GCCVersion = image.GCCVersion.String()
 	}
 
-	// List all images to find nearest gcc
-
-	// Step 1:
+	// Step 2:
 	// Build the list of "proposed" GCC versions,
 	// that is, the list of available gccs from images
 	// for each builder image
-	// whose target is the requested one
-	// or the "any" one.
 	proposedGCCs := make([]semver.Version, 0)
 	for _, img := range b.Images {
-		if img.Target == b.TargetType || img.Target.String() == "any" {
-			proposedGCCs = append(proposedGCCs, img.GCCVersion)
-			logger.WithField("image", img.Name).
-				WithField("targetGCC", targetGCC.String()).
-				Debug("proposedGCC=", img.GCCVersion.String())
-		}
+		proposedGCCs = append(proposedGCCs, img.GCCVersion)
+		logger.WithField("image", img.Name).
+			WithField("targetGCC", targetGCC.String()).
+			Debug("proposedGCC=", img.GCCVersion.String())
 	}
 
 	// Now, sort versions and fetch
