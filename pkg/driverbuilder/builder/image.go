@@ -60,7 +60,7 @@ func (b *Build) LoadImages() {
 	regs = append(regs, regexp.MustCompile(genericFmt))
 
 	b.Images = make(ImagesMap)
-	for _, repo := range b.DockerRepos {
+	for _, repo := range b.BuilderRepos {
 		imgs, err := cli.ImageSearch(context.Background(), repo, types.ImageSearchOptions{Limit: 100})
 		if err != nil {
 			logger.Warnf("Skipping repo %s: %s\n", repo, err.Error())

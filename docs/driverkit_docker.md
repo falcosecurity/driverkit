@@ -11,8 +11,8 @@ driverkit docker [flags]
 ```
       --architecture string       target architecture for the built driver, one of [amd64,arm64] (default "amd64")
       --builderimage string       docker image to be used to build the kernel module and eBPF probe. If not provided, an automatically selected image will be used.
+      --builderrepo strings       list of docker repositories in descending priority order, used to search for builder images. Default falcosecurity/driverkit will always be enforced as lowest priority repo. eg: --builderrepo myorg/driverkit --builderrepo falcosecurity/driverkit
   -c, --config string             config file path (default $HOME/.driverkit.yaml if exists)
-      --dockerrepo strings        list of docker repositories in descending priority order, used to search for builder images. Default falcosecurity/driverkit will always be enforced as lowest priority repo. eg: --dockerrepo myorg/driverkit --dockerrepo falcosecurity/driverkit
       --driverversion string      driver version as a git commit hash or as a git tag (default "master")
       --dryrun                    do not actually perform the action
       --gccversion string         enforce a specific gcc version for the build
