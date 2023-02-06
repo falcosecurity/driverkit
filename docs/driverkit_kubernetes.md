@@ -14,6 +14,7 @@ driverkit kubernetes [flags]
       --as-group stringArray           group to impersonate for the operation, this flag can be repeated to specify multiple groups
       --as-uid string                  uID to impersonate for the operation
       --builderimage string            docker image to be used to build the kernel module and eBPF probe. If not provided, an automatically selected image will be used.
+      --builderrepo strings            list of docker repositories in descending priority order, used to search for builder images. Default falcosecurity/driverkit will always be enforced as lowest priority repo. eg: --builderrepo myorg/driverkit --builderrepo falcosecurity/driverkit
       --cache-dir string               default cache directory (default "$HOME/.kube/cache")
       --certificate-authority string   path to a cert file for the certificate authority
       --client-certificate string      path to a client certificate file for TLS
@@ -21,7 +22,6 @@ driverkit kubernetes [flags]
       --cluster string                 the name of the kubeconfig cluster to use
   -c, --config string                  config file path (default $HOME/.driverkit.yaml if exists)
       --context string                 the name of the kubeconfig context to use
-      --dockerrepo strings             list of docker repositories in descending priority order, used to search for builder images. Default falcosecurity/driverkit will always be enforced as lowest priority repo. eg: --dockerrepo myorg/driverkit --dockerrepo falcosecurity/driverkit
       --driverversion string           driver version as a git commit hash or as a git tag (default "master")
       --dryrun                         do not actually perform the action
       --gccversion string              enforce a specific gcc version for the build

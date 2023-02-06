@@ -7,23 +7,23 @@ import (
 
 // Build contains the info about the on-going build.
 type Build struct {
-	TargetType         Type
-	KernelConfigData   string
-	KernelRelease      string
-	KernelVersion      string
-	DriverVersion      string
-	Architecture       string
-	ModuleFilePath     string
-	ProbeFilePath      string
-	ModuleDriverName   string
-	ModuleDeviceName   string
-	CustomBuilderImage string
-	DockerRepos        []string
-	KernelUrls         []string
-	GCCVersion         string
-	RepoOrg            string
-	RepoName           string
-	Images             ImagesMap
+	TargetType       Type
+	KernelConfigData string
+	KernelRelease    string
+	KernelVersion    string
+	DriverVersion    string
+	Architecture     string
+	ModuleFilePath   string
+	ProbeFilePath    string
+	ModuleDriverName string
+	ModuleDeviceName string
+	BuilderImage     string
+	BuilderRepos     []string
+	KernelUrls       []string
+	GCCVersion       string
+	RepoOrg          string
+	RepoName         string
+	Images           ImagesMap
 }
 
 func (b *Build) KernelReleaseFromBuildConfig() kernelrelease.KernelRelease {

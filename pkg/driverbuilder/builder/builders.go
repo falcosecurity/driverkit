@@ -216,11 +216,11 @@ func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 
 func (b *Build) GetBuilderImage() string {
 	imageTag := "latest"
-	if len(b.CustomBuilderImage) > 0 {
-		customNames := strings.Split(b.CustomBuilderImage, ":")
+	if len(b.BuilderImage) > 0 {
+		customNames := strings.Split(b.BuilderImage, ":")
 		if customNames[0] != "auto" {
-			// CustomBuilderImage MUST have requested GCC installed inside
-			return b.CustomBuilderImage
+			// BuilderImage MUST have requested GCC installed inside
+			return b.BuilderImage
 		}
 
 		// Updated image tag if "auto:tag" is passed

@@ -33,7 +33,7 @@ type RootOptions struct {
 	Target           string   `validate:"required,target" name:"target"`
 	KernelConfigData string   `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level
 	BuilderImage     string   `validate:"omitempty,imagename" name:"builder image"`
-	DockerRepos      []string `validate:"omitempty" name:"docker repositories to look for builder images"`
+	BuilderRepos     []string `validate:"omitempty" name:"docker repositories to look for builder images"`
 	GCCVersion       string   `validate:"omitempty,semvertolerant" name:"gcc version"`
 	KernelUrls       []string `name:"kernel header urls"`
 	Repo             RepoOptions
@@ -116,27 +116,27 @@ func (ro *RootOptions) toBuild() *builder.Build {
 	}
 
 	build := &builder.Build{
-		TargetType:         builder.Type(ro.Target),
-		DriverVersion:      ro.DriverVersion,
-		KernelVersion:      ro.KernelVersion,
-		KernelRelease:      ro.KernelRelease,
-		Architecture:       ro.Architecture,
-		KernelConfigData:   kernelConfigData,
-		ModuleFilePath:     ro.Output.Module,
-		ProbeFilePath:      ro.Output.Probe,
-		ModuleDriverName:   ro.ModuleDriverName,
-		ModuleDeviceName:   ro.ModuleDeviceName,
-		GCCVersion:         ro.GCCVersion,
-		CustomBuilderImage: ro.BuilderImage,
-		DockerRepos:        ro.DockerRepos,
-		KernelUrls:         ro.KernelUrls,
-		RepoOrg:            ro.Repo.Org,
-		RepoName:           ro.Repo.Name,
+		TargetType:       builder.Type(ro.Target),
+		DriverVersion:    ro.DriverVersion,
+		KernelVersion:    ro.KernelVersion,
+		KernelRelease:    ro.KernelRelease,
+		Architecture:     ro.Architecture,
+		KernelConfigData: kernelConfigData,
+		ModuleFilePath:   ro.Output.Module,
+		ProbeFilePath:    ro.Output.Probe,
+		ModuleDriverName: ro.ModuleDriverName,
+		ModuleDeviceName: ro.ModuleDeviceName,
+		GCCVersion:       ro.GCCVersion,
+		BuilderImage:     ro.BuilderImage,
+		BuilderRepos:     ro.BuilderRepos,
+		KernelUrls:       ro.KernelUrls,
+		RepoOrg:          ro.Repo.Org,
+		RepoName:         ro.Repo.Name,
 	}
 
 	// Always append falcosecurity repo; Note: this is a prio first slice
 	// therefore, default falcosecurity repo has lowest prio.
-	build.DockerRepos = append(build.DockerRepos, "docker.io/falcosecurity/driverkit")
+	build.BuilderRepos = append(build.BuilderRepos, "docker.io/falcosecurity/driverkit")
 
 	// attempt the build in case it comes from an invalid config
 	kr := build.KernelReleaseFromBuildConfig()

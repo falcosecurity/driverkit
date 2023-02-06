@@ -34,7 +34,7 @@ In this latest step, there is no distinction between/different priority given to
 
 ## Customize docker repo
 
-Moreover, users can also ship their own builder images in their own docker repositories, by using `--dockerrepo` CLI option.  
+Moreover, users can also ship their own builder images in their own docker repositories, by using `--builderrepo` CLI option.  
 Docker repos are a priority first list of repositories that can provide up to 100 builder images.  
 Note that default falcosecurity repo will always be enforced as lowest priority repo.  
 
@@ -43,7 +43,7 @@ Note that default falcosecurity repo will always be enforced as lowest priority 
 Users can also force-specify the builder image to be used for the current build,  
 instead of relying on the internal algorithm,  
 by using `--builderimage` CLI option.  
-It can also be used in conjunction with `--dockerrepo` to use a builder image from a non-default docker repo.  
+It can also be used in conjunction with `--builderrepo` to use a builder image from a non-default docker repo.  
 
 A special value for builder image is available:
 * `auto:$tag`, that is used to tell driverkit to use the automatic algorithm, but forcing a certain image tag

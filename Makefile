@@ -126,7 +126,7 @@ integration_test: $(test_configs)
 
 .PHONY: $(test_configs)
 $(test_configs): ${driverkit}
-	${driverkit} docker -c $@ --builderimage auto:master -l debug --timeout 600 --dockerrepo docker.io/fededp/driverkit
+	${driverkit} docker -c $@ --builderimage auto:master -l debug --timeout 600 --builderrepo docker.io/fededp/driverkit
 
 .PHONY: ${driverkit_docgen}
 ${driverkit_docgen}: ${PWD}/docgen
