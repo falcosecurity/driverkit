@@ -139,6 +139,7 @@ func (a *amazonlinux2) repos() []string {
 		"core/latest",
 		"extras/kernel-5.4/latest",
 		"extras/kernel-5.10/latest",
+		"extras/kernel-5.15/latest",
 	}
 }
 
