@@ -130,12 +130,13 @@ Indeed, the hardest part is fetching the kernel headers urls for each distro.
 A builder can enforce a GCC selection algorithm,  
 by implementing the `builder.GCCVersionRequestor` interface.  
 A sane default algorithm is provided, that selects a GCC version based on the kernel version.   
-Please note that requested gcc version is then used to find the correct builder image to be used.
+The requested gcc version is then [used to find the correct builder image to be used](builder_images.md#selection-algorithm).  
 
-Note, however, that there is no mechanism to dynamically choose a clang version,  
-because touching it should never be needed.  
-The build will use the one provided by the chosen builder image.    
-Any failure must be treated as a bug, and therefore an issue opened on [libs](https://github.com/falcosecurity/libs) repository.
+> **NOTE**: when implementing the `builder.GCCVersionRequestor`, returning an empty `semver.Version` means to fallback at default algorithm.
+
+However, there is no mechanism to dynamically choose a clang version, because there should never be any need of touching it.   
+The build will use the one provided by the chosen builder image.  
+Any failure must be treated as a bug, and reported on [libs](https://github.com/falcosecurity/libs) repository.
 
 ### 5. kernel-crawler
 
@@ -143,6 +144,5 @@ When creating a new builder, it is recommended to check that [kernel-crawler](ht
 can also support collecting the new builders kernel versions and header package URLs. This will make sure that the latest drivers
 for the new builder are automatically built by [test-infra](https://github.com/falcosecurity/test-infra). If required, add a feature request
 for support for the new builder on the kernel-crawler repository.  
-Note: be sure that the crawler you wants to add is interesting for the community as a whole.  
-For example, an archlinux crawler doesn't make much sense, because Arch is a rolling release and we should not support  
-any past Arch kernel for Falco.
+
+> **NOTE**: be sure that the crawler you are going to add is interesting for the community as a whole.
