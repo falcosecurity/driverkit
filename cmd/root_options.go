@@ -2,13 +2,14 @@ package cmd
 
 import (
 	"fmt"
-
 	"github.com/creasty/defaults"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"github.com/falcosecurity/driverkit/validate"
 	"github.com/go-playground/validator/v10"
 	logger "github.com/sirupsen/logrus"
+	"regexp"
+	"strings"
 )
 
 // OutputOptions wraps the two drivers that driverkit builds.
@@ -33,7 +34,7 @@ type RootOptions struct {
 	Target           string   `validate:"required,target" name:"target"`
 	KernelConfigData string   `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level
 	BuilderImage     string   `validate:"omitempty,imagename" name:"builder image"`
-	BuilderRepos     []string `validate:"omitempty" name:"docker repositories to look for builder images"`
+	BuilderRepos     []string `validate:"omitempty" name:"docker repositories to look for builder images or absolute path pointing to a file container builder image index"`
 	GCCVersion       string   `validate:"omitempty,semvertolerant" name:"gcc version"`
 	KernelUrls       []string `name:"kernel header urls"`
 	Repo             RepoOptions
@@ -132,11 +133,26 @@ func (ro *RootOptions) toBuild() *builder.Build {
 		KernelUrls:       ro.KernelUrls,
 		RepoOrg:          ro.Repo.Org,
 		RepoName:         ro.Repo.Name,
+		Images:           make(builder.ImagesMap),
 	}
 
-	// Always append falcosecurity repo; Note: this is a prio first slice
-	// therefore, default falcosecurity repo has lowest prio.
-	build.BuilderRepos = append(build.BuilderRepos, "docker.io/falcosecurity/driverkit")
+	// loop over BuilderRepos to constuct the list ImagesListers based on the value of the builderRepo, if it's a local path, add FileImagesLister, otherwise add RepoImagesLister
+	for _, builderRepo := range ro.BuilderRepos {
+		if strings.HasPrefix(builderRepo, "/") {
+			build.ImagesListers = append(build.ImagesListers, &builder.FileImagesLister{FilePath: builderRepo})
+		} else {
+			if len(build.Regs) == 0 {
+				// Create the proper regexes to load "any" and target-specific images for requested arch
+				arch := kernelrelease.Architecture(build.Architecture).ToNonDeb()
+				build.Regs = make([]*regexp.Regexp, 0)
+				targetFmt := fmt.Sprintf("driverkit-builder-%s-%s(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)$", build.TargetType.String(), arch)
+				build.Regs = append(build.Regs, regexp.MustCompile(targetFmt))
+				genericFmt := fmt.Sprintf("driverkit-builder-any-%s(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)$", arch)
+				build.Regs = append(build.Regs, regexp.MustCompile(genericFmt))
+			}
+			build.ImagesListers = append(build.ImagesListers, &builder.RepoImagesLister{Repo: builderRepo})
+		}
+	}
 
 	// attempt the build in case it comes from an invalid config
 	kr := build.KernelReleaseFromBuildConfig()
