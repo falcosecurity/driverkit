@@ -185,31 +185,31 @@ func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 	image, ok := b.Images.findImage(b.TargetType, targetGCC)
 	if ok {
 		b.GCCVersion = image.GCCVersion.String()
-	}
-
-	// Step 2:
-	// Build the list of "proposed" GCC versions,
-	// that is, the list of available gccs from images
-	// for each builder image
-	proposedGCCs := make([]semver.Version, 0)
-	for _, img := range b.Images {
-		proposedGCCs = append(proposedGCCs, img.GCCVersion)
-		logger.WithField("image", img.Name).
-			WithField("targetGCC", targetGCC.String()).
-			Debug("proposedGCC=", img.GCCVersion.String())
-	}
-
-	// Now, sort versions and fetch
-	// the nearest gcc, that is also < targetGCC
-	semver.Sort(proposedGCCs)
-	lastGCC := proposedGCCs[0]
-	for _, gcc := range proposedGCCs {
-		if gcc.GT(targetGCC) {
-			break
+	} else {
+		// Step 2:
+		// Build the list of "proposed" GCC versions,
+		// that is, the list of available gccs from images
+		// for each builder image
+		proposedGCCs := make([]semver.Version, 0)
+		for _, img := range b.Images {
+			proposedGCCs = append(proposedGCCs, img.GCCVersion)
+			logger.WithField("image", img.Name).
+				WithField("targetGCC", targetGCC.String()).
+				Debug("proposedGCC=", img.GCCVersion.String())
 		}
-		lastGCC = gcc
+
+		// Now, sort versions and fetch
+		// the nearest gcc, that is also < targetGCC
+		semver.Sort(proposedGCCs)
+		lastGCC := proposedGCCs[0]
+		for _, gcc := range proposedGCCs {
+			if gcc.GT(targetGCC) {
+				break
+			}
+			lastGCC = gcc
+		}
+		b.GCCVersion = lastGCC.String()
 	}
-	b.GCCVersion = lastGCC.String()
 	logger.WithField("targetGCC", targetGCC.String()).
 		Debug("foundGCC=", b.GCCVersion)
 }
