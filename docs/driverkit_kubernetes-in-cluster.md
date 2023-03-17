@@ -11,7 +11,7 @@ driverkit kubernetes-in-cluster [flags]
 ```
       --architecture string        target architecture for the built driver, one of [amd64,arm64] (default "amd64")
       --builderimage string        docker image to be used to build the kernel module and eBPF probe. If not provided, an automatically selected image will be used.
-      --builderrepo strings        list of docker repositories in descending priority order, used to search for builder images. Default falcosecurity/driverkit will always be enforced as lowest priority repo. eg: --builderrepo myorg/driverkit --builderrepo falcosecurity/driverkit
+      --builderrepo strings        list of docker repositories or file (absolute path) containing builder images index with the format '<image>,<target>,<gcc-version>[,<gcc-version>,...]', in descending priority order. Used to search for builder images. eg: --builderrepo myorg/driverkit --builderrepo falcosecurity/driverkit --builderrepo /path/to/my/index.txt. Index file line exmaple: yourorg/driverkit-builder;any;4.9.0;5.0.0;6.0.0;8.0.0
   -c, --config string              config file path (default $HOME/.driverkit.yaml if exists)
       --driverversion string       driver version as a git commit hash or as a git tag (default "master")
       --dryrun                     do not actually perform the action
