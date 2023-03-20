@@ -144,7 +144,7 @@ func (ro *RootOptions) toBuild() *builder.Build {
 		if strings.HasPrefix(builderRepo, "/") {
 			build.ImagesListers = append(build.ImagesListers, &builder.FileImagesLister{FilePath: builderRepo})
 		} else {
-			build.ImagesListers = append(build.ImagesListers, &builder.RepoImagesLister{Repo: builderRepo})
+			build.ImagesListers = append(build.ImagesListers, builder.NewRepoImagesLister(builderRepo, build))
 		}
 	}
 
