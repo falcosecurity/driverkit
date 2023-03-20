@@ -3,7 +3,6 @@ package builder
 import (
 	"fmt"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
-	"regexp"
 )
 
 // Build contains the info about the on-going build.
@@ -26,7 +25,6 @@ type Build struct {
 	RepoOrg          string
 	RepoName         string
 	Images           ImagesMap
-	Regs             []*regexp.Regexp
 }
 
 func (b *Build) KernelReleaseFromBuildConfig() kernelrelease.KernelRelease {

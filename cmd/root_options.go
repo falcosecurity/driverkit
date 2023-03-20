@@ -8,7 +8,6 @@ import (
 	"github.com/falcosecurity/driverkit/validate"
 	"github.com/go-playground/validator/v10"
 	logger "github.com/sirupsen/logrus"
-	"regexp"
 	"strings"
 )
 
@@ -136,20 +135,15 @@ func (ro *RootOptions) toBuild() *builder.Build {
 		Images:           make(builder.ImagesMap),
 	}
 
+	if len(build.BuilderRepos) == 0 {
+		build.BuilderRepos = append(build.BuilderRepos, "docker.io/falcosecurity/driverkit")
+	}
+
 	// loop over BuilderRepos to constuct the list ImagesListers based on the value of the builderRepo, if it's a local path, add FileImagesLister, otherwise add RepoImagesLister
 	for _, builderRepo := range ro.BuilderRepos {
 		if strings.HasPrefix(builderRepo, "/") {
 			build.ImagesListers = append(build.ImagesListers, &builder.FileImagesLister{FilePath: builderRepo})
 		} else {
-			if len(build.Regs) == 0 {
-				// Create the proper regexes to load "any" and target-specific images for requested arch
-				arch := kernelrelease.Architecture(build.Architecture).ToNonDeb()
-				build.Regs = make([]*regexp.Regexp, 0)
-				targetFmt := fmt.Sprintf("driverkit-builder-%s-%s(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)$", build.TargetType.String(), arch)
-				build.Regs = append(build.Regs, regexp.MustCompile(targetFmt))
-				genericFmt := fmt.Sprintf("driverkit-builder-any-%s(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)$", arch)
-				build.Regs = append(build.Regs, regexp.MustCompile(genericFmt))
-			}
 			build.ImagesListers = append(build.ImagesListers, &builder.RepoImagesLister{Repo: builderRepo})
 		}
 	}

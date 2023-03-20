@@ -140,7 +140,7 @@ func defaultGCC(kr kernelrelease.KernelRelease) semver.Version {
 	}
 }
 
-func MustParseTolerant(gccStr string) semver.Version {
+func mustParseTolerant(gccStr string) semver.Version {
 	g, err := semver.ParseTolerant(gccStr)
 	if err != nil {
 		panic(err)
@@ -235,7 +235,7 @@ func (b *Build) GetBuilderImage() string {
 	// to find an image, because setGCCVersion()
 	// has already set an existent gcc version
 	// (ie: one provided by an image) for us
-	image, _ := b.Images.findImage(b.TargetType, MustParseTolerant(b.GCCVersion))
+	image, _ := b.Images.findImage(b.TargetType, mustParseTolerant(b.GCCVersion))
 	return image.Name + ":" + imageTag
 }
 
