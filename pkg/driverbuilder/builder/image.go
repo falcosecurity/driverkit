@@ -3,12 +3,15 @@ package builder
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"github.com/blang/semver"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	logger "github.com/sirupsen/logrus"
 	"log"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -20,27 +23,27 @@ type Image struct {
 }
 
 type ImagesLister interface {
-	LoadImages()
+	LoadImages(*Build)
 }
 
 type FileImagesLister struct {
 	file     *os.File
-	Build    *Build
 	FilePath string
 }
 
 type RepoImagesLister struct {
-	Repo  string
-	Build *Build
+	Repo string
 }
 
 type ImageKey string
 
-func (i *Image) ToKey() ImageKey {
+func (i *Image) toKey() ImageKey {
 	return ImageKey(i.Target.String() + "_" + i.GCCVersion.String())
 }
 
 type ImagesMap map[ImageKey]Image
+
+var repoRegs = make([]*regexp.Regexp, 0)
 
 func (im ImagesMap) findImage(target Type, gccVers semver.Version) (Image, bool) {
 	targetImage := Image{
@@ -48,19 +51,19 @@ func (im ImagesMap) findImage(target Type, gccVers semver.Version) (Image, bool)
 		GCCVersion: gccVers,
 	}
 	// Try to find specific image for specific target first
-	if img, ok := im[targetImage.ToKey()]; ok {
+	if img, ok := im[targetImage.toKey()]; ok {
 		return img, true
 	}
 
 	// Fallback at "any" target that offers specific gcc
 	targetImage.Target = "any"
-	if img, ok := im[targetImage.ToKey()]; ok {
+	if img, ok := im[targetImage.toKey()]; ok {
 		return img, true
 	}
 	return Image{}, false
 }
 
-func (f *FileImagesLister) LoadImages() {
+func (f *FileImagesLister) LoadImages(build *Build) {
 	// loop over lines in file to print them
 	file, err := os.Open(f.FilePath)
 	if err != nil {
@@ -79,9 +82,9 @@ func (f *FileImagesLister) LoadImages() {
 			buildImage := Image{
 				Name:       name,
 				Target:     target,
-				GCCVersion: MustParseTolerant(gcc),
+				GCCVersion: mustParseTolerant(gcc),
 			}
-			f.Build.Images[buildImage.ToKey()] = buildImage
+			build.Images[buildImage.toKey()] = buildImage
 		}
 	}
 	if err := scanner.Err(); err != nil {
@@ -93,7 +96,7 @@ func (f *FileImagesLister) LoadImages() {
 	}
 }
 
-func (repo *RepoImagesLister) LoadImages() {
+func (repo *RepoImagesLister) LoadImages(build *Build) {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		log.Fatal(err)
@@ -104,7 +107,7 @@ func (repo *RepoImagesLister) LoadImages() {
 		return
 	}
 	for _, img := range imgs {
-		for regIdx, reg := range repo.Build.Regs {
+		for regIdx, reg := range repoRegs {
 			match := reg.FindStringSubmatch(img.Name)
 			if len(match) == 0 {
 				continue
@@ -133,21 +136,21 @@ func (repo *RepoImagesLister) LoadImages() {
 			// does not provide a target-specific image that offers same gcc version
 			for _, gccVer := range gccVers {
 				// If user set a fixed gcc version, only load images that provide it.
-				if repo.Build.GCCVersion != "" && repo.Build.GCCVersion != gccVer {
+				if build.GCCVersion != "" && build.GCCVersion != gccVer {
 					continue
 				}
 				buildImage := Image{
-					GCCVersion: MustParseTolerant(gccVer),
+					GCCVersion: mustParseTolerant(gccVer),
 					Name:       img.Name,
 				}
 				if regIdx == 0 {
-					buildImage.Target = repo.Build.TargetType
+					buildImage.Target = build.TargetType
 				} else {
 					buildImage.Target = Type("any")
 				}
 				// Skip if key already exists: we have a descending prio list of docker repos!
-				if _, ok := repo.Build.Images[buildImage.ToKey()]; !ok {
-					repo.Build.Images[buildImage.ToKey()] = buildImage
+				if _, ok := build.Images[buildImage.toKey()]; !ok {
+					build.Images[buildImage.toKey()] = buildImage
 				}
 			}
 		}
@@ -155,7 +158,15 @@ func (repo *RepoImagesLister) LoadImages() {
 }
 
 func (b *Build) LoadImages() {
+	if len(repoRegs) == 0 {
+		// Create the proper regexes to load "any" and target-specific images for requested arch
+		arch := kernelrelease.Architecture(b.Architecture).ToNonDeb()
+		targetFmt := fmt.Sprintf("driverkit-builder-%s-%s(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)$", b.TargetType.String(), arch)
+		repoRegs = append(repoRegs, regexp.MustCompile(targetFmt))
+		genericFmt := fmt.Sprintf("driverkit-builder-any-%s(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)$", arch)
+		repoRegs = append(repoRegs, regexp.MustCompile(genericFmt))
+	}
 	for _, imagesLister := range b.ImagesListers {
-		imagesLister.LoadImages()
+		imagesLister.LoadImages(b)
 	}
 }
