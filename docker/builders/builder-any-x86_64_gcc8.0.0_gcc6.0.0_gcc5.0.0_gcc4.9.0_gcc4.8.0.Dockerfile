@@ -39,6 +39,8 @@ RUN apt-get update \
 	software-properties-common \
 	gpg \
 	zstd \
+	gawk \
+	libdtrace \
     && rm -rf /var/lib/apt/lists/*
 
 RUN if [ "$TARGETARCH" = "amd64" ] ; then apt-get install -y --no-install-recommends libmpx2; fi
