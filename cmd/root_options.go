@@ -33,7 +33,7 @@ type RootOptions struct {
 	Target           string   `validate:"required,target" name:"target"`
 	KernelConfigData string   `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level
 	BuilderImage     string   `validate:"omitempty,imagename" name:"builder image"`
-	BuilderRepos     []string `validate:"omitempty" name:"docker repositories to look for builder images or absolute path pointing to a file container builder image index"`
+	BuilderRepos     []string `default:"[\"docker.io/falcosecurity/driverkit\"]" validate:"omitempty" name:"docker repositories to look for builder images or absolute path pointing to a file container builder image index"`
 	GCCVersion       string   `validate:"omitempty,semvertolerant" name:"gcc version"`
 	KernelUrls       []string `name:"kernel header urls"`
 	Repo             RepoOptions
@@ -133,10 +133,6 @@ func (ro *RootOptions) toBuild() *builder.Build {
 		RepoOrg:          ro.Repo.Org,
 		RepoName:         ro.Repo.Name,
 		Images:           make(builder.ImagesMap),
-	}
-
-	if len(build.BuilderRepos) == 0 {
-		build.BuilderRepos = append(build.BuilderRepos, "docker.io/falcosecurity/driverkit")
 	}
 
 	// loop over BuilderRepos to constuct the list ImagesListers based on the value of the builderRepo, if it's a local path, add FileImagesLister, otherwise add RepoImagesLister
