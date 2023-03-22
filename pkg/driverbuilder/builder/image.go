@@ -27,7 +27,6 @@ type ImagesLister interface {
 }
 
 type FileImagesLister struct {
-	file     *os.File
 	FilePath string
 }
 
@@ -102,7 +101,7 @@ func NewRepoImagesLister(repo string, build *Build) *RepoImagesLister {
 	if len(repoRegs) == 0 {
 		// Create the proper regexes to load "any" and target-specific images for requested arch
 		arch := kernelrelease.Architecture(build.Architecture).ToNonDeb()
-		targetFmt := fmt.Sprintf("driverkit-builder-%s-%s(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)$", build.TargetType.String(), arch)
+		targetFmt := fmt.Sprintf("driverkit-builder-(?P<target>%s)-%s(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)$", build.TargetType.String(), arch)
 		repoRegs = append(repoRegs, regexp.MustCompile(targetFmt))
 		genericFmt := fmt.Sprintf("driverkit-builder-any-%s(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)$", arch)
 		repoRegs = append(repoRegs, regexp.MustCompile(genericFmt))
@@ -122,19 +121,22 @@ func (repo *RepoImagesLister) LoadImages() []Image {
 	}
 	var res []Image
 	for _, img := range imgs {
-		for regIdx, reg := range repoRegs {
+		for _, reg := range repoRegs {
 			match := reg.FindStringSubmatch(img.Name)
 			if len(match) == 0 {
 				continue
 			}
 
 			var gccVers []string
+			target := ""
 			for i, name := range reg.SubexpNames() {
 				if i > 0 && i <= len(match) {
 					switch name {
 					case "gccVers":
 						gccVers = strings.Split(match[i], "_gcc")
 						gccVers = gccVers[1:] // remove initial whitespace
+					case "target":
+						target = match[i]
 					}
 				}
 			}
@@ -155,8 +157,8 @@ func (repo *RepoImagesLister) LoadImages() []Image {
 					GCCVersion: mustParseTolerant(gccVer),
 					Name:       img.Name,
 				}
-				if regIdx == 0 {
-					buildImage.Target = Type("target-placeholder")
+				if target != "" {
+					buildImage.Target = Type(target)
 				} else {
 					buildImage.Target = Type("any")
 				}
@@ -173,13 +175,13 @@ func (b *Build) LoadImages() {
 			if b.GCCVersion != "" && b.GCCVersion != image.GCCVersion.String() {
 				continue
 			}
-			if image.Target == "target-placeholder" {
-				image.Target = b.TargetType
-			}
 			// Skip if key already exists: we have a descending prio list of docker repos!
 			if _, ok := b.Images[image.toKey()]; !ok {
 				b.Images[image.toKey()] = image
 			}
 		}
+	}
+	if len(b.Images) == 0 {
+		logger.Fatal("Could not load any builder image. Leaving.")
 	}
 }
