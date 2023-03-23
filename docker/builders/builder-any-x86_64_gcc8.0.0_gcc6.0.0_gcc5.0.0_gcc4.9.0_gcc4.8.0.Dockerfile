@@ -40,15 +40,15 @@ RUN apt-get update \
 	gpg \
 	zstd \
 	gawk \
-	libdtrace \
     && rm -rf /var/lib/apt/lists/*
 
 RUN if [ "$TARGETARCH" = "amd64" ] ; then apt-get install -y --no-install-recommends libmpx2; fi
 
 # gcc 4.9 is required on x86 to build some 3.10+ kernels
 # note: on arm gcc 4.9 could not be found.
-RUN echo 'deb http://deb.debian.org/debian jessie main' >>/etc/apt/sources.list # gcc 4.9 on x86_64
-# jessie repo is unsigned therefore the APT options
+RUN echo 'deb http://dk.archive.ubuntu.com/ubuntu/ xenial main' >> /etc/apt/sources.list     && \
+	echo 'deb http://dk.archive.ubuntu.com/ubuntu/ xenial universe' >> /etc/apt/sources.list
+# repo is unsigned therefore the APT options
 RUN if [ "$TARGETARCH" = "amd64" ] ; then apt-get -o Acquire::AllowInsecureRepositories=true -o Acquire::AllowDowngradeToInsecureRepositories=true update && apt-get -o APT::Get::AllowUnauthenticated=true install -y --no-install-recommends gcc-4.9; fi
 
 # gcc 6 is no longer included in debian stable, but we need it to

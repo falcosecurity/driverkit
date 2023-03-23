@@ -11,8 +11,8 @@ import (
 //go:embed templates/oracle.sh
 var oracleTemplate string
 
-// TargetTypeoracle identifies the oracle target.
-const TargetTypeoracle Type = "oracle"
+// TargetTypeoracle identifies the oracle target ("ol" is the ID from /etc/os-release that Oracle uses)
+const TargetTypeoracle Type = "ol"
 
 func init() {
 	BuilderByTarget[TargetTypeoracle] = &oracle{}
@@ -52,7 +52,7 @@ func (c *oracle) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error
 
 	// list of possible UEK versions, which are used in the URL - ex: "UEKR3"
 	// may need to evolve over time if Oracle adds more
-	ueks := []string{"R3", "R4", "R5", "R6"}
+	ueks := []string{"R3", "R4", "R5", "R6", "R7"}
 
 	// template the kernel info into all possible URL strings
 	urls := []string{
@@ -63,14 +63,20 @@ func (c *oracle) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error
 			kr.Fullversion,
 			kr.FullExtraversion,
 		),
-		fmt.Sprintf( // latest + baseos (Oracle 8)
+		fmt.Sprintf( // latest + baseos (Oracle 8 + 9)
 			"http://yum.oracle.com/repo/OracleLinux/OL%s/baseos/latest/%s/getPackage/kernel-devel-%s%s.rpm",
 			version,
 			kr.Architecture.ToNonDeb(),
 			kr.Fullversion,
 			kr.FullExtraversion,
 		),
-
+		fmt.Sprintf( // appstream (Oracle 8 + 9)
+			"http://yum.oracle.com/repo/OracleLinux/OL%s/appstream/%s/getPackage/kernel-devel-%s%s.rpm",
+			version,
+			kr.Architecture.ToNonDeb(),
+			kr.Fullversion,
+			kr.FullExtraversion,
+		),
 		fmt.Sprintf( // MODRHCK (Oracle 7)
 			"http://yum.oracle.com/repo/OracleLinux/OL%s/MODRHCK/%s/getPackage/kernel-devel-%s%s.rpm",
 			version,
