@@ -79,6 +79,28 @@ output:
 driverversion: master
 ```
 
+## fedora
+
+```yaml
+kernelrelease: 5.19.16-200.fc36.x86_64
+kernelversion: 1
+target: fedora
+output:
+  module: /tmp/falco-fedora.ko
+driverversion: master
+```
+
+## oracle linux 8
+
+```yaml
+kernelrelease: 5.4.17-2011.3.2.1.el8uek.x86_64
+kernelversion: 1
+target: ol
+output:
+  module: /tmp/falco-ol8.ko
+driverversion: master
+```
+
 ## amazonlinux
 
 ```yaml

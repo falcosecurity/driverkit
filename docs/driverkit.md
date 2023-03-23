@@ -29,7 +29,7 @@ driverkit
       --proxy string              the proxy to use to download data
       --repo-name string          repository github name (default "libs")
       --repo-org string           repository github organization (default "falcosecurity")
-  -t, --target string             the system to target the build for, one of [almalinux,amazonlinux,amazonlinux2,amazonlinux2022,arch,bottlerocket,centos,debian,fedora,flatcar,minikube,opensuse,photon,redhat,rocky,ubuntu,vanilla]
+  -t, --target string             the system to target the build for, one of [almalinux,amazonlinux,amazonlinux2,amazonlinux2022,arch,bottlerocket,centos,debian,fedora,ol,flatcar,minikube,opensuse,photon,redhat,rocky,ubuntu,vanilla]
       --timeout int               timeout in seconds (default 120)
 ```
 
