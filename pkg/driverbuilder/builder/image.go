@@ -1,7 +1,6 @@
 package builder
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"github.com/blang/semver"
@@ -9,12 +8,22 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	logger "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 	"log"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
 )
+
+type YAMLImage struct {
+	Target      string   `yaml:"target"`
+	GCCVersions []string `yaml:"gcc_versions"` // we expect images to internally link eg: gcc5 to gcc5.0.0
+	Name        string   `yaml:"name"`
+}
+
+type YAMLImagesList struct {
+	Images []YAMLImage `yaml:"images"`
+}
 
 type Image struct {
 	Target     Type
@@ -64,35 +73,35 @@ func (im ImagesMap) findImage(target Type, gccVers semver.Version) (Image, bool)
 
 func (f *FileImagesLister) LoadImages() []Image {
 	// loop over lines in file to print them
-	file, err := os.Open(f.FilePath)
+	file, err := os.ReadFile(f.FilePath)
 	if err != nil {
 		logger.WithError(err).WithField("FilePath", f.FilePath).Fatal("error opening builder repo file")
 	}
-	scanner := bufio.NewScanner(file)
+
+	var imageList YAMLImagesList
 	var res []Image
-	for scanner.Scan() {
-		infos := strings.Split(scanner.Text(), ",")
-		if len(infos) < 3 {
-			logger.WithField("FilePath", f.FilePath).WithField("line", scanner.Text()).Fatal("Invalid image list file: expected at least 3 fields (name,target,gcc_version) but got " + strconv.Itoa(len(infos)) + ".")
+
+	err = yaml.Unmarshal(file, &imageList)
+	if err != nil {
+		logger.WithError(err).WithField("FilePath", f.FilePath).Fatal("error unmarshalling builder repo file")
+	}
+
+	if len(imageList.Images) == 0 {
+		logger.WithField("FilePath", f.FilePath).Warning("Invalid image list file: expected at least 1 image")
+	}
+
+	for _, image := range imageList.Images {
+		if len(image.GCCVersions) == 0 {
+			logger.WithField("FilePath", f.FilePath).WithField("image", image).Fatal("Invalid image list file: expected at least 1 gcc version")
 		}
-		name := infos[0]
-		target := Type(infos[1])
-		gccVersions := infos[2:]
-		for _, gcc := range gccVersions {
+		for _, gcc := range image.GCCVersions {
 			buildImage := Image{
-				Name:       name,
-				Target:     target,
+				Name:       image.Name,
+				Target:     Type(image.Target),
 				GCCVersion: mustParseTolerant(gcc),
 			}
 			res = append(res, buildImage)
 		}
-	}
-	if err := scanner.Err(); err != nil {
-		logger.WithField("file", file.Name()).WithError(err).Fatal()
-	}
-	err = file.Close()
-	if err != nil {
-		logger.WithField("file", file.Name()).WithError(err).Fatal()
 	}
 	return res
 }
