@@ -26,11 +26,9 @@ type aliyunlinuxTemplateData struct {
 }
 
 type aliyunlinux2 struct {
-	aliyunlinux2
 }
 
 type aliyunlinux3 struct {
-	aliyunlinux3
 }
 
 func (c *aliyunlinux2) Name() string {
@@ -46,7 +44,7 @@ func (c *aliyunlinux2) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string,
 }
 
 func (c *aliyunlinux2) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
-	return aliyunlinux2TemplateData{
+	return aliyunlinuxTemplateData{
 		commonTemplateData: cfg.toTemplateData(c, kr),
 		KernelDownloadURL:  urls[0],
 	}
@@ -84,7 +82,7 @@ func (c *aliyunlinux3) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string,
 }
 
 func (c *aliyunlinux3) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
-	return aliyunlinux3TemplateData{
+	return aliyunlinuxTemplateData{
 		commonTemplateData: cfg.toTemplateData(c, kr),
 		KernelDownloadURL:  urls[0],
 	}
