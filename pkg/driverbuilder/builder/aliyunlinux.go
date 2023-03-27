@@ -6,95 +6,54 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
-//go:embed templates/aliyunlinux.sh
-var aliyunlinuxTemplate string
+//go:embed templates/alinux.sh
+var alinuxTemplate string
 
-// TargetTypeAlma identifies the AliyunLinux2 target.
-const TargetTypeAliyunLinux2 Type = "aliyunlinux2"
+// TargetTypeAlinux identifies the AliyunLinux 2 and 3 target.
+const TargetTypeAlinux Type = "alinux"
 
-// TargetTypeAlma identifies the AliyunLinux3 target.
-const TargetTypeAliyunLinux3 Type = "aliyunlinux3"
+
 
 func init() {
-	BuilderByTarget[TargetTypeAliyunLinux2] = &aliyunlinux2{}
-	BuilderByTarget[TargetTypeAliyunLinux3] = &aliyunlinux3{}
+	BuilderByTarget[TargetTypeAlinux] = &alinux{}
 }
 
-type aliyunlinuxTemplateData struct {
+type alinuxTemplateData struct {
 	commonTemplateData
 	KernelDownloadURL string
 }
 
-type aliyunlinux2 struct {
+type alinux struct {
 }
 
-type aliyunlinux3 struct {
+func (c *alinux) Name() string {
+	return TargetTypeAlinux.String()
 }
 
-func (c *aliyunlinux2) Name() string {
-	return TargetTypeAliyunLinux2.String()
+func (c *alinux) TemplateScript() string {
+	return alinuxTemplate
 }
 
-func (c *aliyunlinux2) TemplateScript() string {
-	return aliyunlinuxTemplate
+func (c *alinux) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+	return fetchAlinuxKernelURLS(kr), nil
 }
 
-func (c *aliyunlinux2) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
-	return fetchAliyunLinux2KernelURLS(kr), nil
-}
-
-func (c *aliyunlinux2) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
-	return aliyunlinuxTemplateData{
+func (c *alinux) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+	return alinuxTemplateData{
 		commonTemplateData: cfg.toTemplateData(c, kr),
 		KernelDownloadURL:  urls[0],
 	}
 }
 
-func fetchAliyunLinux2KernelURLS(kr kernelrelease.KernelRelease) []string {
-	aliyunlinux2Releases := []string{
+func fetchAlinuxKernelURLS(kr kernelrelease.KernelRelease) []string {
+	alinuxReleases := []string{
 		"2",
 		"2.1903",
-	}
-
-	urls := []string{}
-	for _, r := range aliyunlinux2Releases {
-		urls = append(urls, fmt.Sprintf(
-			"http://mirrors.aliyun.com/alinux/%s/os/%s/Packages/kernel-devel-%s%s.rpm",
-			r,
-			kr.Architecture.ToNonDeb(),
-			kr.Fullversion,
-			kr.FullExtraversion,
-		))
-	}
-	return urls
-}
-
-func (c *aliyunlinux3) Name() string {
-	return TargetTypeAliyunLinux3.String()
-}
-
-func (c *aliyunlinux3) TemplateScript() string {
-	return aliyunlinuxTemplate
-}
-
-func (c *aliyunlinux3) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
-	return fetchAliyunLinux3KernelURLS(kr), nil
-}
-
-func (c *aliyunlinux3) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
-	return aliyunlinuxTemplateData{
-		commonTemplateData: cfg.toTemplateData(c, kr),
-		KernelDownloadURL:  urls[0],
-	}
-}
-
-func fetchAliyunLinux3KernelURLS(kr kernelrelease.KernelRelease) []string {
-	aliyunlinux3Releases := []string{
 		"3",
 	}
 
 	urls := []string{}
-	for _, r := range aliyunlinux3Releases {
+	for _, r := range alinuxReleases {
 		urls = append(urls, fmt.Sprintf(
 			"http://mirrors.aliyun.com/alinux/%s/os/%s/Packages/kernel-devel-%s%s.rpm",
 			r,
