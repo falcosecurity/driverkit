@@ -1,103 +1,35 @@
 # Example Configs
 
-## ubuntu
-Example configuration file to build both the Kernel module and eBPF probe for Ubuntu (works with any flavor!).
+## aliyun linux 2 (Alibaba Cloud Linux 2)
 
 ```yaml
-kernelrelease: 5.0.0-1021-aws-5.0
-kernelversion: 24~18.04.1
-target: ubuntu
+kernelrelease: 4.19.91-26.al7.x86_64
+target: alinux
 output:
-  module: /tmp/falco-ubuntu-generic.ko
-  probe: /tmp/falco-ubuntu-generic.o
+    module: /tmp/falco_alinux_4.19.91-26.al7.x86_64.ko
+    probe: /tmp/falco_alinux_4.19.91-26.al7.x86_64.o
 driverversion: master
 ```
 
-## ubuntu-generic
-Example configuration file to build both the Kernel module and eBPF probe for Ubuntu generic.
+## aliyun linux 3 (Alibaba Cloud Linux 3)
 
 ```yaml
-kernelrelease: 4.15.0-72-generic
-kernelversion: 81
-target: ubuntu-generic
+kernelrelease: 5.10.84-10.4.al8.x86_64
+target: alinux
 output:
-  module: /tmp/falco-ubuntu-generic.ko
-  probe: /tmp/falco-ubuntu-generic.o
+    module: /tmp/falco_alinux_4.19.91-26.al7.x86_64.ko
+    probe: /tmp/falco_alinux_4.19.91-26.al7.x86_64.o
 driverversion: master
 ```
 
-> **NOTE:** ubuntu-generic exists to retain backward compatibility only,
-> and should not be used in new configs.
-
-## ubuntu-aws
-
-Example configuration file to build both the Kernel module and eBPF probe for Ubuntu AWS.
+## alma linux
 
 ```yaml
-kernelrelease: 4.15.0-1057-aws
-kernelversion: 59
-target: ubuntu-aws
+kernelrelease: 5.14.0-162.12.1.el9_1.x86_64
+target: almalinux
 output:
-  module: /tmp/falco-ubuntu-aws.ko
-  probe: /tmp/falco-ubuntu-aws.o
-driverversion: master
-```
-
-> **NOTE:** ubuntu-aws exists to retain backward compatibility only,
-> and should not be used in new configs.
-
-## centos 6
-
-```yaml
-kernelrelease: 2.6.32-754.14.2.el6.x86_64
-kernelversion: 1
-target: centos
-output:
-  module: /tmp/falco-centos6.ko
-driverversion: master
-```
-
-## centos 7
-
-```yaml
-kernelrelease: 3.10.0-957.12.2.el7.x86_64
-kernelversion: 1
-target: centos
-output:
-  module: /tmp/falco-centos7.ko
-driverversion: master
-```
-
-## centos 8
-
-```yaml
-kernelrelease: 4.18.0-147.5.1.el8_1.x86_64
-kernelversion: 1
-target: centos
-output:
-  module: /tmp/falco-centos8.ko
-driverversion: master
-```
-
-## fedora
-
-```yaml
-kernelrelease: 5.19.16-200.fc36.x86_64
-kernelversion: 1
-target: fedora
-output:
-  module: /tmp/falco-fedora.ko
-driverversion: master
-```
-
-## oracle linux 8
-
-```yaml
-kernelrelease: 5.4.17-2011.3.2.1.el8uek.x86_64
-kernelversion: 1
-target: ol
-output:
-  module: /tmp/falco-ol8.ko
+    module: /tmp/falco_almalinux_5.14.0-162.12.1.el9_1.x86_64.ko
+    probe: /tmp/falco_almalinux_5.14.0-162.12.1.el9_1.x86_64.o
 driverversion: master
 ```
 
@@ -133,49 +65,6 @@ output:
 driverversion: master
 ```
 
-## debian
-
-Example configuration file to build both the Kernel module and eBPF probe for Debian.
-
-```yaml
-kernelrelease: 4.19.0-6-amd64
-kernelversion: 1
-output:
-  module: /tmp/falco-debian.ko
-  probe: /tmp/falco-debian.o
-target: debian
-driverversion: master
-```
-
-## flatcar
-
-Example configuration file to build both the Kernel module and eBPF probe for Flatcar.
-The Flatcar release version needs to be provided in the `kernelrelease` field instead of the kernel version;
-moreover, kernelconfigdata must be provided.
-
-```yaml
-kernelrelease: 3185.0.0
-target: flatcar
-output:
-  module: /tmp/falco-flatcar-3185.0.0.ko
-  probe: /tmp/falco-flatcar-3185.0.0.o
-driverversion: master
-kernelconfigdata: Q09ORklHX0ZBTk9USUZZPXkKQ09ORklHX0t...
-```
-
-## minikube
-Example configuration file to build both the Kernel module and eBPF probe for Minikube.
-```yaml
-kernelversion: 1_1.26.0
-kernelrelease: 5.10.57
-target: minikube
-architecture: amd64
-output:
-  module: /tmp/falco_minikube_5.10.57_1_1.26.0.ko
-  probe: /tmp/falco_minikube_5.10.57_1_1.26.0.o
-kernelconfigdata: Q09ORklHX0ZBTk9USUZZPXkKQ09ORklHX0t...
-```
-
 ## archlinux
 
 Example configuration file to build both the Kernel module and eBPF probe for Archlinux.
@@ -208,6 +97,104 @@ output:
   probe: /tmp/falco-arch.o
 driverversion: master
 builderimage: ${ARCH_BUILD_IMAGE_HERE}
+```
+
+## centos 6
+
+```yaml
+kernelrelease: 2.6.32-754.14.2.el6.x86_64
+kernelversion: 1
+target: centos
+output:
+  module: /tmp/falco-centos6.ko
+driverversion: master
+```
+
+## centos 7
+
+```yaml
+kernelrelease: 3.10.0-957.12.2.el7.x86_64
+kernelversion: 1
+target: centos
+output:
+  module: /tmp/falco-centos7.ko
+driverversion: master
+```
+
+## centos 8
+
+```yaml
+kernelrelease: 4.18.0-147.5.1.el8_1.x86_64
+kernelversion: 1
+target: centos
+output:
+  module: /tmp/falco-centos8.ko
+driverversion: master
+```
+
+## debian
+
+Example configuration file to build both the Kernel module and eBPF probe for Debian.
+
+```yaml
+kernelrelease: 4.19.0-6-amd64
+kernelversion: 1
+output:
+  module: /tmp/falco-debian.ko
+  probe: /tmp/falco-debian.o
+target: debian
+driverversion: master
+```
+
+## fedora
+
+```yaml
+kernelrelease: 5.19.16-200.fc36.x86_64
+kernelversion: 1
+target: fedora
+output:
+  module: /tmp/falco-fedora.ko
+driverversion: master
+```
+
+## flatcar
+
+Example configuration file to build both the Kernel module and eBPF probe for Flatcar.
+The Flatcar release version needs to be provided in the `kernelrelease` field instead of the kernel version;
+moreover, kernelconfigdata must be provided.
+
+```yaml
+kernelrelease: 3185.0.0
+target: flatcar
+output:
+  module: /tmp/falco-flatcar-3185.0.0.ko
+  probe: /tmp/falco-flatcar-3185.0.0.o
+driverversion: master
+kernelconfigdata: Q09ORklHX0ZBTk9USUZZPXkKQ09ORklHX0t...
+```
+
+## minikube
+Example configuration file to build both the Kernel module and eBPF probe for Minikube.
+```yaml
+kernelversion: 1_1.26.0
+kernelrelease: 5.10.57
+target: minikube
+architecture: amd64
+output:
+  module: /tmp/falco_minikube_5.10.57_1_1.26.0.ko
+  probe: /tmp/falco_minikube_5.10.57_1_1.26.0.o
+kernelconfigdata: Q09ORklHX0ZBTk9USUZZPXkKQ09ORklHX0t...
+```
+
+## oracle linux 8
+
+```yaml
+kernelrelease: 5.4.17-2011.3.2.1.el8uek.x86_64
+kernelversion: 1
+target: ol
+output:
+  module: /tmp/falco-ol8.ko
+driverversion: master
 ```
 
 ## redhat 7
@@ -300,6 +287,63 @@ RUN yum install gcc elfutils-libelf-devel kmod make cpio llvm-toolset -y
 ```
 | :exclamation: **subscription-manager does not work on RHEL9 containers**: Host must have a valid RHEL subscription |
 |--------------------------------------------------------------------------------------------------------------------|
+
+## rocky linux
+
+```yaml
+kernelrelease: 5.14.0-162.18.1.el9_1.x86_64
+target: rocky
+output:
+    module: /tmp/falco_almalinux_5.14.0-162.18.1.el9_1.x86_64.ko
+    probe: /tmp/falco_almalinux_5.14.0-162.18.1.el9_1.x86_64.o
+driverversion: master
+```
+
+## ubuntu
+Example configuration file to build both the Kernel module and eBPF probe for Ubuntu (works with any flavor!).
+
+```yaml
+kernelrelease: 5.0.0-1021-aws-5.0
+kernelversion: 24~18.04.1
+target: ubuntu
+output:
+  module: /tmp/falco-ubuntu-generic.ko
+  probe: /tmp/falco-ubuntu-generic.o
+driverversion: master
+```
+
+## ubuntu-aws
+
+Example configuration file to build both the Kernel module and eBPF probe for Ubuntu AWS.
+
+```yaml
+kernelrelease: 4.15.0-1057-aws
+kernelversion: 59
+target: ubuntu-aws
+output:
+  module: /tmp/falco-ubuntu-aws.ko
+  probe: /tmp/falco-ubuntu-aws.o
+driverversion: master
+```
+
+> **NOTE:** ubuntu-aws exists to retain backward compatibility only,
+> and should not be used in new configs.
+
+## ubuntu-generic
+Example configuration file to build both the Kernel module and eBPF probe for Ubuntu generic.
+
+```yaml
+kernelrelease: 4.15.0-72-generic
+kernelversion: 81
+target: ubuntu-generic
+output:
+  module: /tmp/falco-ubuntu-generic.ko
+  probe: /tmp/falco-ubuntu-generic.o
+driverversion: master
+```
+
+> **NOTE:** ubuntu-generic exists to retain backward compatibility only,
+> and should not be used in new configs.
 
 ## vanilla
 
