@@ -1,8 +1,10 @@
 package validate
 
 import (
-	"github.com/go-playground/validator/v10"
 	"strings"
+	"unicode"
+
+	"github.com/go-playground/validator/v10"
 )
 
 const letters = "abcdefghijklmnopqrstuvwxyz"
@@ -14,7 +16,7 @@ func isImageName(fl validator.FieldLevel) bool {
 	name := fl.Field().String()
 
 	for _, c := range name {
-		if !strings.ContainsRune(alphabet, c) {
+		if !strings.ContainsRune(alphabet, unicode.ToLower(c)) {
 			return false
 		}
 	}
