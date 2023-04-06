@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/blang/semver"
-	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"log"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
 	"text/template"
+
+	"github.com/blang/semver"
+	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 
 	logger "github.com/sirupsen/logrus"
 )
@@ -122,7 +123,7 @@ type GCCVersionRequestor interface {
 func defaultGCC(kr kernelrelease.KernelRelease) semver.Version {
 	switch kr.Major {
 	case 5:
-		if kr.Minor >= 18 {
+		if kr.Minor >= 15 {
 			return semver.Version{Major: 12}
 		}
 		return semver.Version{Major: 11}
