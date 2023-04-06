@@ -1,9 +1,10 @@
 package builder
 
 import (
+	"testing"
+
 	"github.com/blang/semver"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
-	"testing"
 )
 
 var gccTests = []struct {
@@ -39,7 +40,7 @@ var gccTests = []struct {
 			Architecture:     kernelrelease.ArchitectureAmd64,
 		},
 		expectedGCC: semver.Version{
-			Major: 11,
+			Major: 12,
 		},
 	},
 	{
