@@ -3,6 +3,7 @@ package builder
 import (
 	"fmt"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
+	"strings"
 )
 
 // Build contains the info about the on-going build.
@@ -44,4 +45,27 @@ func (b *Build) ToConfig() Config {
 		DownloadBaseURL: b.toGithubRepoArchive(),
 		Build:           b,
 	}
+}
+
+// hasCustomBuilderImage return true if a custom builder image has been set by the user.
+func (b *Build) hasCustomBuilderImage() bool {
+	if len(b.BuilderImage) > 0 {
+		customNames := strings.Split(b.BuilderImage, ":")
+		return customNames[0] != "auto"
+	}
+
+	return false
+}
+
+// builderImageTag returns the tag(latest, master or hash) to be used for the builder image.
+func (b *Build) builderImageTag() string {
+	if len(b.BuilderImage) > 0 {
+		customNames := strings.Split(b.BuilderImage, ":")
+		// Updated image tag if "auto:tag" is passed
+		if len(customNames) > 1 {
+			return customNames[1]
+		}
+	}
+
+	return "latest"
 }

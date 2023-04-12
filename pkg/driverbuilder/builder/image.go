@@ -4,12 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/blang/semver"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/client"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
+	"github.com/falcosecurity/falcoctl/pkg/oci/repository"
 	logger "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
-	"log"
 	"os"
 	"regexp"
 	"strings"
@@ -108,30 +106,40 @@ func (f *FileImagesLister) LoadImages() []Image {
 
 func NewRepoImagesLister(repo string, build *Build) *RepoImagesLister {
 	if len(repoRegs) == 0 {
+		imageTag := build.builderImageTag()
 		// Create the proper regexes to load "any" and target-specific images for requested arch
 		arch := kernelrelease.Architecture(build.Architecture).ToNonDeb()
-		targetFmt := fmt.Sprintf("driverkit-builder-(?P<target>%s)-%s(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)$", build.TargetType.String(), arch)
+		targetFmt := fmt.Sprintf("driverkit-builder-(?P<target>%s)-%s(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)-%s$", build.TargetType.String(), arch, imageTag)
 		repoRegs = append(repoRegs, regexp.MustCompile(targetFmt))
-		genericFmt := fmt.Sprintf("driverkit-builder-any-%s(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)$", arch)
+		genericFmt := fmt.Sprintf("driverkit-builder-any-%s(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)-%s$", arch, imageTag)
 		repoRegs = append(repoRegs, regexp.MustCompile(genericFmt))
 	}
 	return &RepoImagesLister{repo: repo}
 }
 
 func (repo *RepoImagesLister) LoadImages() []Image {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		log.Fatal(err)
+	noCredentials := func(r *repository.Repository) {
+		// The default client will be used by oras.
+		r.Client = nil
 	}
-	imgs, err := cli.ImageSearch(context.Background(), repo.repo, types.ImageSearchOptions{Limit: 100})
+
+	repoOCI, err := repository.NewRepository(repo.repo, noCredentials)
 	if err != nil {
-		logger.WithField("Repository", repo.repo).WithError(err).Warnf("Skipping repo")
-		return []Image{}
+		logger.Warnf("Skipping repo %s: %s\n", repo, err.Error())
+		return nil
 	}
+
+	tags, err := repoOCI.Tags(context.Background())
+	if err != nil {
+		logger.Warnf("Skipping repo %s: %s\n", repo, err.Error())
+		return nil
+	}
+
 	var res []Image
-	for _, img := range imgs {
+	for _, t := range tags {
+		img := fmt.Sprintf("%s:%s", repo.repo, t)
 		for _, reg := range repoRegs {
-			match := reg.FindStringSubmatch(img.Name)
+			match := reg.FindStringSubmatch(img)
 			if len(match) == 0 {
 				continue
 			}
@@ -151,7 +159,7 @@ func (repo *RepoImagesLister) LoadImages() []Image {
 			}
 
 			if len(gccVers) == 0 {
-				logger.Debug("Malformed image name: ", img.Name, len(match))
+				logger.Debug("Malformed image name: ", img, len(match))
 				continue
 			}
 
@@ -164,7 +172,7 @@ func (repo *RepoImagesLister) LoadImages() []Image {
 				// If user set a fixed gcc version, only load images that provide it.
 				buildImage := Image{
 					GCCVersion: mustParseTolerant(gccVer),
-					Name:       img.Name,
+					Name:       img,
 				}
 				if target != "" {
 					buildImage.Target = Type(target)
