@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strings"
 	"text/template"
 
 	"github.com/blang/semver"
@@ -155,7 +154,9 @@ func mustParseTolerant(gccStr string) semver.Version {
 // * otherwise, try to fix the best-match gcc version provided by any of the loaded images;
 // see below for algorithm explanation
 func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
-	b.LoadImages()
+	if !b.hasCustomBuilderImage() {
+		b.LoadImages()
+	}
 
 	if len(b.GCCVersion) > 0 {
 		// If set from user, go on
@@ -177,6 +178,11 @@ func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 	// and instead wants to fallback to default algorithm
 	if targetGCC.EQ(semver.Version{}) {
 		targetGCC = defaultGCC(kr)
+	}
+
+	if b.hasCustomBuilderImage() {
+		b.GCCVersion = targetGCC.String()
+		return
 	}
 
 	// Step 1:
@@ -216,20 +222,9 @@ func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 }
 
 func (b *Build) GetBuilderImage() string {
-	imageTag := "latest"
-	if len(b.BuilderImage) > 0 {
-		customNames := strings.Split(b.BuilderImage, ":")
-		if customNames[0] != "auto" {
-			// BuilderImage MUST have requested GCC installed inside
-			return b.BuilderImage
-		}
-
-		// Updated image tag if "auto:tag" is passed
-		if len(customNames) > 1 {
-			imageTag = customNames[1]
-		} else {
-			imageTag = "latest"
-		}
+	if b.hasCustomBuilderImage() {
+		// BuilderImage MUST have requested GCC installed inside
+		return b.BuilderImage
 	}
 
 	// NOTE: here below we are already sure that we are going
@@ -237,7 +232,7 @@ func (b *Build) GetBuilderImage() string {
 	// has already set an existent gcc version
 	// (ie: one provided by an image) for us
 	image, _ := b.Images.findImage(b.TargetType, mustParseTolerant(b.GCCVersion))
-	return image.Name + ":" + imageTag
+	return image.Name
 }
 
 // Factory returns a builder for the given target.
