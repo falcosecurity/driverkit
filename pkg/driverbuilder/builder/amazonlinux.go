@@ -42,6 +42,13 @@ type amazonlinux2022 struct {
 	amazonlinux
 }
 
+type amazonlinux2023 struct {
+	amazonlinux
+}
+
+// TargetTypeAmazonLinux2023 identifies the AmazonLinux2023 target.
+const TargetTypeAmazonLinux2023 Type = "amazonlinux2023"
+
 // TargetTypeAmazonLinux2022 identifies the AmazonLinux2022 target.
 const TargetTypeAmazonLinux2022 Type = "amazonlinux2022"
 
@@ -52,6 +59,7 @@ const TargetTypeAmazonLinux2 Type = "amazonlinux2"
 const TargetTypeAmazonLinux Type = "amazonlinux"
 
 func init() {
+	BuilderByTarget[TargetTypeAmazonLinux2023] = &amazonlinux2023{}
 	BuilderByTarget[TargetTypeAmazonLinux2022] = &amazonlinux2022{}
 	BuilderByTarget[TargetTypeAmazonLinux2] = &amazonlinux2{}
 	BuilderByTarget[TargetTypeAmazonLinux] = &amazonlinux{}
@@ -122,6 +130,28 @@ func (a *amazonlinux2022) baseUrl() string {
 }
 
 func (a *amazonlinux2022) ext() string {
+	return "gz"
+}
+
+func (a *amazonlinux2023) Name() string {
+	return TargetTypeAmazonLinux2023.String()
+}
+
+func (a *amazonlinux2023) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+	return fetchAmazonLinuxPackagesURLs(a, kr)
+}
+
+func (a *amazonlinux2023) repos() []string {
+	return []string{
+		"latest",
+	}
+}
+
+func (a *amazonlinux2023) baseUrl() string {
+	return "https://cdn.amazonlinux.com/al2023/core/mirrors/"
+}
+
+func (a *amazonlinux2023) ext() string {
 	return "gz"
 }
 
