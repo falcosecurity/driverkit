@@ -32,7 +32,7 @@ driverkit kubernetes-in-cluster [flags]
       --repo-name string           repository github name (default "libs")
       --repo-org string            repository github organization (default "falcosecurity")
       --run-as-user int            Pods runner user
-  -t, --target string              the system to target the build for, one of [alinux,almalinux,amazonlinux,amazonlinux2,amazonlinux2022,amazonlinux2023,arch,bottlerocket,centos,debian,fedora,flatcar,minikube,ol,opensuse,photon,redhat,rocky,ubuntu,vanilla]
+  -t, --target string              the system to target the build for, one of [alinux,almalinux,amazonlinux,amazonlinux2,amazonlinux2022,amazonlinux2023,arch,bottlerocket,centos,debian,fedora,flatcar,minikube,ol,opensuse,photon,redhat,rocky,talos,ubuntu,vanilla]
       --timeout int                timeout in seconds (default 120)
 ```
 

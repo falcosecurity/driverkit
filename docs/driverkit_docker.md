@@ -29,7 +29,7 @@ driverkit docker [flags]
       --proxy string              the proxy to use to download data
       --repo-name string          repository github name (default "libs")
       --repo-org string           repository github organization (default "falcosecurity")
-  -t, --target string             the system to target the build for, one of [alinux,almalinux,amazonlinux,amazonlinux2,amazonlinux2022,amazonlinux2023,arch,bottlerocket,centos,debian,fedora,flatcar,minikube,ol,opensuse,photon,redhat,rocky,ubuntu,vanilla]
+  -t, --target string             the system to target the build for, one of [alinux,almalinux,amazonlinux,amazonlinux2,amazonlinux2022,amazonlinux2023,arch,bottlerocket,centos,debian,fedora,flatcar,minikube,ol,opensuse,photon,redhat,rocky,talos,ubuntu,vanilla]
       --timeout int               timeout in seconds (default 120)
 ```
 

@@ -45,7 +45,7 @@ driverkit kubernetes [flags]
       --request-timeout string         the length of time to wait before giving up on a single server request, non-zero values should contain a corresponding time unit (e.g, 1s, 2m, 3h), a value of zero means don't timeout requests (default "0")
       --run-as-user int                Pods runner user
   -s, --server string                  the address and port of the Kubernetes API server
-  -t, --target string                  the system to target the build for, one of [alinux,almalinux,amazonlinux,amazonlinux2,amazonlinux2022,amazonlinux2023,arch,bottlerocket,centos,debian,fedora,flatcar,minikube,ol,opensuse,photon,redhat,rocky,ubuntu,vanilla]
+  -t, --target string                  the system to target the build for, one of [alinux,almalinux,amazonlinux,amazonlinux2,amazonlinux2022,amazonlinux2023,arch,bottlerocket,centos,debian,fedora,flatcar,minikube,ol,opensuse,photon,redhat,rocky,talos,ubuntu,vanilla]
       --timeout int                    timeout in seconds (default 120)
       --tls-server-name string         server name to use for server certificate validation, if it is not provided, the hostname used to contact the server is used
       --token string                   bearer token for authentication to the API server
