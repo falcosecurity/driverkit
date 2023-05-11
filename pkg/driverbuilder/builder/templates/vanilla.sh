@@ -15,7 +15,11 @@ bash /driverkit/fill-driver-config.sh {{ .DriverBuildDir }}
 # Fetch the kernel
 cd /tmp
 mkdir /tmp/kernel-download
+{{ if .IsTarGz}}
+curl --silent -SL {{ .KernelDownloadURL }} | tar -zxf - -C /tmp/kernel-download
+{{ else }}
 curl --silent -SL {{ .KernelDownloadURL }} | tar -Jxf - -C /tmp/kernel-download
+{{ end }}
 rm -Rf /tmp/kernel
 mkdir -p /tmp/kernel
 mv /tmp/kernel-download/*/* /tmp/kernel

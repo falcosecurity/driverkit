@@ -26,6 +26,18 @@ func TestFromString(t *testing.T) {
 				FullExtraversion: "-arch1-1",
 			},
 		},
+		"version RC": {
+			kernelVersionStr: "6.4-rc1",
+			want: KernelRelease{
+				Fullversion: "6.4",
+				Version: semver.Version{
+					Major: 6,
+					Minor: 4,
+				},
+				Extraversion:     "rc1",
+				FullExtraversion: "-rc1",
+			},
+		},
 		"just kernel version": {
 			kernelVersionStr: "5.5.2",
 			want: KernelRelease{
