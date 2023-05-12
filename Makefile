@@ -69,7 +69,7 @@ push/all: push/builder push/driverkit
 .PHONY: push/builder
 push/builder:
 	$(foreach b,$(BUILDERS),\
-		$(DOCKER) buildx build --push -t "$(IMAGE_NAME_BUILDER_BASE)-$b:$(GIT_REF)" -t "$(IMAGE_NAME_BUILDER_BASE)-$b:$(GIT_COMMIT)" -f docker/builders/builder-$b.Dockerfile . ; \
+		$(DOCKER) buildx build --push -t "$(IMAGE_NAME_BUILDER_BASE):$b-$(GIT_REF)" -t "$(IMAGE_NAME_BUILDER_BASE):$b-$(GIT_COMMIT)" -f docker/builders/builder-$b.Dockerfile . ; \
 	)
 
 .PHONY: push/driverkit
@@ -79,7 +79,7 @@ push/driverkit:
 .PHONY: push/latest
 push/latest:
 	$(foreach b,$(BUILDERS),\
-		$(DOCKER) buildx build --push -t "$(IMAGE_NAME_BUILDER_BASE)-$b:latest" -f docker/builders/builder-$b.Dockerfile . ; \
+		$(DOCKER) buildx build --push -t "$(IMAGE_NAME_BUILDER_BASE):$b-latest" -f docker/builders/builder-$b.Dockerfile . ; \
 	)
 	$(DOCKER) buildx build --push -t "$(IMAGE_NAME_DRIVERKIT_LATEST)" -f docker/driverkit.Dockerfile .
 
