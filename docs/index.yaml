@@ -15,6 +15,17 @@ images:
   - name: docker.io/foo/bar:mytag
     target: arch
     arch: x86_64
+    tag: mytag
+    gcc_versions:
+      - 13.1.1
+
+  # Image name tag ("mytag" in this case)
+  # is not even required to match "tag" property below,
+  # since the latter is used to match against the desired builder image tag for the build,
+  # while the former is the real image tag that will be used.
+  - name: docker.io/foo/baz:mytag
+    target: arch
+    arch: x86_64
     tag: latest
     gcc_versions:
       - 13.1.1

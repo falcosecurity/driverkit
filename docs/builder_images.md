@@ -19,14 +19,20 @@ This is needed because driverkit logic must be able to differentiate eg: between
 an image that provides gcc4 and one that provides 4.8, in a reliable manner.
 
 The makefile will be then automatically able to collect the new docker images and pushing it as part of the CI.  
+Note: the images will be pushed under the `falcosecurity/driverkit-builder` repository, each with a tag reflecting its name, eg:  
+* `falcosecurity/driverkit-builder:centos-x86_64_gcc5.8.0_gcc6.0.0-latest`
+* `falcosecurity/driverkit-builder:any-x86_64_gcc12.0.0-454eff8fcc7d9abc615d312e9eccbd41abffb810`
+
+As you can see, the last part of the image tag is the real versioned tag (ie: `-latest` or `-$commithash`).
 
 ## Selection algorithm
 
-Once pushed, driverkit will be able to correctly load the image during startup, using a `docker search`.  
+Once pushed, driverkit will be able to correctly load the image during startup, using [falcoctl](https://github.com/falcosecurity/falcoctl/) OCI utilities.  
 Then, it will map images whose target and architecture are correct for the current build, storing the provided GCCs list.  
+Moreover, it will also take care of only using images with correct tag (ie: `latest` or `commithash`), as requested by user or automatically set by Makefile.
 The algorithm goes as follows:
-* load any image for the build arch and build target
-* load any image for the build arch and "any" target
+* load any image for the build arch, tag and target
+* load any image for the build arch, tag and "any" target
 * if any of the target-specific image provides the targetGCC for the build, we are over
 * if any of the "any" fallback image provides the targetGCC for the build, we are over
 * else, find the image between target-specific and fallback ones, that provides nearest GCC.  
@@ -35,8 +41,12 @@ In this latest step, there is no distinction between/different priority given to
 ## Customize builder images repos
 
 Moreover, users can also ship their own builder images in their own docker repositories, by using `--builderrepo` CLI option.  
-One can use this option multiple times; builder repos are a priority first list of docker repositories that can each provide up to 100 builder images.  
-Note that default falcosecurity repo will always be enforced as lowest priority repo.
+
+Instead of passing a docker repo, one can also pass the full path to a so-called builder images index yaml file.  
+It is mostly convenient in "static" scenarios, but it also gives the ability to freely define images name since all required infos are explicitly stated in the index file.  
+For an example of such a file, see [index.yaml](./index.yaml).
+
+One can use this option multiple times; builder repos are a priority first list of docker repositories or builder images indexes (they can be mixed too!).
 
 ## Force use a builder image
 
@@ -47,8 +57,6 @@ instead of relying on the internal algorithm, by using `--builderimage` CLI opti
 
 A special value for builder image is available:
 * `auto:$tag`, that is used to tell driverkit to use the automatic algorithm, but forcing a certain image tag
-
-> **NOTE**: since `docker search` has no way to differentiate between image tags, all builder images are expected to be tagged together.
 
 ## Force use a gcc version
 

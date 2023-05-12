@@ -33,7 +33,7 @@ type RootOptions struct {
 	Target           string   `validate:"required,target" name:"target"`
 	KernelConfigData string   `validate:"omitempty,base64" name:"kernel config data"` // fixme > tag "name" does not seem to work when used at struct level, but works when used at inner level
 	BuilderImage     string   `validate:"omitempty,imagename" name:"builder image"`
-	BuilderRepos     []string `default:"[\"docker.io/falcosecurity/driverkit\"]" validate:"omitempty" name:"docker repositories to look for builder images or absolute path pointing to a yaml file containing builder image index"`
+	BuilderRepos     []string `default:"[\"docker.io/falcosecurity/driverkit-builder\"]" validate:"omitempty" name:"docker repositories to look for builder images or absolute path pointing to a yaml file containing builder images index"`
 	GCCVersion       string   `validate:"omitempty,semvertolerant" name:"gcc version"`
 	KernelUrls       []string `name:"kernel header urls"`
 	Repo             RepoOptions
