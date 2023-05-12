@@ -49,7 +49,7 @@ func (i *Image) toKey() ImageKey {
 
 type ImagesMap map[ImageKey]Image
 
-var repoRegs = make([]*regexp.Regexp, 0, 2)
+var tagReg *regexp.Regexp
 
 func (im ImagesMap) findImage(target Type, gccVers semver.Version) (Image, bool) {
 	targetImage := Image{
@@ -85,12 +85,12 @@ func (f *FileImagesLister) LoadImages() []Image {
 	}
 
 	if len(imageList.Images) == 0 {
-		logger.WithField("FilePath", f.FilePath).Warning("Invalid image list file: expected at least 1 image")
+		logger.WithField("FilePath", f.FilePath).Warnf("Skipping image list file: expected at least 1 image\n")
 	}
 
 	for _, image := range imageList.Images {
 		if len(image.GCCVersions) == 0 {
-			logger.WithField("FilePath", f.FilePath).WithField("image", image).Fatal("Invalid image list file: expected at least 1 gcc version")
+			logger.WithField("FilePath", f.FilePath).WithField("image", image).Debug("Expected at least 1 gcc version")
 		}
 		for _, gcc := range image.GCCVersions {
 			buildImage := Image{
@@ -105,14 +105,13 @@ func (f *FileImagesLister) LoadImages() []Image {
 }
 
 func NewRepoImagesLister(repo string, build *Build) *RepoImagesLister {
-	if len(repoRegs) == 0 {
+	// Lazy inizialization
+	if tagReg == nil {
 		imageTag := build.builderImageTag()
 		// Create the proper regexes to load "any" and target-specific images for requested arch
 		arch := kernelrelease.Architecture(build.Architecture).ToNonDeb()
-		targetFmt := fmt.Sprintf("driverkit-builder-(?P<target>%s)-%s(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)-%s$", build.TargetType.String(), arch, imageTag)
-		repoRegs = append(repoRegs, regexp.MustCompile(targetFmt))
-		genericFmt := fmt.Sprintf("driverkit-builder-any-%s(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)-%s$", arch, imageTag)
-		repoRegs = append(repoRegs, regexp.MustCompile(genericFmt))
+		targetFmt := fmt.Sprintf("^(?P<target>%s|any)-%s(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)-%s$", build.TargetType.String(), arch, imageTag)
+		tagReg = regexp.MustCompile(targetFmt)
 	}
 	return &RepoImagesLister{repo: repo}
 }
@@ -120,67 +119,60 @@ func NewRepoImagesLister(repo string, build *Build) *RepoImagesLister {
 func (repo *RepoImagesLister) LoadImages() []Image {
 	noCredentials := func(r *repository.Repository) {
 		// The default client will be used by oras.
+		// TODO: we don't support private repositories for now.
 		r.Client = nil
 	}
 
 	repoOCI, err := repository.NewRepository(repo.repo, noCredentials)
 	if err != nil {
-		logger.Warnf("Skipping repo %s: %s\n", repo, err.Error())
+		logger.WithField("Repo", repo.repo).Warnf("Skipping repo %s: %s\n", repo, err.Error())
 		return nil
 	}
 
 	tags, err := repoOCI.Tags(context.Background())
 	if err != nil {
-		logger.Warnf("Skipping repo %s: %s\n", repo, err.Error())
+		logger.WithField("Repo", repo.repo).Warnf("Skipping repo %s: %s\n", repo, err.Error())
 		return nil
 	}
 
 	var res []Image
 	for _, t := range tags {
 		img := fmt.Sprintf("%s:%s", repo.repo, t)
-		for _, reg := range repoRegs {
-			match := reg.FindStringSubmatch(img)
-			if len(match) == 0 {
-				continue
-			}
+		match := tagReg.FindStringSubmatch(t)
+		if len(match) != 2 {
+			logger.WithField("Repo", repo.repo).WithField("Image", img).Debug("Malformed image name")
+			continue
+		}
 
-			var gccVers []string
-			target := ""
-			for i, name := range reg.SubexpNames() {
-				if i > 0 && i <= len(match) {
-					switch name {
-					case "gccVers":
-						gccVers = strings.Split(match[i], "_gcc")
-						gccVers = gccVers[1:] // remove initial whitespace
-					case "target":
-						target = match[i]
-					}
+		var (
+			target  string
+			gccVers []string
+		)
+		for i, name := range tagReg.SubexpNames() {
+			if i > 0 && i <= len(match) {
+				switch name {
+				case "gccVers":
+					gccVers = strings.Split(match[i], "_gcc")
+					gccVers = gccVers[1:] // remove initial whitespace
+				case "target":
+					target = match[i]
 				}
 			}
+		}
 
-			if len(gccVers) == 0 {
-				logger.Debug("Malformed image name: ", img, len(match))
-				continue
+		// Note: we store "any" target images as "any",
+		// instead of adding them to the target,
+		// because we always prefer specific target images,
+		// and we cannot guarantee here that any subsequent docker repos
+		// does not provide a target-specific image that offers same gcc version
+		for _, gccVer := range gccVers {
+			// If user set a fixed gcc version, only load images that provide it.
+			buildImage := Image{
+				GCCVersion: mustParseTolerant(gccVer),
+				Name:       img,
+				Target:     Type(target),
 			}
-
-			// Note: we store "any" target images as "any",
-			// instead of adding them to the target,
-			// because we always prefer specific target images,
-			// and we cannot guarantee here that any subsequent docker repos
-			// does not provide a target-specific image that offers same gcc version
-			for _, gccVer := range gccVers {
-				// If user set a fixed gcc version, only load images that provide it.
-				buildImage := Image{
-					GCCVersion: mustParseTolerant(gccVer),
-					Name:       img,
-				}
-				if target != "" {
-					buildImage.Target = Type(target)
-				} else {
-					buildImage.Target = Type("any")
-				}
-				res = append(res, buildImage)
-			}
+			res = append(res, buildImage)
 		}
 	}
 	return res
