@@ -17,6 +17,8 @@ type YAMLImage struct {
 	Target      string   `yaml:"target"`
 	GCCVersions []string `yaml:"gcc_versions"` // we expect images to internally link eg: gcc5 to gcc5.0.0
 	Name        string   `yaml:"name"`
+	Arch        string   `yaml:"arch"`
+	Tag         string   `yaml:"tag"`
 }
 
 type YAMLImagesList struct {
@@ -35,6 +37,8 @@ type ImagesLister interface {
 
 type FileImagesLister struct {
 	FilePath string
+	Arch     string
+	Tag      string
 }
 
 type RepoImagesLister struct {
@@ -69,26 +73,44 @@ func (im ImagesMap) findImage(target Type, gccVers semver.Version) (Image, bool)
 	return Image{}, false
 }
 
+func NewFileImagesLister(filePath string, build *Build) *FileImagesLister {
+	// Create the proper regexes to load "any" and target-specific images for requested arch
+	arch := kernelrelease.Architecture(build.Architecture).ToNonDeb()
+	return &FileImagesLister{FilePath: filePath, Arch: arch, Tag: build.builderImageTag()}
+}
+
 func (f *FileImagesLister) LoadImages() []Image {
+	var (
+		res       []Image
+		imageList YAMLImagesList
+	)
+
 	// loop over lines in file to print them
 	file, err := os.ReadFile(f.FilePath)
 	if err != nil {
-		logger.WithError(err).WithField("FilePath", f.FilePath).Fatal("error opening builder repo file")
+		logger.WithError(err).WithField("FilePath", f.FilePath).Warnf("Error opening builder repo file: %s\n", err.Error())
+		return res
 	}
-
-	var imageList YAMLImagesList
-	var res []Image
 
 	err = yaml.Unmarshal(file, &imageList)
 	if err != nil {
-		logger.WithError(err).WithField("FilePath", f.FilePath).Fatal("error unmarshalling builder repo file")
+		logger.WithError(err).WithField("FilePath", f.FilePath).Warnf("Error unmarshalling builder repo file: %s\n", err.Error())
+		return res
 	}
 
 	if len(imageList.Images) == 0 {
-		logger.WithField("FilePath", f.FilePath).Warnf("Skipping image list file: expected at least 1 image\n")
+		logger.WithField("FilePath", f.FilePath).Warnf("Malformed image list file: expected at least 1 image\n")
 	}
 
 	for _, image := range imageList.Images {
+		if image.Arch != f.Arch {
+			logger.WithField("FilePath", f.FilePath).WithField("image", image).Debug("Skipping wrong-arch image")
+			continue
+		}
+		if image.Tag != f.Tag {
+			logger.WithField("FilePath", f.FilePath).WithField("image", image).Debug("Skipping wrong-tag image")
+			continue
+		}
 		if len(image.GCCVersions) == 0 {
 			logger.WithField("FilePath", f.FilePath).WithField("image", image).Debug("Expected at least 1 gcc version")
 		}

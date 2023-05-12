@@ -138,7 +138,7 @@ func (ro *RootOptions) toBuild() *builder.Build {
 	// loop over BuilderRepos to constuct the list ImagesListers based on the value of the builderRepo, if it's a local path, add FileImagesLister, otherwise add RepoImagesLister
 	for _, builderRepo := range build.BuilderRepos {
 		if strings.HasPrefix(builderRepo, "/") {
-			build.ImagesListers = append(build.ImagesListers, &builder.FileImagesLister{FilePath: builderRepo})
+			build.ImagesListers = append(build.ImagesListers, builder.NewFileImagesLister(builderRepo, build))
 		} else {
 			build.ImagesListers = append(build.ImagesListers, builder.NewRepoImagesLister(builderRepo, build))
 		}

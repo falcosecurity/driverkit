@@ -1,9 +1,20 @@
 images:
-  - name: docker.io/falcosecurity/driverkit-builder-any-x86_64_gcc8.0.0_gcc6.0.0_gcc5.0.0_gcc4.9.0_gcc4.8.0
+  - name: docker.io/falcosecurity/driverkit-builder:any-x86_64_gcc8.0.0_gcc6.0.0_gcc5.0.0_gcc4.9.0_gcc4.8.0-latest
     target: any
+    arch: x86_64
+    tag: latest
     gcc_versions:
       - 8.0.0
       - 6.0.0
       - 5.0.0
       - 4.9.0
       - 4.8.0
+  # Name is just the image name that will be used to download the image.
+  # Contrarily to normal repo lister there is no constraint on it,
+  # since all fields are already explicitly available
+  - name: docker.io/foo/bar:mytag
+    target: arch
+    arch: x86_64
+    tag: latest
+    gcc_versions:
+      - 13.1.1
