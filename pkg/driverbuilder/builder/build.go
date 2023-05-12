@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+var defaultImageTag = "latest" // This is overwritten when using the Makefile to build
+
 // Build contains the info about the on-going build.
 type Build struct {
 	TargetType       Type
@@ -53,7 +55,6 @@ func (b *Build) hasCustomBuilderImage() bool {
 		customNames := strings.Split(b.BuilderImage, ":")
 		return customNames[0] != "auto"
 	}
-
 	return false
 }
 
@@ -66,6 +67,5 @@ func (b *Build) builderImageTag() string {
 			return customNames[1]
 		}
 	}
-
-	return "latest"
+	return defaultImageTag
 }
