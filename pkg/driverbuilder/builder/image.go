@@ -86,13 +86,13 @@ func (f *FileImagesLister) LoadImages() []Image {
 	)
 
 	// loop over lines in file to print them
-	file, err := os.ReadFile(f.FilePath)
+	fileData, err := os.ReadFile(f.FilePath)
 	if err != nil {
 		logger.WithError(err).WithField("FilePath", f.FilePath).Warnf("Error opening builder repo file: %s\n", err.Error())
 		return res
 	}
 
-	err = yaml.Unmarshal(file, &imageList)
+	err = yaml.Unmarshal(fileData, &imageList)
 	if err != nil {
 		logger.WithError(err).WithField("FilePath", f.FilePath).Warnf("Error unmarshalling builder repo file: %s\n", err.Error())
 		return res
@@ -103,6 +103,15 @@ func (f *FileImagesLister) LoadImages() []Image {
 	}
 
 	for _, image := range imageList.Images {
+		// Fixup empty fields using default values
+		if image.Arch == "" {
+			image.Arch = f.Arch
+		}
+		if image.Tag == "" {
+			image.Tag = f.Tag
+		}
+
+		// Values checks
 		if image.Arch != f.Arch {
 			logger.WithField("FilePath", f.FilePath).WithField("image", image).Debug("Skipping wrong-arch image")
 			continue
@@ -111,9 +120,19 @@ func (f *FileImagesLister) LoadImages() []Image {
 			logger.WithField("FilePath", f.FilePath).WithField("image", image).Debug("Skipping wrong-tag image")
 			continue
 		}
+		if image.Target != "any" && BuilderByTarget[Type(image.Target)] == nil {
+			logger.WithField("FilePath", f.FilePath).WithField("image", image).Debug("Skipping unexistent target image")
+			continue
+		}
+		if image.Name == "" {
+			logger.WithField("FilePath", f.FilePath).WithField("image", image).Debug("Skipping empty name image")
+			continue
+		}
 		if len(image.GCCVersions) == 0 {
 			logger.WithField("FilePath", f.FilePath).WithField("image", image).Debug("Expected at least 1 gcc version")
+			continue
 		}
+
 		for _, gcc := range image.GCCVersions {
 			buildImage := Image{
 				Name:       image.Name,
