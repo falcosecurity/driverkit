@@ -180,8 +180,7 @@ func (repo *RepoImagesLister) LoadImages() []Image {
 	for _, t := range tags {
 		img := fmt.Sprintf("%s:%s", repo.repo, t)
 		match := tagReg.FindStringSubmatch(t)
-		if len(match) != 2 {
-			logger.WithField("Repo", repo.repo).WithField("Image", img).Debug("Malformed image name")
+		if len(match) == 0 {
 			continue
 		}
 
