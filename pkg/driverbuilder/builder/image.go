@@ -39,10 +39,12 @@ type FileImagesLister struct {
 	FilePath string
 	Arch     string
 	Tag      string
+	Target   string
 }
 
 type RepoImagesLister struct {
-	repo string
+	repo     string
+	httpOnly bool // set to true for mocking tests
 }
 
 type ImageKey string
@@ -74,9 +76,8 @@ func (im ImagesMap) findImage(target Type, gccVers semver.Version) (Image, bool)
 }
 
 func NewFileImagesLister(filePath string, build *Build) *FileImagesLister {
-	// Create the proper regexes to load "any" and target-specific images for requested arch
 	arch := kernelrelease.Architecture(build.Architecture).ToNonDeb()
-	return &FileImagesLister{FilePath: filePath, Arch: arch, Tag: build.builderImageTag()}
+	return &FileImagesLister{FilePath: filePath, Arch: arch, Tag: build.builderImageTag(), Target: build.TargetType.String()}
 }
 
 func (f *FileImagesLister) LoadImages() []Image {
@@ -103,14 +104,6 @@ func (f *FileImagesLister) LoadImages() []Image {
 	}
 
 	for _, image := range imageList.Images {
-		// Fixup empty fields using default values
-		if image.Arch == "" {
-			image.Arch = f.Arch
-		}
-		if image.Tag == "" {
-			image.Tag = f.Tag
-		}
-
 		// Values checks
 		if image.Arch != f.Arch {
 			logger.WithField("FilePath", f.FilePath).WithField("image", image).Debug("Skipping wrong-arch image")
@@ -120,8 +113,8 @@ func (f *FileImagesLister) LoadImages() []Image {
 			logger.WithField("FilePath", f.FilePath).WithField("image", image).Debug("Skipping wrong-tag image")
 			continue
 		}
-		if image.Target != "any" && BuilderByTarget[Type(image.Target)] == nil {
-			logger.WithField("FilePath", f.FilePath).WithField("image", image).Debug("Skipping unexistent target image")
+		if image.Target != "any" && image.Target != f.Target {
+			logger.WithField("FilePath", f.FilePath).WithField("image", image).Debug("Skipping wrong-target image")
 			continue
 		}
 		if image.Name == "" {
@@ -154,7 +147,7 @@ func NewRepoImagesLister(repo string, build *Build) *RepoImagesLister {
 		targetFmt := fmt.Sprintf("^(?P<target>%s|any)-%s(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)-%s$", build.TargetType.String(), arch, imageTag)
 		tagReg = regexp.MustCompile(targetFmt)
 	}
-	return &RepoImagesLister{repo: repo}
+	return &RepoImagesLister{repo: repo, httpOnly: false}
 }
 
 func (repo *RepoImagesLister) LoadImages() []Image {
@@ -162,17 +155,18 @@ func (repo *RepoImagesLister) LoadImages() []Image {
 		// The default client will be used by oras.
 		// TODO: we don't support private repositories for now.
 		r.Client = nil
+		r.PlainHTTP = repo.httpOnly
 	}
 
 	repoOCI, err := repository.NewRepository(repo.repo, noCredentials)
 	if err != nil {
-		logger.WithField("Repo", repo.repo).Warnf("Skipping repo %s: %s\n", repo, err.Error())
+		logger.WithField("Repo", repo.repo).Warnf("Skipping repo %s: %s\n", repo.repo, err.Error())
 		return nil
 	}
 
 	tags, err := repoOCI.Tags(context.Background())
 	if err != nil {
-		logger.WithField("Repo", repo.repo).Warnf("Skipping repo %s: %s\n", repo, err.Error())
+		logger.WithField("Repo", repo.repo).Warnf("Skipping repo %s: %s\n", repo.repo, err.Error())
 		return nil
 	}
 
