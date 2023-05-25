@@ -3,6 +3,7 @@ package builder
 import (
 	_ "embed"
 	"fmt"
+
 	"github.com/blang/semver"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
@@ -169,6 +170,10 @@ func (c *centos) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls [
 }
 
 func (c *centos) GCCVersion(kr kernelrelease.KernelRelease) semver.Version {
+	// 4.18+ centos 8 kernels need gcc 9
+	if kr.Major == 4 && kr.Minor >= 18 {
+		return semver.Version{Major: 9}
+	}
 	// 3.10.X kernels need 4.8.5 gcc version; see:
 	// https://github.com/falcosecurity/driverkit/issues/236
 	if kr.Major == 3 && kr.Minor == 10 {
