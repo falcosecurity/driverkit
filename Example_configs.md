@@ -269,9 +269,29 @@ and Dockerfile.rhel9:
 FROM docker.io/redhat/ubi9
 
 RUN yum install gcc elfutils-libelf-devel kmod make cpio llvm-toolset -y
+RUN ln -s /usr/bin/$(uname -p)-redhat-linux-gcc-11 /usr/bin/gcc-11
 ```
-| :exclamation: **subscription-manager does not work on RHEL9 containers**: Host must have a valid RHEL subscription |
-|--------------------------------------------------------------------------------------------------------------------|
+The `ln -s /usr/bin/$(uname -p)-redhat-linux-gcc-11 /usr/bin/gcc-11` command creates a symbolic link which makes sure driverkit finds the correct compiler binary.
+
+| :exclamation: **subscription-manager does not work on RHEL9 containers**: Host must have a valid RHEL subscription. However, If you want to build the Docker image on a host that is not RHEL9, the container will not have access to the required repositories. In that case, the subscription manager can be activated with some additional adjustments. |
+|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+
+Dockerfile.rhel9.containerSkip:
+```bash
+FROM docker.io/redhat/ubi9
+
+ENV SMDEV_CONTAINER_OFF 1
+
+ARG REDHAT_USERNAME
+ARG REDHAT_PASSWORD
+
+RUN subscription-manager register --username $REDHAT_USERNAME --password $REDHAT_PASSWORD --auto-attach
+
+RUN yum install gcc elfutils-libelf-devel kmod make cpio llvm-toolset -y
+RUN ln -s /usr/bin/$(uname -p)-redhat-linux-gcc-11 /usr/bin/gcc-11
+```
+
+Setting `SMDEV_CONTAINER_OFF 1` makes sure the container detection is skipped and therefore enables the subsciption manager again.
 
 ## rocky linux
 
