@@ -54,7 +54,7 @@ func fetchVanillaKernelURLFromKernelVersion(kv kernelrelease.KernelRelease) stri
 	// and thus much quicker to download. Let's keep tar.xz for non RC!
 	// Numbers: 110M (tar.gz) vs 75M (tar.xz)
 	if isRC(kv) {
-		return fmt.Sprintf("https://git.kernel.org/torvalds/t/linux-%s%s.tar.gz", kv.Fullversion, kv.FullExtraversion)
+		return fmt.Sprintf("https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/snapshot/linux-%s%s.tar.gz", kv.Fullversion, kv.FullExtraversion)
 	}
 	return fmt.Sprintf("https://cdn.kernel.org/pub/linux/kernel/v%d.x/linux-%s.tar.xz", kv.Major, kv.Fullversion)
 }
