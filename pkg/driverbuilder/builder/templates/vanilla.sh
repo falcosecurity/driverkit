@@ -36,6 +36,8 @@ make KCONFIG_CONFIG=/tmp/kernel.config oldconfig
 make KCONFIG_CONFIG=/tmp/kernel.config prepare
 make KCONFIG_CONFIG=/tmp/kernel.config modules_prepare
 
+export KBUILD_MODPOST_WARN=1
+
 {{ if .BuildModule }}
 # Build the kernel module
 cd {{ .DriverBuildDir }}
