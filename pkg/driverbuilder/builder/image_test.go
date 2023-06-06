@@ -228,11 +228,12 @@ func TestFileImagesLister(t *testing.T) {
 	}
 	defer os.Remove(f.Name())
 
-	lister := NewFileImagesLister(f.Name(), &Build{
+	lister, err := NewFileImagesLister(f.Name(), &Build{
 		TargetType:   Type("centos"),
 		Architecture: "amd64",
 		BuilderImage: "auto:latest",
 	})
+	assert.NilError(t, err)
 
 	for _, test := range imagesTests {
 		if test.yamlData == "" {
@@ -262,13 +263,12 @@ func TestRepoImagesLister(t *testing.T) {
 	assert.NilError(t, err)
 	defer mock.Close()
 
-	lister := NewRepoImagesLister(mock.URL()+"/foo/test", &Build{
+	lister, err := NewRepoImagesLister(mock.URL()+"/foo/test", true, &Build{
 		TargetType:   Type("centos"),
 		Architecture: "amd64",
 		BuilderImage: "auto:latest",
 	})
-	// Test only
-	lister.httpOnly = true
+	assert.NilError(t, err)
 
 	for _, test := range imagesTests {
 		if test.jsonData == "" {

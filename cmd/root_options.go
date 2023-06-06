@@ -8,7 +8,7 @@ import (
 	"github.com/falcosecurity/driverkit/validate"
 	"github.com/go-playground/validator/v10"
 	logger "github.com/sirupsen/logrus"
-	"strings"
+	"os"
 )
 
 // OutputOptions wraps the two drivers that driverkit builds.
@@ -135,12 +135,22 @@ func (ro *RootOptions) toBuild() *builder.Build {
 		Images:           make(builder.ImagesMap),
 	}
 
-	// loop over BuilderRepos to constuct the list ImagesListers based on the value of the builderRepo, if it's a local path, add FileImagesLister, otherwise add RepoImagesLister
+	// loop over BuilderRepos to build the list ImagesListers based on the value of the builderRepo:
+	// if it's a local path use FileImagesLister, otherwise use RepoImagesLister
+	var (
+		imageLister builder.ImagesLister
+		err         error
+	)
 	for _, builderRepo := range build.BuilderRepos {
-		if strings.HasPrefix(builderRepo, "/") {
-			build.ImagesListers = append(build.ImagesListers, builder.NewFileImagesLister(builderRepo, build))
+		if _, err = os.Stat(builderRepo); err == nil {
+			imageLister, err = builder.NewFileImagesLister(builderRepo, build)
 		} else {
-			build.ImagesListers = append(build.ImagesListers, builder.NewRepoImagesLister(builderRepo, build))
+			imageLister, err = builder.NewRepoImagesLister(builderRepo, false, build)
+		}
+		if err != nil {
+			logger.WithError(err).Warnf("Skipping %s repo\n", builderRepo)
+		} else {
+			build.ImagesListers = append(build.ImagesListers, imageLister)
 		}
 	}
 

@@ -43,8 +43,7 @@ type FileImagesLister struct {
 }
 
 type RepoImagesLister struct {
-	repo     string
-	httpOnly bool // set to true for mocking tests
+	*repository.Repository
 }
 
 type ImageKey string
@@ -75,9 +74,13 @@ func (im ImagesMap) findImage(target Type, gccVers semver.Version) (Image, bool)
 	return Image{}, false
 }
 
-func NewFileImagesLister(filePath string, build *Build) *FileImagesLister {
-	arch := kernelrelease.Architecture(build.Architecture).ToNonDeb()
-	return &FileImagesLister{FilePath: filePath, Arch: arch, Tag: build.builderImageTag(), Target: build.TargetType.String()}
+func NewFileImagesLister(filePath string, build *Build) (*FileImagesLister, error) {
+	return &FileImagesLister{
+		FilePath: filePath,
+		Arch:     kernelrelease.Architecture(build.Architecture).ToNonDeb(),
+		Tag:      build.builderImageTag(),
+		Target:   build.TargetType.String(),
+	}, nil
 }
 
 func (f *FileImagesLister) LoadImages() []Image {
@@ -97,10 +100,6 @@ func (f *FileImagesLister) LoadImages() []Image {
 	if err != nil {
 		logger.WithError(err).WithField("FilePath", f.FilePath).Warnf("Error unmarshalling builder repo file: %s\n", err.Error())
 		return res
-	}
-
-	if len(imageList.Images) == 0 {
-		logger.WithField("FilePath", f.FilePath).Warnf("Malformed image list file: expected at least 1 image\n")
 	}
 
 	for _, image := range imageList.Images {
@@ -138,7 +137,7 @@ func (f *FileImagesLister) LoadImages() []Image {
 	return res
 }
 
-func NewRepoImagesLister(repo string, build *Build) *RepoImagesLister {
+func NewRepoImagesLister(repo string, httpOnly bool, build *Build) (*RepoImagesLister, error) {
 	// Lazy inizialization
 	if tagReg == nil {
 		imageTag := build.builderImageTag()
@@ -147,32 +146,31 @@ func NewRepoImagesLister(repo string, build *Build) *RepoImagesLister {
 		targetFmt := fmt.Sprintf("^(?P<target>%s|any)-%s(?P<gccVers>(_gcc[0-9]+.[0-9]+.[0-9]+)+)-%s$", build.TargetType.String(), arch, imageTag)
 		tagReg = regexp.MustCompile(targetFmt)
 	}
-	return &RepoImagesLister{repo: repo, httpOnly: false}
-}
 
-func (repo *RepoImagesLister) LoadImages() []Image {
 	noCredentials := func(r *repository.Repository) {
 		// The default client will be used by oras.
 		// TODO: we don't support private repositories for now.
 		r.Client = nil
-		r.PlainHTTP = repo.httpOnly
+		r.PlainHTTP = httpOnly
 	}
 
-	repoOCI, err := repository.NewRepository(repo.repo, noCredentials)
+	repoOCI, err := repository.NewRepository(repo, noCredentials)
 	if err != nil {
-		logger.WithField("Repo", repo.repo).Warnf("Skipping repo %s: %s\n", repo.repo, err.Error())
-		return nil
+		return nil, err
 	}
+	return &RepoImagesLister{repoOCI}, nil
+}
 
-	tags, err := repoOCI.Tags(context.Background())
+func (repo *RepoImagesLister) LoadImages() []Image {
+	tags, err := repo.Tags(context.Background())
 	if err != nil {
-		logger.WithField("Repo", repo.repo).Warnf("Skipping repo %s: %s\n", repo.repo, err.Error())
+		logger.WithField("Repo", repo.Reference).Warnf("Skipping repo %s: %s\n", repo.Reference, err.Error())
 		return nil
 	}
 
 	var res []Image
 	for _, t := range tags {
-		img := fmt.Sprintf("%s:%s", repo.repo, t)
+		img := fmt.Sprintf("%s:%s", repo.Reference, t)
 		match := tagReg.FindStringSubmatch(t)
 		if len(match) == 0 {
 			continue
@@ -215,6 +213,7 @@ func (repo *RepoImagesLister) LoadImages() []Image {
 func (b *Build) LoadImages() {
 	for _, imagesLister := range b.ImagesListers {
 		for _, image := range imagesLister.LoadImages() {
+			// User forced a gcc version? Only load images matching the requested gcc version.
 			if b.GCCVersion != "" && b.GCCVersion != image.GCCVersion.String() {
 				continue
 			}
