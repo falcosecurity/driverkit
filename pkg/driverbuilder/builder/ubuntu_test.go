@@ -147,17 +147,17 @@ var tests = []struct {
 	},
 	{
 		config: kernelrelease.KernelRelease{
-			Fullversion: "3.13.0",
+			Fullversion: "6.3.0",
 			Version: semver.Version{
-				Major: 3,
-				Minor: 13,
+				Major: 6,
+				Minor: 3,
 				Patch: 0,
 			},
-			Extraversion:     "100",
-			FullExtraversion: "-100",
+			Extraversion:     "7",
+			FullExtraversion: "-7",
 			Architecture:     kernelrelease.ArchitectureAmd64,
 		},
-		kernelversion: "147",
+		kernelversion: "7",
 		expected: struct {
 			headersURLs []string
 			urls        []string
@@ -166,13 +166,32 @@ var tests = []struct {
 			flavor      string
 			err         error
 		}{
-			headersURLs: []string{"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-3.13.0-100-generic_3.13.0-100.147_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-3.13.0-100_3.13.0-100.147_all.deb"},
-			urls:        []string{"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-3.13.0-100_3.13.0-100.147_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-3.13.0-100-generic_3.13.0-100.147_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-generic-headers-3.13.0-100_3.13.0-100.147_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-3.13.0-100_3.13.0-100.147_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-3.13.0-100_3.13.0-100.147_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic/linux-headers-3.13.0-100_3.13.0-100.147_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic/linux-headers-3.13.0-100-generic_3.13.0-100.147_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic/linux-generic-headers-3.13.0-100_3.13.0-100.147_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic/linux-headers-3.13.0-100_3.13.0-100.147_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic/linux-headers-3.13.0-100_3.13.0-100.147_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic-3.13/linux-headers-3.13.0-100_3.13.0-100.147_amd64_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic-3.13/linux-headers-3.13.0-100-generic_3.13.0-100.147_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic-3.13/linux-generic-headers-3.13.0-100_3.13.0-100.147_all.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic-3.13/linux-headers-3.13.0-100_3.13.0-100.147_amd64.deb", "https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic-3.13/linux-headers-3.13.0-100_3.13.0-100.147_all.deb"},
-			gccVersion: semver.Version{
-				Major: 4,
-				Minor: 8,
+			headersURLs: []string{
+				"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-6.3.0-7-generic_6.3.0-7.7_amd64.deb",
+				"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-6.3.0-7_6.3.0-7.7_all.deb",
 			},
-			firstExtra: "100",
+			urls: []string{
+				"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-6.3.0-7_6.3.0-7.7_amd64_all.deb",
+				"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-6.3.0-7-generic_6.3.0-7.7_amd64.deb",
+				"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-generic-headers-6.3.0-7_6.3.0-7.7_all.deb",
+				"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-6.3.0-7_6.3.0-7.7_amd64.deb",
+				"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux/linux-headers-6.3.0-7_6.3.0-7.7_all.deb",
+				"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic/linux-headers-6.3.0-7_6.3.0-7.7_amd64_all.deb",
+				"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic/linux-headers-6.3.0-7-generic_6.3.0-7.7_amd64.deb",
+				"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic/linux-generic-headers-6.3.0-7_6.3.0-7.7_all.deb",
+				"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic/linux-headers-6.3.0-7_6.3.0-7.7_amd64.deb",
+				"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic/linux-headers-6.3.0-7_6.3.0-7.7_all.deb",
+				"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic-6.3/linux-headers-6.3.0-7_6.3.0-7.7_amd64_all.deb",
+				"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic-6.3/linux-headers-6.3.0-7-generic_6.3.0-7.7_amd64.deb",
+				"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic-6.3/linux-generic-headers-6.3.0-7_6.3.0-7.7_all.deb",
+				"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic-6.3/linux-headers-6.3.0-7_6.3.0-7.7_amd64.deb",
+				"https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-generic-6.3/linux-headers-6.3.0-7_6.3.0-7.7_all.deb",
+			},
+			gccVersion: semver.Version{
+				Major: 6,
+				Minor: 3,
+			},
+			firstExtra: "7",
 			flavor:     "generic",
 			err:        nil,
 		},
@@ -281,7 +300,7 @@ func TestFetchUbuntuKernelURL(t *testing.T) {
 	for _, test := range tests {
 
 		// setup baseURLs - leave out security for sake of simplicity
-		baseURLs := []string{}
+		var baseURLs []string
 		if test.config.Architecture.String() == kernelrelease.ArchitectureAmd64 {
 			baseURLs = []string{
 				"https://mirrors.edge.kernel.org/ubuntu/pool/main/l",
