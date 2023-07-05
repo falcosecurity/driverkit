@@ -11,7 +11,7 @@ driverkit kubernetes-in-cluster [flags]
 ```
       --architecture string        target architecture for the built driver, one of [amd64,arm64] (default "amd64")
       --builderimage string        docker image to be used to build the kernel module and eBPF probe. If not provided, an automatically selected image will be used.
-      --builderrepo strings        list of docker repositories or yaml file (absolute path) containing builder images index with the format 'images: [ { target:<target>, name:<image-name>, gcc_versions: [ <gcc-tag> ] },...]', in descending priority order. Used to search for builder images. eg: --builderrepo myorg/driverkit --builderrepo falcosecurity/driverkit --builderrepo '/path/to/my/index.yaml'. (default [docker.io/falcosecurity/driverkit-builder])
+      --builderrepo strings        list of docker repositories or yaml file (absolute path) containing builder images index with the format 'images: [ { target:<target>, name:<image-name>, arch: <arch>, tag: <imagetag>, gcc_versions: [ <gcc-tag> ] },...]', in descending priority order. Used to search for builder images. eg: --builderrepo myorg/driverkit-builder --builderrepo falcosecurity/driverkit-builder --builderrepo '/path/to/my/index.yaml'. (default [docker.io/falcosecurity/driverkit-builder])
   -c, --config string              config file path (default $HOME/.driverkit.yaml if exists)
       --driverversion string       driver version as a git commit hash or as a git tag (default "master")
       --dryrun                     do not actually perform the action
@@ -29,6 +29,10 @@ driverkit kubernetes-in-cluster [flags]
       --output-module string       filepath where to save the resulting kernel module
       --output-probe string        filepath where to save the resulting eBPF probe
       --proxy string               the proxy to use to download data
+      --registry-name string       registry name to which authenticate
+      --registry-password string   registry password
+      --registry-plain-http        allows interacting with remote registry via plain http requests
+      --registry-user string       registry username
       --repo-name string           repository github name (default "libs")
       --repo-org string            repository github organization (default "falcosecurity")
       --run-as-user int            Pods runner user

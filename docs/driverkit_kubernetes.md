@@ -14,7 +14,7 @@ driverkit kubernetes [flags]
       --as-group stringArray           group to impersonate for the operation, this flag can be repeated to specify multiple groups
       --as-uid string                  uID to impersonate for the operation
       --builderimage string            docker image to be used to build the kernel module and eBPF probe. If not provided, an automatically selected image will be used.
-      --builderrepo strings            list of docker repositories or yaml file (absolute path) containing builder images index with the format 'images: [ { target:<target>, name:<image-name>, gcc_versions: [ <gcc-tag> ] },...]', in descending priority order. Used to search for builder images. eg: --builderrepo myorg/driverkit --builderrepo falcosecurity/driverkit --builderrepo '/path/to/my/index.yaml'. (default [docker.io/falcosecurity/driverkit-builder])
+      --builderrepo strings            list of docker repositories or yaml file (absolute path) containing builder images index with the format 'images: [ { target:<target>, name:<image-name>, arch: <arch>, tag: <imagetag>, gcc_versions: [ <gcc-tag> ] },...]', in descending priority order. Used to search for builder images. eg: --builderrepo myorg/driverkit-builder --builderrepo falcosecurity/driverkit-builder --builderrepo '/path/to/my/index.yaml'. (default [docker.io/falcosecurity/driverkit-builder])
       --cache-dir string               default cache directory (default "$HOME/.kube/cache")
       --certificate-authority string   path to a cert file for the certificate authority
       --client-certificate string      path to a client certificate file for TLS
@@ -40,6 +40,10 @@ driverkit kubernetes [flags]
       --output-module string           filepath where to save the resulting kernel module
       --output-probe string            filepath where to save the resulting eBPF probe
       --proxy string                   the proxy to use to download data
+      --registry-name string           registry name to which authenticate
+      --registry-password string       registry password
+      --registry-plain-http            allows interacting with remote registry via plain http requests
+      --registry-user string           registry username
       --repo-name string               repository github name (default "libs")
       --repo-org string                repository github organization (default "falcosecurity")
       --request-timeout string         the length of time to wait before giving up on a single server request, non-zero values should contain a corresponding time unit (e.g, 1s, 2m, 3h), a value of zero means don't timeout requests (default "0")
