@@ -1,8 +1,10 @@
 package builder
 
 import (
+	"context"
 	"fmt"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
+	"oras.land/oras-go/v2/registry/remote/auth"
 	"strings"
 )
 
@@ -10,24 +12,28 @@ var defaultImageTag = "latest" // This is overwritten when using the Makefile to
 
 // Build contains the info about the on-going build.
 type Build struct {
-	TargetType       Type
-	KernelConfigData string
-	KernelRelease    string
-	KernelVersion    string
-	DriverVersion    string
-	Architecture     string
-	ModuleFilePath   string
-	ProbeFilePath    string
-	ModuleDriverName string
-	ModuleDeviceName string
-	BuilderImage     string
-	BuilderRepos     []string
-	ImagesListers    []ImagesLister
-	KernelUrls       []string
-	GCCVersion       string
-	RepoOrg          string
-	RepoName         string
-	Images           ImagesMap
+	TargetType        Type
+	KernelConfigData  string
+	KernelRelease     string
+	KernelVersion     string
+	DriverVersion     string
+	Architecture      string
+	ModuleFilePath    string
+	ProbeFilePath     string
+	ModuleDriverName  string
+	ModuleDeviceName  string
+	BuilderImage      string
+	BuilderRepos      []string
+	ImagesListers     []ImagesLister
+	KernelUrls        []string
+	GCCVersion        string
+	RepoOrg           string
+	RepoName          string
+	Images            ImagesMap
+	RegistryName      string
+	RegistryUser      string
+	RegistryPassword  string
+	RegistryPlainHTTP bool
 }
 
 func (b *Build) KernelReleaseFromBuildConfig() kernelrelease.KernelRelease {
@@ -68,4 +74,21 @@ func (b *Build) builderImageTag() string {
 		}
 	}
 	return defaultImageTag
+}
+
+func (b *Build) ClientForRegistry(registry string) *auth.Client {
+	client := auth.DefaultClient
+	client.SetUserAgent("driverkit")
+	client.Credential = func(ctx context.Context, reg string) (auth.Credential, error) {
+		if b.RegistryName == registry {
+			return auth.Credential{
+				Username: b.RegistryUser,
+				Password: b.RegistryPassword,
+			}, nil
+		}
+
+		return auth.EmptyCredential, nil
+	}
+
+	return client
 }

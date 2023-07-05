@@ -137,7 +137,7 @@ func (f *FileImagesLister) LoadImages() []Image {
 	return res
 }
 
-func NewRepoImagesLister(repo string, httpOnly bool, build *Build) (*RepoImagesLister, error) {
+func NewRepoImagesLister(repo string, build *Build) (*RepoImagesLister, error) {
 	// Lazy inizialization
 	if tagReg == nil {
 		imageTag := build.builderImageTag()
@@ -147,14 +147,15 @@ func NewRepoImagesLister(repo string, httpOnly bool, build *Build) (*RepoImagesL
 		tagReg = regexp.MustCompile(targetFmt)
 	}
 
-	noCredentials := func(r *repository.Repository) {
-		// The default client will be used by oras.
-		// TODO: we don't support private repositories for now.
-		r.Client = nil
-		r.PlainHTTP = httpOnly
+	// Get the registry URL from repository.
+	registry, err := getRegistryFromRef(repo)
+	if err != nil {
+		return nil, err
 	}
 
-	repoOCI, err := repository.NewRepository(repo, noCredentials)
+	repoOCI, err := repository.NewRepository(repo,
+		repository.WithPlainHTTP(build.RegistryPlainHTTP),
+		repository.WithClient(build.ClientForRegistry(registry)))
 	if err != nil {
 		return nil, err
 	}
@@ -226,4 +227,14 @@ func (b *Build) LoadImages() {
 	if len(b.Images) == 0 {
 		logger.Fatal("Could not load any builder image. Leaving.")
 	}
+}
+
+// getRegistryFromRef extracts the registry from a ref string.
+func getRegistryFromRef(ref string) (string, error) {
+	index := strings.Index(ref, "/")
+	if index <= 0 {
+		return "", fmt.Errorf("cannot extract registry name from ref %q", ref)
+	}
+
+	return ref[0:index], nil
 }

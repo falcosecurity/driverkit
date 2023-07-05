@@ -22,6 +22,13 @@ type RepoOptions struct {
 	Name string `default:"libs" name:"repo name"`
 }
 
+type Registry struct {
+	Name      string `validate:"required_with=Username Password" name:"registry name"`
+	Username  string `validate:"required_with=Registry Password" name:"registry username"`
+	Password  string `validate:"required_with=Username Registry" name:"registry password"`
+	PlainHTTP bool   `default:"false" name:"registry plain http"`
+}
+
 // RootOptions ...
 type RootOptions struct {
 	Architecture     string   `validate:"required,architecture" name:"architecture"`
@@ -38,6 +45,7 @@ type RootOptions struct {
 	KernelUrls       []string `name:"kernel header urls"`
 	Repo             RepoOptions
 	Output           OutputOptions
+	Registry         Registry
 }
 
 func init() {
@@ -116,23 +124,27 @@ func (ro *RootOptions) toBuild() *builder.Build {
 	}
 
 	build := &builder.Build{
-		TargetType:       builder.Type(ro.Target),
-		DriverVersion:    ro.DriverVersion,
-		KernelVersion:    ro.KernelVersion,
-		KernelRelease:    ro.KernelRelease,
-		Architecture:     ro.Architecture,
-		KernelConfigData: kernelConfigData,
-		ModuleFilePath:   ro.Output.Module,
-		ProbeFilePath:    ro.Output.Probe,
-		ModuleDriverName: ro.ModuleDriverName,
-		ModuleDeviceName: ro.ModuleDeviceName,
-		GCCVersion:       ro.GCCVersion,
-		BuilderImage:     ro.BuilderImage,
-		BuilderRepos:     ro.BuilderRepos,
-		KernelUrls:       ro.KernelUrls,
-		RepoOrg:          ro.Repo.Org,
-		RepoName:         ro.Repo.Name,
-		Images:           make(builder.ImagesMap),
+		TargetType:        builder.Type(ro.Target),
+		DriverVersion:     ro.DriverVersion,
+		KernelVersion:     ro.KernelVersion,
+		KernelRelease:     ro.KernelRelease,
+		Architecture:      ro.Architecture,
+		KernelConfigData:  kernelConfigData,
+		ModuleFilePath:    ro.Output.Module,
+		ProbeFilePath:     ro.Output.Probe,
+		ModuleDriverName:  ro.ModuleDriverName,
+		ModuleDeviceName:  ro.ModuleDeviceName,
+		GCCVersion:        ro.GCCVersion,
+		BuilderImage:      ro.BuilderImage,
+		BuilderRepos:      ro.BuilderRepos,
+		KernelUrls:        ro.KernelUrls,
+		RepoOrg:           ro.Repo.Org,
+		RepoName:          ro.Repo.Name,
+		Images:            make(builder.ImagesMap),
+		RegistryName:      ro.Registry.Name,
+		RegistryUser:      ro.Registry.Username,
+		RegistryPassword:  ro.Registry.Password,
+		RegistryPlainHTTP: ro.Registry.PlainHTTP,
 	}
 
 	// loop over BuilderRepos to build the list ImagesListers based on the value of the builderRepo:
@@ -145,7 +157,7 @@ func (ro *RootOptions) toBuild() *builder.Build {
 		if _, err = os.Stat(builderRepo); err == nil {
 			imageLister, err = builder.NewFileImagesLister(builderRepo, build)
 		} else {
-			imageLister, err = builder.NewRepoImagesLister(builderRepo, false, build)
+			imageLister, err = builder.NewRepoImagesLister(builderRepo, build)
 		}
 		if err != nil {
 			logger.WithError(err).Warnf("Skipping %s repo\n", builderRepo)

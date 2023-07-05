@@ -263,10 +263,11 @@ func TestRepoImagesLister(t *testing.T) {
 	assert.NilError(t, err)
 	defer mock.Close()
 
-	lister, err := NewRepoImagesLister(mock.URL()+"/foo/test", true, &Build{
-		TargetType:   Type("centos"),
-		Architecture: "amd64",
-		BuilderImage: "auto:latest",
+	lister, err := NewRepoImagesLister(mock.URL()+"/foo/test", &Build{
+		TargetType:        Type("centos"),
+		Architecture:      "amd64",
+		BuilderImage:      "auto:latest",
+		RegistryPlainHTTP: true,
 	})
 	assert.NilError(t, err)
 

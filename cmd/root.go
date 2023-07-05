@@ -152,6 +152,11 @@ func NewRootCmd() *RootCmd {
 	flags.StringVar(&rootOpts.Repo.Org, "repo-org", rootOpts.Repo.Org, "repository github organization")
 	flags.StringVar(&rootOpts.Repo.Name, "repo-name", rootOpts.Repo.Name, "repository github name")
 
+	flags.StringVar(&rootOpts.Registry.Name, "registry-name", rootOpts.Registry.Name, "registry name to which authenticate")
+	flags.StringVar(&rootOpts.Registry.Username, "registry-user", rootOpts.Registry.Username, "registry username")
+	flags.StringVar(&rootOpts.Registry.Password, "registry-password", rootOpts.Registry.Password, "registry password")
+	flags.BoolVar(&rootOpts.Registry.PlainHTTP, "registry-plain-http", rootOpts.Registry.PlainHTTP, "allows interacting with remote registry via plain http requests")
+
 	viper.BindPFlags(flags)
 
 	// Flag annotations and custom completions

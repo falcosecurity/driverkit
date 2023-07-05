@@ -5,6 +5,6 @@
 {{ .Commands }}
 
 {{ .Flags }}
-  -v, --version                   version for driverkit
+  -v, --version                    version for driverkit
 
 {{ .Info }}
