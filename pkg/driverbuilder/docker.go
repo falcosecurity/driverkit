@@ -133,15 +133,21 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		return err
 	}
 
-	// Prepare makefile template
-	objList, err := LoadMakefileObjList(c)
-	if err != nil {
-		return err
+	// Prepare makefiles templates
+	bufKmodMakefile := bytes.NewBuffer(nil)
+	if c.BuildModule() {
+		err = LoadKmodMakefile(bufKmodMakefile, c)
+		if err != nil {
+			return err
+		}
 	}
-	bufMakefile := bytes.NewBuffer(nil)
-	err = renderMakefile(bufMakefile, makefileData{ModuleName: c.DriverName, ModuleBuildDir: builder.DriverDirectory, MakeObjList: objList})
-	if err != nil {
-		return err
+
+	bufBpfMakefile := bytes.NewBuffer(nil)
+	if c.BuildProbe() {
+		err = LoadBpfMakefile(bufBpfMakefile, c)
+		if err != nil {
+			return err
+		}
 	}
 
 	configDecoded, err := base64.StdEncoding.DecodeString(b.KernelConfigData)
@@ -217,7 +223,8 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	files := []dockerCopyFile{
 		{"/driverkit/driverkit.sh", driverkitScript},
 		{"/driverkit/kernel.config", string(configDecoded)},
-		{"/driverkit/module-Makefile", bufMakefile.String()},
+		{"/driverkit/module-Makefile", bufKmodMakefile.String()},
+		{"/driverkit/bpf-Makefile", bufBpfMakefile.String()},
 		{"/driverkit/fill-driver-config.sh", bufFillDriverConfig.String()},
 	}
 

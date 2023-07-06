@@ -92,3 +92,11 @@ func (b *Build) ClientForRegistry(registry string) *auth.Client {
 
 	return client
 }
+
+func (b *Build) BuildModule() bool {
+	return len(b.ModuleFilePath) > 0
+}
+
+func (b *Build) BuildProbe() bool {
+	return len(b.ProbeFilePath) > 0
+}

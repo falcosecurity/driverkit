@@ -251,8 +251,8 @@ func (c Config) toTemplateData(b Builder, kr kernelrelease.KernelRelease) common
 		ModuleDownloadURL: fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.DriverVersion),
 		ModuleDriverName:  c.DriverName,
 		ModuleFullPath:    ModuleFullPath,
-		BuildModule:       len(c.ModuleFilePath) > 0,
-		BuildProbe:        len(c.ProbeFilePath) > 0,
+		BuildModule:       c.BuildModule(),
+		BuildProbe:        c.BuildProbe(),
 		GCCVersion:        c.GCCVersion,
 	}
 }

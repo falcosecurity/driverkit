@@ -121,15 +121,21 @@ func (bp *KubernetesBuildProcessor) buildModule(b *builder.Build) error {
 		return err
 	}
 
-	// Prepare makefile template
-	objList, err := LoadMakefileObjList(c)
-	if err != nil {
-		return err
+	// Prepare makefiles templates
+	bufKmodMakefile := bytes.NewBuffer(nil)
+	if c.BuildModule() {
+		err = LoadKmodMakefile(bufKmodMakefile, c)
+		if err != nil {
+			return err
+		}
 	}
-	bufMakefile := bytes.NewBuffer(nil)
-	err = renderMakefile(bufMakefile, makefileData{ModuleName: c.DriverName, ModuleBuildDir: builder.DriverDirectory, MakeObjList: objList})
-	if err != nil {
-		return err
+
+	bufBpfMakefile := bytes.NewBuffer(nil)
+	if c.BuildProbe() {
+		err = LoadBpfMakefile(bufBpfMakefile, c)
+		if err != nil {
+			return err
+		}
 	}
 
 	configDecoded, err := base64.StdEncoding.DecodeString(b.KernelConfigData)
@@ -142,7 +148,8 @@ func (bp *KubernetesBuildProcessor) buildModule(b *builder.Build) error {
 		Data: map[string]string{
 			"driverkit.sh":          res,
 			"kernel.config":         string(configDecoded),
-			"module-Makefile":       bufMakefile.String(),
+			"module-Makefile":       bufKmodMakefile.String(),
+			"bpf-Makefile":          bufBpfMakefile.String(),
 			"fill-driver-config.sh": bufFillDriverConfig.String(),
 			"downloader.sh":         waitForLockAndCat,
 			"unlock.sh":             deleteLock,
