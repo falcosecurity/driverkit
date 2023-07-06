@@ -148,13 +148,18 @@ func (bp *KubernetesBuildProcessor) buildModule(b *builder.Build) error {
 		Data: map[string]string{
 			"driverkit.sh":          res,
 			"kernel.config":         string(configDecoded),
-			"module-Makefile":       bufKmodMakefile.String(),
-			"bpf-Makefile":          bufBpfMakefile.String(),
 			"fill-driver-config.sh": bufFillDriverConfig.String(),
 			"downloader.sh":         waitForLockAndCat,
 			"unlock.sh":             deleteLock,
 		},
 	}
+	if c.BuildModule() {
+		cm.Data["module-Makefile"] = bufKmodMakefile.String()
+	}
+	if c.BuildProbe() {
+		cm.Data["bpf-Makefile"] = bufBpfMakefile.String()
+	}
+
 	// Construct environment variable array of corev1.EnvVar
 	var envs []corev1.EnvVar
 	// Add http_porxy and https_proxy environment variable

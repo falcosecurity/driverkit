@@ -223,9 +223,13 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	files := []dockerCopyFile{
 		{"/driverkit/driverkit.sh", driverkitScript},
 		{"/driverkit/kernel.config", string(configDecoded)},
-		{"/driverkit/module-Makefile", bufKmodMakefile.String()},
-		{"/driverkit/bpf-Makefile", bufBpfMakefile.String()},
 		{"/driverkit/fill-driver-config.sh", bufFillDriverConfig.String()},
+	}
+	if c.BuildModule() {
+		files = append(files, dockerCopyFile{"/driverkit/module-Makefile", bufKmodMakefile.String()})
+	}
+	if c.BuildProbe() {
+		files = append(files, dockerCopyFile{"/driverkit/bpf-Makefile", bufBpfMakefile.String()})
 	}
 
 	var buf bytes.Buffer
