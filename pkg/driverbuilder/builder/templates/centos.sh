@@ -24,6 +24,7 @@ mv usr/src/kernels/*/* /tmp/kernel
 {{ if .BuildModule }}
 # Build the module
 cd {{ .DriverBuildDir }}
+sed -i 's/make -C $(KERNELDIR)/make KCFLAGS="-Wno-incompatible-pointer-types" -C $(KERNELDIR)/g' Makefile
 make CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=/tmp/kernel
 mv {{ .ModuleDriverName }}.ko {{ .ModuleFullPath }}
 strip -g {{ .ModuleFullPath }}
