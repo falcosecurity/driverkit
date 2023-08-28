@@ -7,23 +7,21 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"github.com/docker/docker/pkg/archive"
-	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
-	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"io"
-	"io/ioutil"
-	"log"
-	"runtime"
-	"strconv"
-	"time"
-
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/archive"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
+	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"github.com/falcosecurity/driverkit/pkg/signals"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	logger "github.com/sirupsen/logrus"
+	"io"
+	"io/ioutil"
 	"k8s.io/apimachinery/pkg/util/uuid"
+	"log"
+	"runtime"
+	"strconv"
 )
 
 // DockerBuildProcessorName is a constant containing the docker name.
@@ -97,7 +95,7 @@ func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Cli
 	case <-statusCh:
 	}
 
-	err = cli.ContainerStop(ctx, qemuImage.ID, nil)
+	err = cli.ContainerStop(ctx, qemuImage.ID, container.StopOptions{})
 	if err != nil && !client.IsErrNotFound(err) {
 		log.Fatal(err)
 	}
@@ -305,8 +303,8 @@ func (bp *DockerBuildProcessor) cleanup(cli *client.Client, ID string) {
 	if !bp.clean {
 		bp.clean = true
 		logger.Debug("context canceled")
-		duration := time.Second
-		if err := cli.ContainerStop(context.Background(), ID, &duration); err != nil && !client.IsErrNotFound(err) {
+		duration := 1
+		if err := cli.ContainerStop(context.Background(), ID, container.StopOptions{Timeout: &duration}); err != nil && !client.IsErrNotFound(err) {
 			logger.WithError(err).WithField("container_id", ID).Error("error stopping container")
 		}
 	}
