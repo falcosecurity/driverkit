@@ -85,7 +85,7 @@ func (o *opensuse) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	possibleURLs := buildURLs(kr, kernelDefaultDevelPattern, kernelDevelNoArchPattern)
 
 	// trim the list to only resolving URLs
-	urls, err := getResolvingURLs(possibleURLs)
+	urls, err := GetResolvingURLs(possibleURLs)
 	if err != nil {
 		return nil, err
 	}

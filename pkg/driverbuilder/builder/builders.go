@@ -87,10 +87,10 @@ func Script(b Builder, c Config, kr kernelrelease.KernelRelease) (string, error)
 		// Otherwise, it is up to the builder to return an error
 		if len(urls) > 0 {
 			// Check (and filter) existing kernels before continuing
-			urls, err = getResolvingURLs(urls)
+			urls, err = GetResolvingURLs(urls)
 		}
 	} else {
-		urls, err = getResolvingURLs(c.KernelUrls)
+		urls, err = GetResolvingURLs(c.KernelUrls)
 	}
 	if err != nil {
 		return "", err
@@ -269,7 +269,7 @@ func resolveURLReference(u string) string {
 	return base.ResolveReference(uu).String()
 }
 
-func getResolvingURLs(urls []string) ([]string, error) {
+func GetResolvingURLs(urls []string) ([]string, error) {
 	var results []string
 	for _, u := range urls {
 		// in case url has some relative paths

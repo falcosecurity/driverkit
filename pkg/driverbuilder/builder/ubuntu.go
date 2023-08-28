@@ -96,7 +96,7 @@ func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv string) ([]s
 			return nil, err
 		}
 		// try resolving the URLs
-		urls, err := getResolvingURLs(possibleURLs)
+		urls, err := GetResolvingURLs(possibleURLs)
 		// there should be 2 urls returned - the _all.deb package and the _{arch}.deb package
 		if err == nil && len(urls) == ubuntuRequiredURLs {
 			return urls, err
