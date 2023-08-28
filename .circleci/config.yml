@@ -6,7 +6,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker: # used by integration tests that runs driverkit binary that needs docker
-          version: 20.10.12
+          version: 20.10.24
       - run:
           name: Install deps
           command: apk add gcc musl-dev make bash git
@@ -74,7 +74,7 @@ jobs:
           at: /
       - checkout
       - setup_remote_docker:
-          version: 20.10.12
+          version: 20.10.24
           docker_layer_caching: true
       - run:
           name: Install deps
@@ -147,7 +147,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker:
-          version: 20.10.12
+          version: 20.10.24
       - run:
           name: Prepare env
           command: |
