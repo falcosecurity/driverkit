@@ -78,7 +78,7 @@ func (a *amazonlinux) TemplateScript() string {
 	return amazonlinuxTemplate
 }
 
-func (a *amazonlinux) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (a *amazonlinux) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchAmazonLinuxPackagesURLs(a, kr)
 }
 
@@ -114,7 +114,7 @@ func (a *amazonlinux2022) Name() string {
 	return TargetTypeAmazonLinux2022.String()
 }
 
-func (a *amazonlinux2022) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (a *amazonlinux2022) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchAmazonLinuxPackagesURLs(a, kr)
 }
 
@@ -137,7 +137,7 @@ func (a *amazonlinux2023) Name() string {
 	return TargetTypeAmazonLinux2023.String()
 }
 
-func (a *amazonlinux2023) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (a *amazonlinux2023) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchAmazonLinuxPackagesURLs(a, kr)
 }
 
@@ -159,7 +159,7 @@ func (a *amazonlinux2) Name() string {
 	return TargetTypeAmazonLinux2.String()
 }
 
-func (a *amazonlinux2) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (a *amazonlinux2) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchAmazonLinuxPackagesURLs(a, kr)
 }
 

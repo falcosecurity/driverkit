@@ -32,7 +32,7 @@ func (v *redhat) TemplateScript() string {
 	return redhatTemplate
 }
 
-func (v *redhat) URLs(_ Config, _ kernelrelease.KernelRelease) ([]string, error) {
+func (v *redhat) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return nil, nil
 }
 

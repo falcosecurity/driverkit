@@ -35,7 +35,7 @@ func (c *fedora) TemplateScript() string {
 	return fedoraTemplate
 }
 
-func (c *fedora) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (c *fedora) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 
 	// fedora FullExtraversion looks like "-200.fc36.x86_64"
 	// need to get the "fc36" out of the middle

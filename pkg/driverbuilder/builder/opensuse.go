@@ -71,7 +71,7 @@ func (o *opensuse) TemplateScript() string {
 	return opensuseTemplate
 }
 
-func (o *opensuse) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (o *opensuse) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 
 	// SUSE requires 2 urls: a kernel-default-devel*{arch}.rpm and a kernel-devel*noarch.rpm
 	kernelDefaultDevelPattern := fmt.Sprintf("kernel-default-devel-%s%s.rpm", kr.Fullversion, kr.FullExtraversion)

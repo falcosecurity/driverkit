@@ -12,8 +12,6 @@ var alinuxTemplate string
 // TargetTypeAlinux identifies the AliyunLinux 2 and 3 target.
 const TargetTypeAlinux Type = "alinux"
 
-
-
 func init() {
 	BuilderByTarget[TargetTypeAlinux] = &alinux{}
 }
@@ -34,7 +32,7 @@ func (c *alinux) TemplateScript() string {
 	return alinuxTemplate
 }
 
-func (c *alinux) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (c *alinux) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchAlinuxKernelURLS(kr), nil
 }
 

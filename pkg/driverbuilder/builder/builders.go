@@ -55,7 +55,7 @@ type commonTemplateData struct {
 type Builder interface {
 	Name() string
 	TemplateScript() string
-	URLs(c Config, kr kernelrelease.KernelRelease) ([]string, error)
+	URLs(kr kernelrelease.KernelRelease) ([]string, error)
 	TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} // error return type is managed
 }
 
@@ -79,7 +79,7 @@ func Script(b Builder, c Config, kr kernelrelease.KernelRelease) (string, error)
 
 	var urls []string
 	if c.KernelUrls == nil {
-		urls, err = b.URLs(c, kr)
+		urls, err = b.URLs(kr)
 		if err != nil {
 			return "", err
 		}
