@@ -87,7 +87,7 @@ func fetchFlatcarKernelURLS(kernelVersion string) []string {
 func fetchFlatcarMetadata(kr kernelrelease.KernelRelease) (*flatcarReleaseInfo, error) {
 	flatcarInfo := flatcarReleaseInfo{}
 	flatcarVersion := kr.Fullversion
-	packageIndexUrl, err := getResolvingURLs(fetchFlatcarPackageListURL(kr.Architecture, flatcarVersion))
+	packageIndexUrl, err := GetResolvingURLs(fetchFlatcarPackageListURL(kr.Architecture, flatcarVersion))
 	if err != nil {
 		return nil, err
 	}
