@@ -33,7 +33,7 @@ func (c *alma) TemplateScript() string {
 	return almaTemplate
 }
 
-func (c *alma) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (c *alma) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchAlmaKernelURLS(kr), nil
 }
 
@@ -62,7 +62,7 @@ func fetchAlmaKernelURLS(kr kernelrelease.KernelRelease) []string {
 				kr.Fullversion,
 				kr.FullExtraversion,
 			))
-		}else{
+		} else {
 			urls = append(urls, fmt.Sprintf(
 				"https://repo.almalinux.org/almalinux/%s/BaseOS/%s/os/Packages/kernel-devel-%s%s.rpm",
 				r,

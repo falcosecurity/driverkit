@@ -33,7 +33,7 @@ func (p *photon) TemplateScript() string {
 	return photonTemplate
 }
 
-func (p *photon) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (p *photon) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchPhotonKernelURLS(kr), nil
 }
 

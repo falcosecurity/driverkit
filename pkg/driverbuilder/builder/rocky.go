@@ -33,7 +33,7 @@ func (c *rocky) TemplateScript() string {
 	return rockyTemplate
 }
 
-func (c *rocky) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (c *rocky) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchRockyKernelURLS(kr), nil
 }
 

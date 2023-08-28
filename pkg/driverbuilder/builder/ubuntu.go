@@ -3,6 +3,7 @@ package builder
 import (
 	_ "embed"
 	"fmt"
+	"github.com/spf13/viper"
 	"regexp"
 	"strings"
 
@@ -41,8 +42,8 @@ func (v *ubuntu) TemplateScript() string {
 	return ubuntuTemplate
 }
 
-func (v *ubuntu) URLs(c Config, kr kernelrelease.KernelRelease) ([]string, error) {
-	return ubuntuHeadersURLFromRelease(kr, c.Build.KernelVersion)
+func (v *ubuntu) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
+	return ubuntuHeadersURLFromRelease(kr, viper.GetString("kernelversion"))
 }
 
 func (v *ubuntu) MinimumURLs() int {
@@ -60,7 +61,7 @@ func (v *ubuntu) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []s
 		headersPattern = "linux-headers*generic"
 	} else {
 		// some flavors (ex: lowlatency-hwe) only contain the first part of the flavor in the directory extracted from the .deb
-		// splitting a flavor without a "-" should just return the original flavor back	
+		// splitting a flavor without a "-" should just return the original flavor back
 		headersPattern = fmt.Sprintf("linux-headers*%s*", strings.Split(flavor, "-")[0])
 	}
 

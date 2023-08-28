@@ -35,7 +35,7 @@ func (c *oracle) TemplateScript() string {
 	return oracleTemplate
 }
 
-func (c *oracle) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (c *oracle) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 
 	// oracle FullExtraversion looks like "-2047.510.5.5.el7uek.x86_64"
 	// need to get the "el7uek" out of the middle

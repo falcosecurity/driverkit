@@ -35,7 +35,7 @@ func (c *archlinux) TemplateScript() string {
 	return archlinuxTemplate
 }
 
-func (c *archlinux) URLs(cfg Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (c *archlinux) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 
 	urls := []string{}
 	possibleCompressionSuffixes := []string{

@@ -35,7 +35,7 @@ func (c *centos) TemplateScript() string {
 	return centosTemplate
 }
 
-func (c *centos) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (c *centos) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	vaultReleases := []string{
 		"6.0/os",
 		"6.0/updates",

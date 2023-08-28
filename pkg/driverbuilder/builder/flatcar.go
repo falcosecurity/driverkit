@@ -38,7 +38,7 @@ func (f *flatcar) TemplateScript() string {
 	return flatcarTemplate
 }
 
-func (f *flatcar) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (f *flatcar) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	if err := f.fillFlatcarInfos(kr); err != nil {
 		return nil, err
 	}

@@ -45,7 +45,7 @@ func (v *debian) TemplateScript() string {
 	return debianTemplate
 }
 
-func (v *debian) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (v *debian) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchDebianKernelURLs(kr)
 }
 

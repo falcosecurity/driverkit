@@ -36,7 +36,7 @@ func (v *vanilla) TemplateScript() string {
 	return vanillaTemplate
 }
 
-func (v *vanilla) URLs(_ Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (v *vanilla) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return []string{fetchVanillaKernelURLFromKernelVersion(kr)}, nil
 }
 
