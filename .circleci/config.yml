@@ -2,14 +2,14 @@ version: 2.1
 jobs:
   "build-test":
     docker:
-      - image: golang:1.20-alpine
+      - image: alpine:3.18
     steps:
       - checkout
       - setup_remote_docker: # used by integration tests that runs driverkit binary that needs docker
           version: 20.10.24
       - run:
           name: Install deps
-          command: apk add gcc musl-dev make bash git
+          command: apk add gcc musl-dev make bash git go
       - run:
           name: Build
           command: make build
@@ -42,8 +42,8 @@ jobs:
       - run:
           name: Prepare project
           command: |
-            docker run --rm -it -v /tmp/source:/source -v /var/run/docker.sock:/var/run/docker.sock -w /source --name alpine_sh -d golang:1.20-alpine sh
-            docker exec alpine_sh apk add gcc musl-dev make bash git docker
+            docker run --rm -it -v /tmp/source:/source -v /var/run/docker.sock:/var/run/docker.sock -w /source --name alpine_sh -d alpine:3.18 sh
+            docker exec alpine_sh apk add gcc musl-dev make bash git go docker
             docker exec alpine_sh git config --global --add safe.directory /source
       - run:
           name: Build
