@@ -108,6 +108,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	if err != nil {
 		return err
 	}
+	cli.NegotiateAPIVersion(context.Background())
 
 	kr := b.KernelReleaseFromBuildConfig()
 
