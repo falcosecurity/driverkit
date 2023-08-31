@@ -46,7 +46,7 @@ func NewKubernetesInClusterCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) 
 }
 
 func kubernetesInClusterRun(_ *cobra.Command, _ []string, kubeConfig *rest.Config, rootOpts *RootOptions) error {
-	b := rootOpts.toBuild()
+	b := rootOpts.ToBuild()
 
 	kc, err := kubernetes.NewForConfig(kubeConfig)
 	if err != nil {
