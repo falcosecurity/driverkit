@@ -117,7 +117,7 @@ func (ro *RootOptions) Log() {
 	logger.WithFields(fields).Debug("running with options")
 }
 
-func (ro *RootOptions) toBuild() *builder.Build {
+func (ro *RootOptions) ToBuild() *builder.Build {
 	kernelConfigData := ro.KernelConfigData
 	if len(kernelConfigData) == 0 {
 		kernelConfigData = "bm8tZGF0YQ==" // no-data

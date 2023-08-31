@@ -15,7 +15,7 @@ func NewImagesCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Comman
 		Short: "List builder images",
 		Run: func(c *cobra.Command, args []string) {
 			logger.WithField("processor", c.Name()).Info("listing images")
-			b := rootOpts.toBuild()
+			b := rootOpts.ToBuild()
 			b.LoadImages()
 
 			table := tablewriter.NewWriter(os.Stdout)

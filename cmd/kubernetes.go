@@ -57,7 +57,7 @@ func NewKubernetesCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Co
 
 func kubernetesRun(cmd *cobra.Command, args []string, kubefactory factory.Factory, rootOpts *RootOptions) error {
 	f := cmd.Flags()
-	b := rootOpts.toBuild()
+	b := rootOpts.ToBuild()
 
 	namespaceStr, err := f.GetString("namespace")
 	if err != nil {
