@@ -1,5 +1,5 @@
-DEBU running without a configuration file         
-ERRO error validating build options                error="builder image is a required field when target is redhat"
+level=DEBUG msg="running without a configuration file"
+level=ERROR msg="error validating build options" err="builder image is a required field when target is redhat"
 Error: exiting for validation errors
 Usage:
   driverkit docker [flags]

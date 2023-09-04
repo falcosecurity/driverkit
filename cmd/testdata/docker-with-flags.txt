@@ -1,1 +1,1 @@
-INFO driver building, it will take a few seconds   processor=docker
+level=INFO msg="driver building, it will take a few seconds" processor=docker
