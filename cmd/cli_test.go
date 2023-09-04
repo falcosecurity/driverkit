@@ -7,10 +7,8 @@ import (
 	"bytes"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
-	"github.com/falcosecurity/driverkit/validate"
 	"io"
 	"io/ioutil"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -305,7 +303,6 @@ func run(t *testing.T, test testCase) {
 	c := NewRootCmd()
 	b := bytes.NewBufferString("")
 	c.SetOutput(b)
-	validate.ProgramLevel.Set(slog.LevelDebug)
 	if len(test.args) == 0 || (test.args[0] != "__complete" && test.args[0] != "__completeNoDesc" && test.args[0] != "help" && test.args[0] != "completion") {
 		test.args = append(test.args, "--dryrun")
 	}
