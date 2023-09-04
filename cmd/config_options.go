@@ -17,7 +17,7 @@ var configOptions *ConfigOptions
 // ConfigOptions represent the persistent configuration flags of driverkit.
 type ConfigOptions struct {
 	ConfigFile string
-	LogLevel   string `validate:"loglevel" name:"log level" default:"info"`
+	LogLevel   string `validate:"loglevel" name:"log level" default:"INFO"`
 	Timeout    int    `validate:"number,min=30" default:"120" name:"timeout"`
 	ProxyURL   string `validate:"omitempty,proxy" name:"proxy url"`
 	DryRun     bool

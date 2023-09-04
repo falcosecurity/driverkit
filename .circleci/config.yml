@@ -9,7 +9,7 @@ jobs:
           version: 20.10.24
       - run:
           name: Install deps
-          command: apk add gcc musl-dev make bash git
+          command: apk add gcc musl-dev make bash git binutils-gold
       - run:
           name: Build
           command: make build
@@ -43,7 +43,7 @@ jobs:
           name: Prepare project
           command: |
             docker run --rm -it -v /tmp/source:/source -v /var/run/docker.sock:/var/run/docker.sock -w /source --name alpine_sh -d golang:1.21-alpine sh
-            docker exec alpine_sh apk add gcc musl-dev make bash git docker
+            docker exec alpine_sh apk add gcc musl-dev make bash git docker binutils-gold
             docker exec alpine_sh git config --global --add safe.directory /source
       - run:
           name: Build

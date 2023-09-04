@@ -22,6 +22,7 @@ import (
 
 func persistentValidateFunc(rootCommand *RootCmd, rootOpts *RootOptions) func(c *cobra.Command, args []string) error {
 	return func(c *cobra.Command, args []string) error {
+		initConfig()
 		// Early exit if detect some error into config flags
 		if configOptions.configErrors {
 			return fmt.Errorf("exiting for validation errors")
@@ -109,9 +110,6 @@ func NewRootCmd() *RootCmd {
 		DisableFlagsInUseLine: true,
 		DisableAutoGenTag:     true,
 		Version:               version.String(),
-		PreRun: func(cmd *cobra.Command, args []string) {
-			initConfig()
-		},
 		Run: func(c *cobra.Command, args []string) {
 			if len(args) == 0 {
 				slog.With("processors", validProcessors).Info("specify a valid processor")
@@ -206,17 +204,27 @@ func (r *RootCmd) Command() *cobra.Command {
 	return r.c
 }
 
+func createDefaultLogger(w io.Writer) {
+	h := slog.NewTextHandler(w, &slog.HandlerOptions{
+		Level: validate.ProgramLevel,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.TimeKey {
+				return slog.Attr{}
+			}
+			return a
+		}})
+	slog.SetDefault(slog.New(h))
+}
+
 // SetOutput sets the main command output writer.
 func (r *RootCmd) SetOutput(w io.Writer) {
 	r.c.SetOut(w)
 	r.c.SetErr(w)
-	h := slog.NewJSONHandler(w, &slog.HandlerOptions{Level: validate.ProgramLevel})
-	slog.SetDefault(slog.New(h))
+	createDefaultLogger(w)
 }
 
 func init() {
-	h := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: validate.ProgramLevel})
-	slog.SetDefault(slog.New(h))
+	createDefaultLogger(os.Stdout)
 }
 
 // SetArgs proxies the arguments to the underlying cobra.Command.

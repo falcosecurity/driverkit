@@ -7,7 +7,10 @@ import (
 	"bytes"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
+	"github.com/falcosecurity/driverkit/validate"
+	"io"
 	"io/ioutil"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -302,6 +305,7 @@ func run(t *testing.T, test testCase) {
 	c := NewRootCmd()
 	b := bytes.NewBufferString("")
 	c.SetOutput(b)
+	validate.ProgramLevel.Set(slog.LevelDebug)
 	if len(test.args) == 0 || (test.args[0] != "__complete" && test.args[0] != "__completeNoDesc" && test.args[0] != "help" && test.args[0] != "completion") {
 		test.args = append(test.args, "--dryrun")
 	}
@@ -320,7 +324,7 @@ func run(t *testing.T, test testCase) {
 			assert.Error(t, err, test.expect.err)
 		}
 	}
-	out, err := ioutil.ReadAll(b)
+	out, err := io.ReadAll(b)
 	if err != nil {
 		t.Fatalf("error reading CLI output: %v", err)
 	}
@@ -419,7 +423,7 @@ func TestCLI(t *testing.T) {
 			test.descr = strings.TrimSuffix(filepath.Base(test.expect.out), ".txt")
 		}
 		if test.expect.out != "" {
-			out, err := ioutil.ReadFile(test.expect.out)
+			out, err := os.ReadFile(test.expect.out)
 			if err != nil {
 				t.Fatalf("output fixture not found: %v", err)
 			}

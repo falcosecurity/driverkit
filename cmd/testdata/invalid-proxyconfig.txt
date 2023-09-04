@@ -1,4 +1,4 @@
-ERRO error validating config options               error="proxy url must start with http:// or https:// or socks5:// prefix"
+level=ERROR msg="error validating config options" err="proxy url must start with http:// or https:// or socks5:// prefix"
 Error: exiting for validation errors
 {{ .Usage }}
 
