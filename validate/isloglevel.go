@@ -8,8 +8,8 @@ import (
 var ProgramLevel = new(slog.LevelVar)
 
 func isLogLevel(fl validator.FieldLevel) bool {
-	level := fl.Field().Bytes()
-	err := ProgramLevel.UnmarshalText(level)
+	level := fl.Field().String()
+	err := ProgramLevel.UnmarshalText([]byte(level))
 	if err != nil {
 		return false
 	}
