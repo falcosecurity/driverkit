@@ -5,12 +5,12 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log/slog"
 	"os"
 	"path"
 	"strings"
 
 	"github.com/falcosecurity/driverkit/cmd"
-	logger "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra/doc"
 )
 
@@ -72,18 +72,21 @@ func main() {
 	// Generate markdown docs
 	err := doc.GenMarkdownTreeCustom(root, outputDir, prepender(num), linker)
 	if err != nil {
-		logger.WithError(err).Fatal("markdown generation")
+		slog.With("err", err.Error()).Error("markdown generation")
+		os.Exit(1)
 	}
 
 	if targetWebsite {
-		err := os.Rename(path.Join(outputDir, "driverkit.md"), path.Join(outputDir, "_index.md"))
+		err = os.Rename(path.Join(outputDir, "driverkit.md"), path.Join(outputDir, "_index.md"))
 		if err != nil {
-			logger.WithError(err).Fatal("renaming main docs page")
+			slog.With("err", err.Error()).Error("renaming main docs page")
+			os.Exit(1)
 		}
 	}
 
-	if err := stripSensitive(); err != nil {
-		logger.WithError(err).Fatal("error replacing sensitive data")
+	if err = stripSensitive(); err != nil {
+		slog.With("err", err.Error()).Error("error replacing sensitive data")
+		os.Exit(1)
 	}
 }
 

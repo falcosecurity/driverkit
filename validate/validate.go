@@ -33,7 +33,7 @@ func init() {
 		return name
 	})
 
-	V.RegisterValidation("logrus", isLogrusLevel)
+	V.RegisterValidation("loglevel", isLogLevel)
 	V.RegisterValidation("filepath", isFilePath)
 	V.RegisterValidation("sha1", isSHA1)
 	V.RegisterValidation("target", isTargetSupported)
@@ -127,13 +127,13 @@ func init() {
 	)
 
 	V.RegisterTranslation(
-		"logrus",
+		"loglevel",
 		T,
 		func(ut ut.Translator) error {
-			return ut.Add("logrus", "{0} must be a valid logrus level", true)
+			return ut.Add("loglevel", "{0} must be a valid slog level", true)
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
-			t, _ := ut.T("logrus", fe.Field())
+			t, _ := ut.T("loglevel", fe.Field())
 
 			return t
 		},

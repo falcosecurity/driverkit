@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"log/slog"
+	"os"
 
 	"github.com/creasty/defaults"
 	"github.com/falcosecurity/driverkit/validate"
 	"github.com/go-playground/validator/v10"
-	logger "github.com/sirupsen/logrus"
 )
 
 var validProcessors = []string{"docker", "kubernetes", "kubernetes-in-cluster"}
@@ -16,7 +17,7 @@ var configOptions *ConfigOptions
 // ConfigOptions represent the persistent configuration flags of driverkit.
 type ConfigOptions struct {
 	ConfigFile string
-	LogLevel   string `validate:"logrus" name:"log level" default:"info"`
+	LogLevel   string `validate:"loglevel" name:"log level" default:"info"`
 	Timeout    int    `validate:"number,min=30" default:"120" name:"timeout"`
 	ProxyURL   string `validate:"omitempty,proxy" name:"proxy url"`
 	DryRun     bool
@@ -28,7 +29,8 @@ type ConfigOptions struct {
 func NewConfigOptions() *ConfigOptions {
 	o := &ConfigOptions{}
 	if err := defaults.Set(o); err != nil {
-		logger.WithError(err).WithField("options", "ConfigOptions").Fatal("error setting driverkit options defaults")
+		slog.With("err", err.Error(), "options", "ConfigOptions").Error("error setting driverkit options defaults")
+		os.Exit(1)
 	}
 	return o
 }

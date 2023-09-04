@@ -15,11 +15,12 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"github.com/falcosecurity/driverkit/pkg/signals"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-	logger "github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"log"
+	"log/slog"
+	"os"
 	"runtime"
 	"strconv"
 )
@@ -56,9 +57,9 @@ func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Cli
 		log.Fatal("qemu-user-static image is only available for x86_64 hosts: https://github.com/multiarch/qemu-user-static#supported-host-architectures")
 	}
 
-	logger.Debug("using qemu for cross build")
+	slog.Debug("using qemu for cross build")
 	if _, _, err = cli.ImageInspectWithRaw(ctx, "multiarch/qemu-user-static"); client.IsErrNotFound(err) {
-		logger.WithField("image", "multiarch/qemu-user-static").Debug("pulling qemu static image")
+		slog.With("image", "multiarch/qemu-user-static").Debug("pulling qemu static image")
 		pullRes, err := cli.ImagePull(ctx, "multiarch/qemu-user-static", types.ImagePullOptions{})
 		if err != nil {
 			log.Fatal(err)
@@ -79,7 +80,8 @@ func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Cli
 			Privileged: true,
 		}, nil, nil, "")
 	if err != nil {
-		log.Fatal(err)
+		slog.Error(err.Error())
+		os.Exit(1)
 	}
 
 	if err = cli.ContainerStart(ctx, qemuImage.ID, types.ContainerStartOptions{}); err != nil {
@@ -97,13 +99,14 @@ func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Cli
 
 	err = cli.ContainerStop(ctx, qemuImage.ID, container.StopOptions{})
 	if err != nil && !client.IsErrNotFound(err) {
-		log.Fatal(err)
+		slog.Error(err.Error())
+		os.Exit(1)
 	}
 }
 
 // Start the docker processor
 func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
-	logger.Debug("doing a new docker build")
+	slog.Debug("doing a new docker build")
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
@@ -160,9 +163,8 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	if inspect, _, err = cli.ImageInspectWithRaw(ctx, builderImage); client.IsErrNotFound(err) ||
 		inspect.Architecture != b.Architecture {
 
-		logger.
-			WithField("image", builderImage).
-			WithField("arch", b.Architecture).
+		slog.
+			With("image", builderImage, "arch", b.Architecture).
 			Debug("pulling builder image")
 
 		pullRes, err := cli.ImagePull(ctx, builderImage, types.ImagePullOptions{Platform: b.Architecture})
@@ -176,8 +178,8 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		}
 	}
 
-	logger.
-		WithField("image", builderImage).
+	slog.
+		With("image", builderImage).
 		Debug("starting container")
 
 	containerCfg := &container.Config{
@@ -271,14 +273,14 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		if err := copyFromContainer(ctx, cli, cdata.ID, builder.ModuleFullPath, b.ModuleFilePath); err != nil {
 			return err
 		}
-		logger.WithField("path", b.ModuleFilePath).Info("kernel module available")
+		slog.With("path", b.ModuleFilePath).Info("kernel module available")
 	}
 
 	if len(b.ProbeFilePath) > 0 {
 		if err := copyFromContainer(ctx, cli, cdata.ID, builder.ProbeFullPath, b.ProbeFilePath); err != nil {
 			return err
 		}
-		logger.WithField("path", b.ProbeFilePath).Info("eBPF probe available")
+		slog.With("path", b.ProbeFilePath).Info("eBPF probe available")
 	}
 
 	return nil
@@ -303,10 +305,10 @@ func copyFromContainer(ctx context.Context, cli *client.Client, ID, from, to str
 func (bp *DockerBuildProcessor) cleanup(cli *client.Client, ID string) {
 	if !bp.clean {
 		bp.clean = true
-		logger.Debug("context canceled")
+		slog.Debug("context canceled")
 		duration := 1
 		if err := cli.ContainerStop(context.Background(), ID, container.StopOptions{Timeout: &duration}); err != nil && !client.IsErrNotFound(err) {
-			logger.WithError(err).WithField("container_id", ID).Error("error stopping container")
+			slog.With("err", err.Error(), "container_id", ID).Error("error stopping container")
 		}
 	}
 }
@@ -340,14 +342,14 @@ func forwardLogs(logPipe io.Reader) {
 	for {
 		line, err := lineReader.ReadBytes('\n')
 		if len(line) > 0 {
-			logger.Debugf("%s", line)
+			slog.Debug(string(line))
 		}
 		if err == io.EOF {
-			logger.WithError(err).Debug("log pipe close")
+			slog.With("err", err.Error()).Debug("log pipe close")
 			return
 		}
 		if err != nil {
-			logger.WithError(err).Error("log pipe error")
+			slog.With("err", err.Error()).Error("log pipe error")
 		}
 	}
 }

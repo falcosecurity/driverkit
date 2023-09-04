@@ -3,12 +3,13 @@ package cmd
 import (
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder"
 	"github.com/falcosecurity/driverkit/pkg/kubernetes/factory"
-	logger "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"log/slog"
+	"os"
 )
 
 // NewKubernetesInClusterCmd creates the `driverkit kubernetes` command.
@@ -27,17 +28,20 @@ func NewKubernetesInClusterCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) 
 	kubernetesInClusterCmd.PersistentFlags().AddFlagSet(rootFlags)
 
 	kubernetesInClusterCmd.Run = func(cmd *cobra.Command, args []string) {
-		logger.WithField("processor", cmd.Name()).Info("driver building, it will take a few seconds")
+		slog.With("processor", cmd.Name()).Info("driver building, it will take a few seconds")
 		if !configOptions.DryRun {
 			config, err := rest.InClusterConfig()
 			if err != nil {
-				logger.WithError(err).Fatal("exiting")
+				slog.With("err", err.Error()).Error("exiting")
+				os.Exit(1)
 			}
 			if err = factory.SetKubernetesDefaults(config); err != nil {
-				logger.WithError(err).Fatal("exiting")
+				slog.With("err", err.Error()).Error("exiting")
+				os.Exit(1)
 			}
 			if err = kubernetesInClusterRun(cmd, args, config, rootOpts); err != nil {
-				logger.WithError(err).Fatal("exiting")
+				slog.With("err", err.Error()).Error("exiting")
+				os.Exit(1)
 			}
 		}
 	}

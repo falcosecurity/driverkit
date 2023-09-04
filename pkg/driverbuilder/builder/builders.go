@@ -4,16 +4,15 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"text/template"
 
 	"github.com/blang/semver"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
-
-	logger "github.com/sirupsen/logrus"
 )
 
 // DriverDirectory is the directory the processor uses to store the driver.
@@ -200,9 +199,8 @@ func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 		proposedGCCs := make([]semver.Version, 0)
 		for _, img := range b.Images {
 			proposedGCCs = append(proposedGCCs, img.GCCVersion)
-			logger.WithField("image", img.Name).
-				WithField("targetGCC", targetGCC.String()).
-				Debug("proposedGCC=", img.GCCVersion.String())
+			slog.With("image", img.Name, "targetGCC", targetGCC.String()).
+				Debug("proposedGCC", "version", img.GCCVersion.String())
 		}
 
 		// Now, sort versions and fetch
@@ -217,8 +215,8 @@ func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 		}
 		b.GCCVersion = lastGCC.String()
 	}
-	logger.WithField("targetGCC", targetGCC.String()).
-		Debug("foundGCC=", b.GCCVersion)
+	slog.With("targetGCC", targetGCC.String()).
+		Debug("foundGCC", "version", b.GCCVersion)
 }
 
 func (b *Build) GetBuilderImage() string {
@@ -260,11 +258,13 @@ func (c Config) toTemplateData(b Builder, kr kernelrelease.KernelRelease) common
 func resolveURLReference(u string) string {
 	uu, err := url.Parse(u)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error(err.Error())
+		os.Exit(1)
 	}
 	base, err := url.Parse(uu.Host)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error(err.Error())
+		os.Exit(1)
 	}
 	return base.ResolveReference(uu).String()
 }
@@ -284,7 +284,7 @@ func GetResolvingURLs(urls []string) ([]string, error) {
 		}
 		if res.StatusCode == http.StatusOK {
 			results = append(results, u)
-			logger.WithField("url", u).Debug("kernel header url found")
+			slog.With("url", u).Debug("kernel header url found")
 		}
 	}
 	if len(results) == 0 {

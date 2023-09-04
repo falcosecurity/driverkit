@@ -7,7 +7,7 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"github.com/falcosecurity/driverkit/validate"
 	"github.com/go-playground/validator/v10"
-	logger "github.com/sirupsen/logrus"
+	"log/slog"
 	"os"
 )
 
@@ -56,7 +56,8 @@ func init() {
 func NewRootOptions() *RootOptions {
 	rootOpts := &RootOptions{}
 	if err := defaults.Set(rootOpts); err != nil {
-		logger.WithError(err).WithField("options", "RootOptions").Fatal("error setting driverkit options defaults")
+		slog.With("err", err.Error(), "options", "RootOptions").Error("error setting driverkit options defaults")
+		os.Exit(1)
 	}
 	return rootOpts
 }
@@ -87,34 +88,18 @@ func (ro *RootOptions) Validate() []error {
 //
 // Call it only after validation.
 func (ro *RootOptions) Log() {
-	fields := logger.Fields{}
-	if ro.Output.Module != "" {
-		fields["output-module"] = ro.Output.Module
-	}
-	if ro.Output.Probe != "" {
-		fields["output-probe"] = ro.Output.Probe
-
-	}
-	if ro.DriverVersion != "" {
-		fields["driverversion"] = ro.DriverVersion
-	}
-	if ro.KernelRelease != "" {
-		fields["kernelrelease"] = ro.KernelRelease
-	}
-	if ro.KernelVersion != "" {
-		fields["kernelversion"] = ro.KernelVersion
-	}
-	if ro.Target != "" {
-		fields["target"] = ro.Target
-	}
-	fields["arch"] = ro.Architecture
-	if len(ro.KernelUrls) > 0 {
-		fields["kernelurls"] = ro.KernelUrls
-	}
-	fields["repo-org"] = ro.Repo.Org
-	fields["repo-name"] = ro.Repo.Name
-
-	logger.WithFields(fields).Debug("running with options")
+	slog.Debug("running with options",
+		"output-module", ro.Output.Module,
+		"output-probe", ro.Output.Probe,
+		"driverversion", ro.DriverVersion,
+		"kernelrelease", ro.KernelRelease,
+		"kernelversion", ro.KernelVersion,
+		"target", ro.Target,
+		"arch", ro.Architecture,
+		"kernelurls", ro.KernelUrls,
+		"repo-org", ro.Repo.Org,
+		"repo-name", ro.Repo.Name,
+	)
 }
 
 func (ro *RootOptions) ToBuild() *builder.Build {
@@ -160,7 +145,7 @@ func (ro *RootOptions) ToBuild() *builder.Build {
 			imageLister, err = builder.NewRepoImagesLister(builderRepo, build)
 		}
 		if err != nil {
-			logger.WithError(err).Warnf("Skipping %s repo\n", builderRepo)
+			slog.With("err", err.Error()).Warn("Skipping repo", "repo", builderRepo)
 		} else {
 			build.ImagesListers = append(build.ImagesListers, imageLister)
 		}
@@ -170,11 +155,11 @@ func (ro *RootOptions) ToBuild() *builder.Build {
 	kr := build.KernelReleaseFromBuildConfig()
 	if len(build.ModuleFilePath) > 0 && !kr.SupportsModule() {
 		build.ModuleFilePath = ""
-		logger.Warningf("Skipping build attempt of module for unsupported kernel version %s", kr.String())
+		slog.Warn("Skipping build attempt of module for unsupported kernel release", "kernelrelease", kr.String())
 	}
 	if len(build.ProbeFilePath) > 0 && !kr.SupportsProbe() {
 		build.ProbeFilePath = ""
-		logger.Warningf("Skipping build attempt of probe for unsupported kernel version %s", kr.String())
+		slog.Warn("Skipping build attempt of module for unsupported kernel release", "kernelrelease", kr.String())
 	}
 
 	return build
