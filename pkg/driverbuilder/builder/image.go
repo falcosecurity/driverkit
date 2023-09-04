@@ -6,8 +6,8 @@ import (
 	"github.com/blang/semver"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"github.com/falcosecurity/falcoctl/pkg/oci/repository"
-	logger "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
+	"log/slog"
 	"os"
 	"regexp"
 	"strings"
@@ -92,36 +92,37 @@ func (f *FileImagesLister) LoadImages() []Image {
 	// loop over lines in file to print them
 	fileData, err := os.ReadFile(f.FilePath)
 	if err != nil {
-		logger.WithError(err).WithField("FilePath", f.FilePath).Warnf("Error opening builder repo file: %s\n", err.Error())
+		slog.With("err", err.Error(), "FilePath", f.FilePath).Warn("Error opening builder repo file")
 		return res
 	}
 
 	err = yaml.Unmarshal(fileData, &imageList)
 	if err != nil {
-		logger.WithError(err).WithField("FilePath", f.FilePath).Warnf("Error unmarshalling builder repo file: %s\n", err.Error())
+		slog.With("err", err.Error(), "FilePath", f.FilePath).Warn("Error unmarshalling builder repo file")
 		return res
 	}
 
 	for _, image := range imageList.Images {
+		logger := slog.With("FilePath", f.FilePath, "image", image)
 		// Values checks
 		if image.Arch != f.Arch {
-			logger.WithField("FilePath", f.FilePath).WithField("image", image).Debug("Skipping wrong-arch image")
+			logger.Debug("Skipping wrong-arch image")
 			continue
 		}
 		if image.Tag != f.Tag {
-			logger.WithField("FilePath", f.FilePath).WithField("image", image).Debug("Skipping wrong-tag image")
+			logger.Debug("Skipping wrong-tag image")
 			continue
 		}
 		if image.Target != "any" && image.Target != f.Target {
-			logger.WithField("FilePath", f.FilePath).WithField("image", image).Debug("Skipping wrong-target image")
+			logger.Debug("Skipping wrong-target image")
 			continue
 		}
 		if image.Name == "" {
-			logger.WithField("FilePath", f.FilePath).WithField("image", image).Debug("Skipping empty name image")
+			logger.Debug("Skipping empty name image")
 			continue
 		}
 		if len(image.GCCVersions) == 0 {
-			logger.WithField("FilePath", f.FilePath).WithField("image", image).Debug("Expected at least 1 gcc version")
+			logger.Debug("Expected at least 1 gcc version")
 			continue
 		}
 
@@ -165,7 +166,7 @@ func NewRepoImagesLister(repo string, build *Build) (*RepoImagesLister, error) {
 func (repo *RepoImagesLister) LoadImages() []Image {
 	tags, err := repo.Tags(context.Background())
 	if err != nil {
-		logger.WithField("Repo", repo.Reference).Warnf("Skipping repo %s: %s\n", repo.Reference, err.Error())
+		slog.With("Repo", repo.Reference, "err", err.Error()).Warn("Skipping repo")
 		return nil
 	}
 
@@ -225,7 +226,8 @@ func (b *Build) LoadImages() {
 		}
 	}
 	if len(b.Images) == 0 {
-		logger.Fatal("Could not load any builder image. Leaving.")
+		slog.Error("Could not load any builder image. Leaving.")
+		os.Exit(1)
 	}
 }
 

@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"github.com/olekukonko/tablewriter"
-	logger "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"log/slog"
 	"os"
 )
 
@@ -14,7 +14,7 @@ func NewImagesCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Comman
 		Use:   "images",
 		Short: "List builder images",
 		Run: func(c *cobra.Command, args []string) {
-			logger.WithField("processor", c.Name()).Info("listing images")
+			slog.With("processor", c.Name()).Info("listing images")
 			b := rootOpts.ToBuild()
 			b.LoadImages()
 

@@ -7,10 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/falcosecurity/driverkit/pkg/signals"
+	"log/slog"
 	"os"
 	"time"
-
-	logger "github.com/sirupsen/logrus"
 
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	corev1 "k8s.io/api/core/v1"
@@ -59,7 +58,7 @@ func (bp *KubernetesBuildProcessor) String() string {
 }
 
 func (bp *KubernetesBuildProcessor) Start(b *builder.Build) error {
-	logger.Debug("doing a new kubernetes build")
+	slog.Debug("doing a new kubernetes build")
 	return bp.buildModule(b)
 }
 
@@ -253,33 +252,33 @@ func (bp *KubernetesBuildProcessor) copyModuleAndProbeFromPodWithUID(ctx context
 			event := <-watch.ResultChan()
 			p, ok := event.Object.(*corev1.Pod)
 			if !ok {
-				logger.Error("unexpected type when watching pods")
+				slog.Error("unexpected type when watching pods")
 				continue
 			}
 			if p.Status.Phase == corev1.PodPending {
 				continue
 			}
 			if p.Status.Phase == corev1.PodRunning {
-				logger.WithField(falcoBuilderUIDLabel, falcoBuilderUID).Info("start downloading module and probe from pod")
+				slog.With(falcoBuilderUIDLabel, falcoBuilderUID).Info("start downloading module and probe from pod")
 				if builder.ModuleFullPath != "" {
 					err = copySingleFileFromPod(build.ModuleFilePath, bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name, builder.ModuleFullPath, moduleLockFile)
 					if err != nil {
 						return err
 					}
-					logger.Info("Kernel Module extraction successful")
+					slog.Info("Kernel Module extraction successful")
 				}
 				if builder.ProbeFullPath != "" {
 					err = copySingleFileFromPod(build.ProbeFilePath, bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name, builder.ProbeFullPath, probeLockFile)
 					if err != nil {
 						return err
 					}
-					logger.Info("Probe Module extraction successful")
+					slog.Info("Probe Module extraction successful")
 				}
 				err = unlockPod(bp.coreV1Client, bp.clientConfig, p)
 				if err != nil {
 					return err
 				}
-				logger.WithField(falcoBuilderUIDLabel, falcoBuilderUID).Info("completed downloading from pod")
+				slog.With(falcoBuilderUIDLabel, falcoBuilderUID).Info("completed downloading from pod")
 			}
 			return nil
 		}

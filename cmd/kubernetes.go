@@ -1,12 +1,13 @@
 package cmd
 
 import (
+	"log/slog"
+	"os"
 	"regexp"
 	"strings"
 
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder"
 	"github.com/falcosecurity/driverkit/pkg/kubernetes/factory"
-	logger "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -44,10 +45,11 @@ func NewKubernetesCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Co
 	kubefactory := factory.NewFactory(configFlags)
 
 	kubernetesCmd.Run = func(cmd *cobra.Command, args []string) {
-		logger.WithField("processor", cmd.Name()).Info("driver building, it will take a few seconds")
+		slog.With("processor", cmd.Name()).Info("driver building, it will take a few seconds")
 		if !configOptions.DryRun {
 			if err := kubernetesRun(cmd, args, kubefactory, rootOpts); err != nil {
-				logger.WithError(err).Fatal("exiting")
+				slog.With("err", err.Error()).Error("exiting")
+				os.Exit(1)
 			}
 		}
 	}

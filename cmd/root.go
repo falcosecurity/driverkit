@@ -3,7 +3,9 @@ package cmd
 import (
 	"fmt"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
+	"github.com/falcosecurity/driverkit/validate"
 	"io"
+	"log/slog"
 	"os"
 	"runtime"
 	"sort"
@@ -15,7 +17,6 @@ import (
 	"github.com/spf13/pflag"
 
 	homedir "github.com/mitchellh/go-homedir"
-	logger "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -80,7 +81,7 @@ func persistentValidateFunc(rootCommand *RootCmd, rootOpts *RootOptions) func(c 
 		if c.Root() != c && c.Name() != "help" && c.Name() != "__complete" && c.Name() != "__completeNoDesc" && c.Name() != "completion" {
 			if errs := rootOpts.Validate(); errs != nil {
 				for _, err := range errs {
-					logger.WithError(err).Error("error validating build options")
+					slog.With("err", err.Error()).Error("error validating build options")
 				}
 				return fmt.Errorf("exiting for validation errors")
 			}
@@ -108,9 +109,12 @@ func NewRootCmd() *RootCmd {
 		DisableFlagsInUseLine: true,
 		DisableAutoGenTag:     true,
 		Version:               version.String(),
+		PreRun: func(cmd *cobra.Command, args []string) {
+			initConfig()
+		},
 		Run: func(c *cobra.Command, args []string) {
 			if len(args) == 0 {
-				logger.WithField("processors", validProcessors).Info("specify a valid processor")
+				slog.With("processors", validProcessors).Info("specify a valid processor")
 			}
 			// Fallback to help
 			c.Help()
@@ -206,7 +210,13 @@ func (r *RootCmd) Command() *cobra.Command {
 func (r *RootCmd) SetOutput(w io.Writer) {
 	r.c.SetOut(w)
 	r.c.SetErr(w)
-	logger.SetOutput(w)
+	h := slog.NewJSONHandler(w, &slog.HandlerOptions{Level: validate.ProgramLevel})
+	slog.SetDefault(slog.New(h))
+}
+
+func init() {
+	h := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: validate.ProgramLevel})
+	slog.SetDefault(slog.New(h))
 }
 
 // SetArgs proxies the arguments to the underlying cobra.Command.
@@ -223,25 +233,16 @@ func (r *RootCmd) Execute() error {
 func Start() {
 	root := NewRootCmd()
 	if err := root.Execute(); err != nil {
-		logger.WithError(err).Fatal("error executing driverkit")
+		slog.With("err", err.Error()).Error("error executing driverkit")
+		os.Exit(1)
 	}
-}
-
-func init() {
-	logger.SetFormatter(&logger.TextFormatter{
-		ForceColors:            true,
-		DisableLevelTruncation: false,
-		DisableTimestamp:       true,
-	})
-
-	cobra.OnInitialize(initConfig)
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	if errs := configOptions.Validate(); errs != nil {
 		for _, err := range errs {
-			logger.WithError(err).Error("error validating config options")
+			slog.With("err", err.Error()).Error("error validating config options")
 		}
 		// configOptions.configErrors should be true here
 	}
@@ -251,7 +252,7 @@ func initConfig() {
 		// Find home directory.
 		home, err := homedir.Dir()
 		if err != nil {
-			logger.WithError(err).Debug("error getting the home directory")
+			slog.With("err", err.Error()).Debug("error getting the home directory")
 			// not setting configOptions.configErrors = true because we fallback to `$HOME/.driverkit.yaml` and try with it
 		}
 
@@ -265,14 +266,14 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		logger.WithField("file", viper.ConfigFileUsed()).Info("using config file")
+		slog.With("file", viper.ConfigFileUsed()).Info("using config file")
 	} else {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
 			// Config file not found, ignore ...
-			logger.Debug("running without a configuration file")
+			slog.Debug("running without a configuration file")
 		} else {
 			// Config file was found but another error was produced
-			logger.WithField("file", viper.ConfigFileUsed()).WithError(err).Debug("error running with config file")
+			slog.With("file", viper.ConfigFileUsed(), "err", err.Error()).Debug("error running with config file")
 			configOptions.configErrors = true
 		}
 	}
