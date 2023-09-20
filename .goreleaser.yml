@@ -1,6 +1,8 @@
 project_name: driverkit
 builds:
   - id: "driverkit"
+    env:
+    - GOEXPERIMENT=loopvar
     goos:
     - linux
     goarch:
