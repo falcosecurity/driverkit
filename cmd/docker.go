@@ -17,7 +17,11 @@ func NewDockerCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Comman
 		Run: func(c *cobra.Command, args []string) {
 			slog.With("processor", c.Name()).Info("driver building, it will take a few seconds")
 			if !configOptions.DryRun {
-				if err := driverbuilder.NewDockerBuildProcessor(viper.GetInt("timeout"), viper.GetString("proxy")).Start(rootOpts.ToBuild()); err != nil {
+				b := rootOpts.ToBuild()
+				if !b.HasOutputs() {
+					return
+				}
+				if err := driverbuilder.NewDockerBuildProcessor(viper.GetInt("timeout"), viper.GetString("proxy")).Start(b); err != nil {
 					slog.With("err", err.Error()).Error("exiting")
 					os.Exit(1)
 				}
