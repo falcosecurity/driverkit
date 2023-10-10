@@ -159,9 +159,8 @@ func (ro *RootOptions) ToBuild() *builder.Build {
 	}
 	if len(build.ProbeFilePath) > 0 && !kr.SupportsProbe() {
 		build.ProbeFilePath = ""
-		slog.Warn("Skipping build attempt of module for unsupported kernel release", "kernelrelease", kr.String())
+		slog.Warn("Skipping build attempt of probe for unsupported kernel release", "kernelrelease", kr.String())
 	}
-
 	return build
 }
 

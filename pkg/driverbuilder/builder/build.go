@@ -92,3 +92,7 @@ func (b *Build) ClientForRegistry(registry string) *auth.Client {
 
 	return client
 }
+
+func (b *Build) HasOutputs() bool {
+	return b.ModuleFilePath != "" || b.ProbeFilePath != ""
+}
