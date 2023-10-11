@@ -1,11 +1,10 @@
-FROM debian:buster
+FROM debian:buster-backports
 
 LABEL maintainer="cncf-falco-dev@lists.cncf.io"
 
 ARG TARGETARCH
 
 RUN cp /etc/skel/.bashrc /root && cp /etc/skel/.profile /root
-RUN echo 'deb http://deb.debian.org/debian buster-backports main' >>/etc/apt/sources.list
 
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends \
@@ -21,7 +20,7 @@ RUN apt-get update \
 	gcc \
 	jq \
 	libc6-dev \
-	libelf-dev \
+	libelf-dev/buster-backports \
 	netcat \
 	xz-utils \
 	rpm2cpio \
