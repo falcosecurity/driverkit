@@ -20,7 +20,7 @@ RUN apt-get update \
 	gcc \
 	jq \
 	libc6-dev \
-	libelf-dev/buster-backports \
+	libelf-dev \
 	netcat \
 	xz-utils \
 	rpm2cpio \
