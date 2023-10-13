@@ -63,43 +63,38 @@ func fetchPhotonKernelURLS(kr kernelrelease.KernelRelease) []string {
 	photonReleases := []string{
 		"3.0",
 		"4.0",
+		"5.0",
 	}
 
-	urls := []string{}
+	var urls []string
 	for _, r := range photonReleases {
-		switch r {
-		case "3.0":
-			urls = append(urls, fmt.Sprintf(
-				"https://packages.vmware.com/photon/%s/photon_updates_%s_x86_64/x86_64/linux-devel-%s%s.x86_64.rpm",
-				r,
-				r,
-				kr.Fullversion,
-				kr.FullExtraversion,
-			))
-			urls = append(urls, fmt.Sprintf(
-				"https://packages.vmware.com/photon/%s/photon_release_%s_x86_64/x86_64/linux-devel-%s%s.x86_64.rpm",
-				r,
-				r,
-				kr.Fullversion,
-				kr.FullExtraversion,
-			))
-
-		case "4.0":
-			urls = append(urls, fmt.Sprintf(
-				"https://packages.vmware.com/photon/%s/photon_%s_x86_64/x86_64/linux-devel-%s%s.x86_64.rpm",
-				r,
-				r,
-				kr.Fullversion,
-				kr.FullExtraversion,
-			))
-			urls = append(urls, fmt.Sprintf(
-				"https://packages.vmware.com/photon/%s/photon_release_%s_x86_64/x86_64/linux-devel-%s%s.x86_64.rpm",
-				r,
-				r,
-				kr.Fullversion,
-				kr.FullExtraversion,
-			))
-		}
+		urls = append(urls, fmt.Sprintf(
+			"https://packages.vmware.com/photon/%s/photon_%s_%s/%s/linux-devel-%s%s.x86_64.rpm",
+			r,
+			r,
+			kr.Architecture.ToNonDeb(),
+			kr.Architecture.ToNonDeb(),
+			kr.Fullversion,
+			kr.FullExtraversion,
+		))
+		urls = append(urls, fmt.Sprintf(
+			"https://packages.vmware.com/photon/%s/photon_release_%s_%s/%s/linux-devel-%s%s.x86_64.rpm",
+			r,
+			r,
+			kr.Architecture.ToNonDeb(),
+			kr.Architecture.ToNonDeb(),
+			kr.Fullversion,
+			kr.FullExtraversion,
+		))
+		urls = append(urls, fmt.Sprintf(
+			"https://packages.vmware.com/photon/%s/photon_updates_%s_%s/%s/linux-devel-%s%s.x86_64.rpm",
+			r,
+			r,
+			kr.Architecture.ToNonDeb(),
+			kr.Architecture.ToNonDeb(),
+			kr.Fullversion,
+			kr.FullExtraversion,
+		))
 	}
 	return urls
 }
