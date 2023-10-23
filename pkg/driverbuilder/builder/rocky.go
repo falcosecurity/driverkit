@@ -28,7 +28,7 @@ var rockyTemplate string
 const TargetTypeRocky Type = "rocky"
 
 func init() {
-	BuilderByTarget[TargetTypeRocky] = &rocky{}
+	byTarget[TargetTypeRocky] = &rocky{}
 }
 
 type rockyTemplateData struct {

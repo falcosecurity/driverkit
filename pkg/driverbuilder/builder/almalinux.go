@@ -28,7 +28,7 @@ var almaTemplate string
 const TargetTypeAlma Type = "almalinux"
 
 func init() {
-	BuilderByTarget[TargetTypeAlma] = &alma{}
+	byTarget[TargetTypeAlma] = &alma{}
 }
 
 type almaTemplateData struct {

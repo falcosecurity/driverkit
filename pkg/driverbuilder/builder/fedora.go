@@ -29,7 +29,7 @@ var fedoraTemplate string
 const TargetTypeFedora Type = "fedora"
 
 func init() {
-	BuilderByTarget[TargetTypeFedora] = &fedora{}
+	byTarget[TargetTypeFedora] = &fedora{}
 }
 
 // fedora is a driverkit target.

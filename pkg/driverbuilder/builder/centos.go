@@ -29,7 +29,7 @@ var centosTemplate string
 const TargetTypeCentos Type = "centos"
 
 func init() {
-	BuilderByTarget[TargetTypeCentos] = &centos{}
+	byTarget[TargetTypeCentos] = &centos{}
 }
 
 // centos is a driverkit target.

@@ -29,7 +29,7 @@ var oracleTemplate string
 const TargetTypeoracle Type = "ol"
 
 func init() {
-	BuilderByTarget[TargetTypeoracle] = &oracle{}
+	byTarget[TargetTypeoracle] = &oracle{}
 }
 
 // oracle is a driverkit target.

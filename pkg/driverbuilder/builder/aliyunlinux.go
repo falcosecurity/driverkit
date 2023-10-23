@@ -28,7 +28,7 @@ var alinuxTemplate string
 const TargetTypeAlinux Type = "alinux"
 
 func init() {
-	BuilderByTarget[TargetTypeAlinux] = &alinux{}
+	byTarget[TargetTypeAlinux] = &alinux{}
 }
 
 type alinuxTemplateData struct {

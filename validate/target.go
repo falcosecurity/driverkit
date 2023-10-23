@@ -27,8 +27,8 @@ func isTargetSupported(fl validator.FieldLevel) bool {
 
 	switch field.Kind() {
 	case reflect.String:
-		_, ok := builder.BuilderByTarget[builder.Type(field.String())]
-		return ok
+		_, err := builder.Factory(builder.Type(field.String()))
+		return err == nil
 	}
 
 	panic(fmt.Sprintf("Bad field type %T", field.Interface()))

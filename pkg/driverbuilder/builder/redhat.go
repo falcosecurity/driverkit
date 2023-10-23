@@ -31,7 +31,7 @@ type redhat struct {
 }
 
 func init() {
-	BuilderByTarget[TargetTypeRedhat] = &redhat{}
+	byTarget[TargetTypeRedhat] = &redhat{}
 }
 
 type redhatTemplateData struct {

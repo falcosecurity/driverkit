@@ -28,7 +28,7 @@ const TargetTypePhoton Type = "photon"
 var photonTemplate string
 
 func init() {
-	BuilderByTarget[TargetTypePhoton] = &photon{}
+	byTarget[TargetTypePhoton] = &photon{}
 }
 
 // photon is a driverkit target.
