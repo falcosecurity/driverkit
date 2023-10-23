@@ -22,7 +22,7 @@ import (
 const TargetTypeTalos Type = "talos"
 
 func init() {
-	BuilderByTarget[TargetTypeTalos] = &talos{
+	byTarget[TargetTypeTalos] = &talos{
 		vanilla{},
 	}
 }

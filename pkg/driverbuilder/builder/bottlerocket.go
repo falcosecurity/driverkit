@@ -22,7 +22,7 @@ import (
 const TargetTypeBottlerocket Type = "bottlerocket"
 
 func init() {
-	BuilderByTarget[TargetTypeBottlerocket] = &bottlerocket{
+	byTarget[TargetTypeBottlerocket] = &bottlerocket{
 		vanilla{},
 	}
 }

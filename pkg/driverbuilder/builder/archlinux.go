@@ -29,7 +29,7 @@ var archlinuxTemplate string
 const TargetTypeArchlinux Type = "arch"
 
 func init() {
-	BuilderByTarget[TargetTypeArchlinux] = &archlinux{}
+	byTarget[TargetTypeArchlinux] = &archlinux{}
 }
 
 // archlinux is a driverkit target.

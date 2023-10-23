@@ -38,7 +38,7 @@ const TargetTypeDebian Type = "debian"
 const debianRequiredURLs = 3
 
 func init() {
-	BuilderByTarget[TargetTypeDebian] = &debian{}
+	byTarget[TargetTypeDebian] = &debian{}
 }
 
 type debianTemplateData struct {

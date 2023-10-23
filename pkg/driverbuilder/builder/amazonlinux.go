@@ -73,10 +73,10 @@ const TargetTypeAmazonLinux2 Type = "amazonlinux2"
 const TargetTypeAmazonLinux Type = "amazonlinux"
 
 func init() {
-	BuilderByTarget[TargetTypeAmazonLinux2023] = &amazonlinux2023{}
-	BuilderByTarget[TargetTypeAmazonLinux2022] = &amazonlinux2022{}
-	BuilderByTarget[TargetTypeAmazonLinux2] = &amazonlinux2{}
-	BuilderByTarget[TargetTypeAmazonLinux] = &amazonlinux{}
+	byTarget[TargetTypeAmazonLinux2023] = &amazonlinux2023{}
+	byTarget[TargetTypeAmazonLinux2022] = &amazonlinux2022{}
+	byTarget[TargetTypeAmazonLinux2] = &amazonlinux2{}
+	byTarget[TargetTypeAmazonLinux] = &amazonlinux{}
 }
 
 type amazonlinuxTemplateData struct {

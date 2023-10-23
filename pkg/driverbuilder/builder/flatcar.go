@@ -32,7 +32,7 @@ var flatcarTemplate string
 const TargetTypeFlatcar Type = "flatcar"
 
 func init() {
-	BuilderByTarget[TargetTypeFlatcar] = &flatcar{}
+	byTarget[TargetTypeFlatcar] = &flatcar{}
 }
 
 type flatcarTemplateData struct {

@@ -23,7 +23,7 @@ import (
 const TargetTypeMinikube Type = "minikube"
 
 func init() {
-	BuilderByTarget[TargetTypeMinikube] = &minikube{
+	byTarget[TargetTypeMinikube] = &minikube{
 		vanilla{},
 	}
 }

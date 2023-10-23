@@ -23,6 +23,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strings"
 	"text/template"
 
 	"github.com/blang/semver"
@@ -249,11 +250,24 @@ func (b *Build) GetBuilderImage() string {
 
 // Factory returns a builder for the given target.
 func Factory(target Type) (Builder, error) {
-	b, ok := BuilderByTarget[target]
+	// Driverkit builder is named "ubuntu"; there is no ubuntu-foo
+	if strings.HasPrefix(target.String(), "ubuntu") {
+		target = Type("ubuntu")
+	}
+	b, ok := byTarget[target]
 	if !ok {
 		return nil, fmt.Errorf("no builder found for target: %s", target)
 	}
 	return b, nil
+}
+
+// Targets returns the list of all the supported targets.
+func Targets() []string {
+	res := []string{}
+	for k := range byTarget {
+		res = append(res, k.String())
+	}
+	return res
 }
 
 func (c Config) toTemplateData(b Builder, kr kernelrelease.KernelRelease) commonTemplateData {

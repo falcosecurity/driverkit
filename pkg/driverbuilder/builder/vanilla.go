@@ -33,7 +33,7 @@ type vanilla struct {
 const TargetTypeVanilla Type = "vanilla"
 
 func init() {
-	BuilderByTarget[TargetTypeVanilla] = &vanilla{}
+	byTarget[TargetTypeVanilla] = &vanilla{}
 }
 
 type vanillaTemplateData struct {

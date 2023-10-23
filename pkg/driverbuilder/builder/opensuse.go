@@ -61,7 +61,7 @@ var releases []string = []string{
 }
 
 func init() {
-	BuilderByTarget[TargetTypeOpenSUSE] = &opensuse{}
+	byTarget[TargetTypeOpenSUSE] = &opensuse{}
 }
 
 // opensuse is a driverkit target.

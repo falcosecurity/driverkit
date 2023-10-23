@@ -43,7 +43,7 @@ type ubuntuTemplateData struct {
 }
 
 func init() {
-	BuilderByTarget[TargetTypeUbuntu] = &ubuntu{}
+	byTarget[TargetTypeUbuntu] = &ubuntu{}
 }
 
 // ubuntu is a driverkit target.

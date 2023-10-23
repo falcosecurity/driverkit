@@ -394,7 +394,7 @@ type flagsTemplateData struct {
 }
 
 func initFlagsTemplateData(args []string) flagsTemplateData {
-	targets := builder.BuilderByTarget.Targets()
+	targets := builder.Targets()
 	sort.Strings(targets)
 
 	cmd := "driverkit"

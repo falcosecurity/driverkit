@@ -80,7 +80,7 @@ func init() {
 		"target",
 		T,
 		func(ut ut.Translator) error {
-			return ut.Add("target", fmt.Sprintf("{0} must be a valid target (%s)", builder.BuilderByTarget.Targets()), true)
+			return ut.Add("target", fmt.Sprintf("{0} must be a valid target (%s)", builder.Targets()), true)
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
 			t, _ := ut.T(fe.Tag(), fe.Field())
