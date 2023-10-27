@@ -40,7 +40,10 @@ curl --silent -o kernel-devel.rpm -SL {{ .KernelDownloadURL }}
 rpm2cpio kernel-devel.rpm | cpio --extract --make-directories
 rm -Rf /tmp/kernel
 mkdir -p /tmp/kernel
-mv usr/src/linux-headers-*/* /tmp/kernel
+# eg: linux-aws-headers-$kernelrelease
+# eg: linux-headers-$kernelrelease-rt
+# eg: linux-headers-$kernelrelease
+mv usr/src/linux-*headers-*/* /tmp/kernel
 
 {{ if .BuildModule }}
 
