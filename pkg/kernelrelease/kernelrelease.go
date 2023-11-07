@@ -146,3 +146,7 @@ func (k *KernelRelease) SupportsModule() bool {
 func (k *KernelRelease) SupportsProbe() bool {
 	return k.GTE(probeMinKernelVersion[k.Architecture])
 }
+
+func (k *KernelRelease) String() string {
+	return fmt.Sprintf("%s%s", k.Fullversion, k.FullExtraversion)
+}
