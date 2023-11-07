@@ -24,9 +24,8 @@ import (
 )
 
 var tests = []struct {
-	config        kernelrelease.KernelRelease
-	kernelversion string
-	expected      struct {
+	config   kernelrelease.KernelRelease
+	expected struct {
 		headersURLs []string
 		urls        []string
 		gccVersion  semver.Version
@@ -46,8 +45,8 @@ var tests = []struct {
 			Extraversion:     "188",
 			FullExtraversion: "-188",
 			Architecture:     kernelrelease.ArchitectureAmd64,
+			KernelVersion:    "199",
 		},
-		kernelversion: "199",
 		expected: struct {
 			headersURLs []string
 			urls        []string
@@ -77,8 +76,8 @@ var tests = []struct {
 			Extraversion:     "1140-aws",
 			FullExtraversion: "-1140-aws",
 			Architecture:     kernelrelease.ArchitectureArm64,
+			KernelVersion:    "151",
 		},
-		kernelversion: "151",
 		expected: struct {
 			headersURLs []string
 			urls        []string
@@ -108,8 +107,8 @@ var tests = []struct {
 			Extraversion:     "1004-intel-iotg",
 			FullExtraversion: "-1004-intel-iotg",
 			Architecture:     kernelrelease.ArchitectureAmd64,
+			KernelVersion:    "6",
 		},
-		kernelversion: "6",
 		expected: struct {
 			headersURLs []string
 			urls        []string
@@ -139,8 +138,8 @@ var tests = []struct {
 			Extraversion:     "24-lowlatency-hwe-5.15",
 			FullExtraversion: "-24-lowlatency-hwe-5.15",
 			Architecture:     kernelrelease.ArchitectureAmd64,
+			KernelVersion:    "24~20.04.3",
 		},
-		kernelversion: "24~20.04.3",
 		expected: struct {
 			headersURLs []string
 			urls        []string
@@ -170,8 +169,8 @@ var tests = []struct {
 			Extraversion:     "9",
 			FullExtraversion: "-9",
 			Architecture:     kernelrelease.ArchitectureAmd64,
+			KernelVersion:    "9",
 		},
-		kernelversion: "9",
 		expected: struct {
 			headersURLs []string
 			urls        []string
@@ -221,8 +220,8 @@ var tests = []struct {
 			Extraversion:     "38-lts-utopic",
 			FullExtraversion: "-38-lts-utopic",
 			Architecture:     kernelrelease.ArchitectureAmd64,
+			KernelVersion:    "52~14.04.1",
 		},
-		kernelversion: "52~14.04.1",
 		expected: struct {
 			headersURLs []string
 			urls        []string
@@ -252,8 +251,8 @@ var tests = []struct {
 			Extraversion:     "1006-kvm",
 			FullExtraversion: "-1006-kvm",
 			Architecture:     kernelrelease.ArchitectureAmd64,
+			KernelVersion:    "6",
 		},
-		kernelversion: "6",
 		expected: struct {
 			headersURLs []string
 			urls        []string
@@ -278,33 +277,24 @@ func TestUbuntuHeadersURLFromRelease(t *testing.T) {
 	for _, test := range tests {
 		expected := test.expected.headersURLs
 
-		// setup input
-		input := struct {
-			config kernelrelease.KernelRelease
-			kv     string
-		}{
-			test.config,
-			test.kernelversion,
-		}
-
 		// call function
-		gotURLs, err := ubuntuHeadersURLFromRelease(input.config, input.kv)
+		gotURLs, err := ubuntuHeadersURLFromRelease(test.config)
 		// compare errors
 		// there are no official errors, so comparing fmt.Errorf() doesn't really work
 		// compare error message text instead
 		if err != nil && test.expected.err != nil && err.Error() != test.expected.err.Error() {
-			t.Fatalf("Unexpected error encountered with Test Input: '%v' | Error: '%s'", input, err)
+			t.Fatalf("Unexpected error encountered with Test Input: '%v' | Error: '%s'", test.config, err)
 		}
 
 		// check length of URL slice returned
 		if len(gotURLs) != len(expected) {
-			t.Fatalf("Slice sizes don't match! Test Input: '%v' | Got: '%v' / Want: '%v'", input, gotURLs, expected)
+			t.Fatalf("Slice sizes don't match! Test Input: '%v' | Got: '%v' / Want: '%v'", test.config, gotURLs, expected)
 		}
 
 		// check values are exact match
 		for i, v := range gotURLs {
 			if v != expected[i] {
-				t.Fatalf("Slice values don't match! Test Input: '%v' | Got: '%v' / Want: '%v'", input, gotURLs, expected)
+				t.Fatalf("Slice values don't match! Test Input: '%v' | Got: '%v' / Want: '%v'", test.config, gotURLs, expected)
 			}
 		}
 	}
@@ -332,15 +322,13 @@ func TestFetchUbuntuKernelURL(t *testing.T) {
 			input := struct {
 				baseURL string
 				config  kernelrelease.KernelRelease
-				kv      string
 			}{
 				url,
 				test.config,
-				test.kernelversion,
 			}
 
 			// call function
-			gotURLs, err := fetchUbuntuKernelURL(input.baseURL, input.config, input.kv)
+			gotURLs, err := fetchUbuntuKernelURL(input.baseURL, input.config)
 			if err != nil {
 				t.Fatalf("Unexpected error encountered with Test Input: '%v' | Error: '%s'", input, err)
 			}
