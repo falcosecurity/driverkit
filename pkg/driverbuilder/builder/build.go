@@ -54,6 +54,7 @@ type Build struct {
 func (b *Build) KernelReleaseFromBuildConfig() kernelrelease.KernelRelease {
 	kv := kernelrelease.FromString(b.KernelRelease)
 	kv.Architecture = kernelrelease.Architecture(b.Architecture)
+	kv.KernelVersion = b.KernelVersion
 	return kv
 }
 

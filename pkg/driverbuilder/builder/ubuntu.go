@@ -20,8 +20,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/spf13/viper"
-
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
@@ -58,7 +56,7 @@ func (v *ubuntu) TemplateScript() string {
 }
 
 func (v *ubuntu) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
-	return ubuntuHeadersURLFromRelease(kr, viper.GetString("kernelversion"))
+	return ubuntuHeadersURLFromRelease(kr)
 }
 
 func (v *ubuntu) MinimumURLs() int {
@@ -88,7 +86,7 @@ func (v *ubuntu) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []s
 	}
 }
 
-func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv string) ([]string, error) {
+func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease) ([]string, error) {
 	// decide which mirrors to use based on the architecture passed in
 	baseURLs := []string{}
 	if kr.Architecture.String() == kernelrelease.ArchitectureAmd64 {
@@ -106,7 +104,7 @@ func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv string) ([]s
 
 	for _, url := range baseURLs {
 		// get all possible URLs
-		possibleURLs, err := fetchUbuntuKernelURL(url, kr, kv)
+		possibleURLs, err := fetchUbuntuKernelURL(url, kr)
 		if err != nil {
 			return nil, err
 		}
@@ -122,7 +120,7 @@ func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease, kv string) ([]s
 	return nil, fmt.Errorf("kernel headers not found")
 }
 
-func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernelVersion string) ([]string, error) {
+func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease) ([]string, error) {
 	// parse the extra number and flavor for the kernelrelease extraversion
 	firstExtra, ubuntuFlavor := parseUbuntuExtraVersion(kr.Extraversion)
 
@@ -156,7 +154,7 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 			kr.FullExtraversion,
 			kr.Fullversion,
 			firstExtra,
-			kernelVersion,
+			kr.KernelVersion,
 			kr.Architecture.String(),
 		),
 		fmt.Sprintf(
@@ -166,7 +164,7 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 			ubuntuFlavor,
 			kr.Fullversion,
 			firstExtra,
-			kernelVersion,
+			kr.KernelVersion,
 			kr.Architecture.String(),
 		),
 		fmt.Sprintf(
@@ -176,7 +174,7 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 			firstExtra,
 			kr.Fullversion,
 			firstExtra,
-			kernelVersion,
+			kr.KernelVersion,
 		),
 		fmt.Sprintf(
 			"linux-headers-%s%s_%s-%s.%s_%s.deb",
@@ -184,7 +182,7 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 			kr.FullExtraversion,
 			kr.Fullversion,
 			firstExtra,
-			kernelVersion,
+			kr.KernelVersion,
 			kr.Architecture.String(),
 		),
 	}
@@ -197,7 +195,7 @@ func fetchUbuntuKernelURL(baseURL string, kr kernelrelease.KernelRelease, kernel
 				firstExtra,
 				kr.Fullversion,
 				firstExtra,
-				kernelVersion,
+				kr.KernelVersion,
 			))
 	}
 

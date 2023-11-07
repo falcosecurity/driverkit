@@ -102,6 +102,7 @@ type KernelRelease struct {
 	Extraversion     string
 	FullExtraversion string
 	Architecture     Architecture
+	KernelVersion    string
 }
 
 // FromString extracts a KernelRelease object from string.
