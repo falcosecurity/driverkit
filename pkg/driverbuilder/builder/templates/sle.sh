@@ -37,17 +37,20 @@ bash /driverkit/fill-driver-config.sh {{ .DriverBuildDir }}
 rm -Rf /tmp/kernel-download
 mkdir /tmp/kernel-download
 cd /tmp/kernel-download
-zypper install --non-interactive --download-only --downloaddir=/tmp/kernel-download kernel-devel={{ .KernelPackage }}
-rpm2cpio kernel-devel-{{ .KernelPackage }}.rpm | cpio --extract --make-directories
+zypper --non-interactive install --download-only kernel-default-devel={{ .KernelPackage }} kernel-devel={{ .KernelPackage }}
+mv -v $(find /var/cache/zypp/packages -name kernel*.rpm) /tmp/kernel-download
+for rpm in /tmp/kernel-download/*.rpm
+do
+    rpm2cpio $rpm | cpio --extract --make-directories
+done
 
-rm -Rf /tmp/kernel
-mkdir -p /tmp/kernel
-mv usr/src/kernels/*/* /tmp/kernel
+ls -alh /tmp/kernel-download/usr/src
+sourcedir="$(find . -type d -name "linux-*-obj" | head -n 1 | xargs readlink -f)/*/default"
 
 {{ if .BuildModule }}
 # Build the module
 cd {{ .DriverBuildDir }}
-make CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=/tmp/kernel
+make CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=$sourcedir
 mv {{ .ModuleDriverName }}.ko {{ .ModuleFullPath }}
 strip -g {{ .ModuleFullPath }}
 # Print results
