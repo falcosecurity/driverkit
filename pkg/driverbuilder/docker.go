@@ -20,15 +20,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/binary"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"log"
-	"log/slog"
-	"os"
-	"runtime"
-	"strconv"
-
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
@@ -37,7 +30,14 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"github.com/falcosecurity/driverkit/pkg/signals"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"io"
+	"io/ioutil"
 	"k8s.io/apimachinery/pkg/util/uuid"
+	"log"
+	"log/slog"
+	"os"
+	"runtime"
+	"strconv"
 )
 
 // DockerBuildProcessorName is a constant containing the docker name.
@@ -276,13 +276,21 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		return err
 	}
 
-	hr, err := cli.ContainerExecAttach(ctx, edata.ID, types.ExecStartCheck{})
+	hr, err := cli.ContainerExecAttach(ctx, edata.ID, types.ExecStartCheck{Tty: false})
 	if err != nil {
 		return err
 	}
 	defer hr.Close()
 
-	forwardLogs(hr.Reader)
+	isMultiplexed := false
+	if val, ok := hr.MediaType(); ok {
+		isMultiplexed = val == "application/vnd.docker.multiplexed-stream"
+	}
+	if isMultiplexed {
+		multiplexedForwardLogs(hr.Reader)
+	} else {
+		forwardLogs(hr.Reader)
+	}
 
 	if len(b.ModuleFilePath) > 0 {
 		if err := copyFromContainer(ctx, cli, cdata.ID, builder.ModuleFullPath, b.ModuleFilePath); err != nil {
@@ -360,11 +368,38 @@ func forwardLogs(logPipe io.Reader) {
 			slog.Debug(string(line))
 		}
 		if err == io.EOF {
-			slog.With("err", err.Error()).Debug("log pipe close")
-			return
+			break
 		}
 		if err != nil {
 			slog.With("err", err.Error()).Error("log pipe error")
 		}
 	}
+	slog.Debug("log pipe close")
+}
+
+// When docker container attach is called on a non-tty terminal,
+// docker SDK uses a custom multiplexing protocol allowing STDOUT and STDERR string to be sent to a single stream.
+// Protocol:
+// > The format of the multiplexed stream is as follows:
+// > [8]byte{STREAM_TYPE, 0, 0, 0, SIZE1, SIZE2, SIZE3, SIZE4}[]byte{OUTPUT}
+// see cli.ContainerAttach() method for more info.
+func multiplexedForwardLogs(logPipe io.Reader) {
+	hdr := make([]byte, 8)
+	for {
+		_, err := logPipe.Read(hdr)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			slog.With("err", err.Error()).Error("log pipe error")
+		}
+		count := binary.BigEndian.Uint32(hdr[4:])
+		dat := make([]byte, count)
+		_, err = logPipe.Read(dat)
+		if err != nil {
+			slog.With("err", err.Error()).Error("log pipe error")
+		}
+		slog.Debug(string(dat))
+	}
+	slog.Debug("log pipe close")
 }
