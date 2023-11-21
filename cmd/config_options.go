@@ -24,7 +24,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-var validProcessors = []string{"docker", "kubernetes", "kubernetes-in-cluster"}
+var validProcessors = []string{"docker", "kubernetes", "kubernetes-in-cluster", "local"}
 var aliasProcessors = []string{"docker", "k8s", "k8s-ic"}
 var configOptions *ConfigOptions
 

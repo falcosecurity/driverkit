@@ -86,12 +86,12 @@ func Script(b Builder, c Config, kr kernelrelease.KernelRelease) (string, error)
 		return "", err
 	}
 
+	var urls []string
 	minimumURLs := 1
 	if bb, ok := b.(MinimumURLsBuilder); ok {
 		minimumURLs = bb.MinimumURLs()
 	}
 
-	var urls []string
 	if c.KernelUrls == nil {
 		urls, err = b.URLs(kr)
 		if err != nil {
@@ -250,10 +250,17 @@ func (b *Build) GetBuilderImage() string {
 
 // Factory returns a builder for the given target.
 func Factory(target Type) (Builder, error) {
+	// Workaround for "local" target (that is not exposed to users,
+	// nor registered in byTarget map)".
+	if target.String() == "local" {
+		return &LocalBuilder{}, nil
+	}
+
 	// Driverkit builder is named "ubuntu"; there is no ubuntu-foo
 	if strings.HasPrefix(target.String(), "ubuntu") {
 		target = Type("ubuntu")
 	}
+
 	b, ok := byTarget[target]
 	if !ok {
 		return nil, fmt.Errorf("no builder found for target: %s", target)
