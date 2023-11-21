@@ -1,4 +1,4 @@
-level=INFO msg="specify a valid processor" processors="[docker kubernetes kubernetes-in-cluster]"
+level=INFO msg="specify a valid processor" processors="[docker kubernetes kubernetes-in-cluster local]"
 {{ .Desc }}
 
 {{ .Usage }}

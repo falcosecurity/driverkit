@@ -5,3 +5,4 @@ Available Commands:
   images                List builder images
   kubernetes            Build Falco kernel modules and eBPF probes against a Kubernetes cluster.
   kubernetes-in-cluster Build Falco kernel modules and eBPF probes against a Kubernetes cluster inside a Kubernetes cluster.
+  local                 Build Falco kernel modules and eBPF probes in local env with local kernel sources and gcc/clang.
