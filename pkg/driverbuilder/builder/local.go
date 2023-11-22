@@ -15,6 +15,8 @@ var localTemplate string
 
 type LocalBuilder struct {
 	GccPath string
+	UseDKMS bool
+	SrcDir  string
 }
 
 func (l *LocalBuilder) Name() string {
@@ -25,7 +27,7 @@ func (l *LocalBuilder) TemplateScript() string {
 	return localTemplate
 }
 
-func (l *LocalBuilder) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
+func (l *LocalBuilder) URLs(_ kernelrelease.KernelRelease) ([]string, error) {
 	return nil, nil
 }
 
@@ -36,18 +38,43 @@ func (l *LocalBuilder) MinimumURLs() int {
 
 type localTemplateData struct {
 	commonTemplateData
+	UseDKMS       bool
+	DownloadSrc   bool
+	DriverVersion string
+	KernelRelease string
 }
 
-func (l *LocalBuilder) TemplateData(c Config, _ kernelrelease.KernelRelease, _ []string) interface{} {
+func (l *LocalBuilder) TemplateData(c Config, kr kernelrelease.KernelRelease, _ []string) interface{} {
 	return localTemplateData{
 		commonTemplateData: commonTemplateData{
-			DriverBuildDir:    DriverDirectory,
+			DriverBuildDir:    l.GetDriverBuildDir(),
 			ModuleDownloadURL: fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.DriverVersion),
 			ModuleDriverName:  c.DriverName,
-			ModuleFullPath:    ModuleFullPath,
+			ModuleFullPath:    l.GetModuleFullPath(c, kr),
 			BuildModule:       len(c.ModuleFilePath) > 0,
 			BuildProbe:        len(c.ProbeFilePath) > 0,
 			GCCVersion:        l.GccPath,
 		},
+		UseDKMS:       l.UseDKMS,
+		DownloadSrc:   len(l.SrcDir) == 0, // if no srcdir is provided, download src!
+		DriverVersion: c.DriverVersion,
+		KernelRelease: c.KernelRelease,
 	}
+}
+
+func (l *LocalBuilder) GetModuleFullPath(c Config, kr kernelrelease.KernelRelease) string {
+	moduleFullPath := ModuleFullPath
+	if l.UseDKMS {
+		// When using dkms, we will use a GLOB to match the pattern; ModuleFullPath won't be used in the templated script anyway.
+		moduleFullPath = fmt.Sprintf("/var/lib/dkms/%s/%s/%s/%s/module/%s.*", c.DriverName, c.DriverVersion, kr.String(), kr.Architecture.ToNonDeb(), c.DriverName)
+	}
+	return moduleFullPath
+}
+
+func (l *LocalBuilder) GetDriverBuildDir() string {
+	driverBuildDir := DriverDirectory
+	if len(l.SrcDir) > 0 {
+		driverBuildDir = l.SrcDir
+	}
+	return driverBuildDir
 }

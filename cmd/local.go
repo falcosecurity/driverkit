@@ -9,12 +9,20 @@ import (
 	"golang.org/x/sys/unix"
 	"log/slog"
 	"os"
+	"os/user"
 	"runtime"
 	"strings"
 )
 
+type localCmdOptions struct {
+	useDKMS bool
+	srcDir  string
+	envMap  map[string]string
+}
+
 // NewLocalCmd creates the `driverkit local` command.
 func NewLocalCmd(rootCommand *RootCmd, rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Command {
+	opts := localCmdOptions{}
 	localCmd := &cobra.Command{
 		Use:               "local",
 		Short:             "Build Falco kernel modules and eBPF probes in local env with local kernel sources and gcc/clang.",
@@ -26,7 +34,18 @@ func NewLocalCmd(rootCommand *RootCmd, rootOpts *RootOptions, rootFlags *pflag.F
 				if !b.HasOutputs() {
 					return
 				}
-				if err := driverbuilder.NewLocalBuildProcessor(viper.GetInt("timeout")).Start(b); err != nil {
+				if opts.useDKMS {
+					currentUser, err := user.Current()
+					if err != nil {
+						slog.With("err", err.Error()).Error("Failed to retrieve user. Exiting.")
+						os.Exit(1)
+					}
+					if currentUser.Username != "root" {
+						slog.Error("Must be run as root for DKMS build.")
+						os.Exit(1)
+					}
+				}
+				if err := driverbuilder.NewLocalBuildProcessor(viper.GetInt("timeout"), opts.useDKMS, opts.srcDir, opts.envMap).Start(b); err != nil {
 					slog.With("err", err.Error()).Error("exiting")
 					os.Exit(1)
 				}
@@ -56,6 +75,9 @@ func NewLocalCmd(rootCommand *RootCmd, rootOpts *RootOptions, rootFlags *pflag.F
 			flagSet.AddFlag(flag)
 		}
 	})
+	flagSet.BoolVar(&opts.useDKMS, "dkms", false, "Enforce usage of DKMS to build the kernel module.")
+	flagSet.StringVar(&opts.srcDir, "src-dir", "", "Enforce usage of local source dir to build drivers.")
+	flagSet.StringToStringVar(&opts.envMap, "env", nil, "Env variables to be enforced during the driver build.")
 	localCmd.PersistentFlags().AddFlagSet(flagSet)
 	return localCmd
 }

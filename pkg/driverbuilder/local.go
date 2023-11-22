@@ -7,9 +7,11 @@ import (
 	_ "embed"
 	"fmt"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
+	"io"
 	"log/slog"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"time"
 )
@@ -18,11 +20,17 @@ const LocalBuildProcessorName = "local"
 
 type LocalBuildProcessor struct {
 	timeout int
+	useDKMS bool
+	srcDir  string
+	envMap  map[string]string
 }
 
-func NewLocalBuildProcessor(timeout int) *LocalBuildProcessor {
+func NewLocalBuildProcessor(timeout int, useDKMS bool, srcDir string, envMap map[string]string) *LocalBuildProcessor {
 	return &LocalBuildProcessor{
 		timeout: timeout,
+		useDKMS: useDKMS,
+		srcDir:  srcDir,
+		envMap:  envMap,
 	}
 }
 
@@ -104,6 +112,11 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 
 	// Cannot fail
 	vv, _ := v.(*builder.LocalBuilder)
+	vv.SrcDir = lbp.srcDir
+	vv.UseDKMS = lbp.useDKMS
+
+	modulePath := vv.GetModuleFullPath(c, kr)
+	probePath := path.Join(vv.GetDriverBuildDir(), "bpf", builder.ProbeFileName)
 	for _, gcc := range gccs {
 		vv.GccPath = gcc
 
@@ -115,6 +128,10 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 		ctx, cancelFunc := context.WithTimeout(context.Background(), time.Duration(lbp.timeout)*time.Second)
 		defer cancelFunc()
 		cmd := exec.CommandContext(ctx, "/bin/bash", "-c", driverkitScript)
+		// Append requested env variables to the command env
+		for key, val := range lbp.envMap {
+			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, val))
+		}
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
 			slog.Warn("Failed to pipe output. Trying without piping.", "err", err)
@@ -139,28 +156,52 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 		}
 		// If we received an error, perhaps we must just rebuilt the kmod.
 		// Check if we were able to build anything.
-		if _, err = os.Stat(builder.ModuleFullPath); !os.IsNotExist(err) {
-			// we built the kmod; there is no need to loop again.
+		koFiles, err := filepath.Glob(modulePath)
+		if err == nil && len(koFiles) > 0 {
 			break
 		}
-		if _, err = os.Stat(builder.ProbeFullPath); !os.IsNotExist(err) {
+		if _, err = os.Stat(probePath); !os.IsNotExist(err) {
 			c.ProbeFilePath = ""
 		}
 	}
 
 	if len(b.ModuleFilePath) > 0 {
-		if err = os.Rename(builder.ModuleFullPath, b.ModuleFilePath); err != nil {
+		// If we received an error, perhaps we must just rebuilt the kmod.
+		// Check if we were able to build anything.
+		koFiles, err := filepath.Glob(modulePath)
+		if err != nil || len(koFiles) == 0 {
+			return fmt.Errorf("failed to find kernel module .ko file: %s", modulePath)
+		}
+		if err = copyDataToLocalPath(koFiles[0], b.ModuleFilePath); err != nil {
 			return err
 		}
 		slog.With("path", b.ModuleFilePath).Info("kernel module available")
 	}
 
 	if len(b.ProbeFilePath) > 0 {
-		if err = os.Rename(builder.ProbeFullPath, b.ProbeFilePath); err != nil {
+		if err = copyDataToLocalPath(probePath, b.ProbeFilePath); err != nil {
 			return err
 		}
 		slog.With("path", b.ProbeFilePath).Info("eBPF probe available")
 	}
 
 	return nil
+}
+
+func copyDataToLocalPath(src, dest string) error {
+	in, err := os.Open(filepath.Clean(src))
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	err = os.MkdirAll(filepath.Dir(dest), 0o755)
+	if err != nil {
+		return err
+	}
+	out, err := os.OpenFile(filepath.Clean(dest), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o755)
+	if err == nil {
+		defer out.Close()
+		_, err = io.Copy(out, in)
+	}
+	return err
 }
