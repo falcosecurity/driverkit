@@ -22,6 +22,8 @@
 #
 set -xeuo pipefail
 
+{{ if .DownloadSrc }}
+echo "* Downloading driver sources"
 rm -Rf {{ .DriverBuildDir }}
 mkdir {{ .DriverBuildDir }}
 rm -Rf /tmp/module-download
@@ -32,8 +34,19 @@ mv /tmp/module-download/*/driver/* {{ .DriverBuildDir }}
 
 cp /tmp/module-Makefile {{ .DriverBuildDir }}/Makefile
 bash /tmp/fill-driver-config.sh {{ .DriverBuildDir }}
+{{ end }}
 
 {{ if .BuildModule }}
+{{ if .UseDKMS }}
+echo "* Building kmod with DKMS"
+# Build the module using DKMS
+echo "#!/usr/bin/env bash" > "/tmp/falco-dkms-make"
+echo "make CC={{ .GCCVersion }} \$@" >> "/tmp/falco-dkms-make"
+chmod +x "/tmp/falco-dkms-make"
+dkms install --directive="MAKE='/tmp/falco-dkms-make'" -m "{{ .ModuleDriverName }}" -v "{{ .DriverVersion }}" -k "{{ .KernelRelease }}"
+rm -Rf "/tmp/falco-dkms-make"
+{{ else }}
+echo "* Building kmod"
 # Build the module
 cd {{ .DriverBuildDir }}
 make CC={{ .GCCVersion }}
@@ -42,8 +55,10 @@ strip -g {{ .ModuleFullPath }}
 # Print results
 modinfo {{ .ModuleFullPath }}
 {{ end }}
+{{ end }}
 
 {{ if .BuildProbe }}
+echo "* Building eBPF probe"
 # Build the eBPF probe
 cd {{ .DriverBuildDir }}/bpf
 make
