@@ -1,17 +1,14 @@
 package cmd
 
 import (
-	"bytes"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"golang.org/x/sys/unix"
 	"log/slog"
 	"os"
 	"os/user"
 	"runtime"
-	"strings"
 )
 
 type localCmdOptions struct {
@@ -55,8 +52,6 @@ func NewLocalCmd(rootCommand *RootCmd, rootOpts *RootOptions, rootFlags *pflag.F
 	// Add root flags, but not the ones unneeded
 	unusedFlagsSet := map[string]struct{}{
 		"architecture":        {},
-		"kernelrelease":       {},
-		"kernelversion":       {},
 		"target":              {},
 		"kernelurls":          {},
 		"builderrepo":         {},
@@ -87,19 +82,6 @@ func persistentPreRunFunc(rootCommand *RootCmd, rootOpts *RootOptions) func(c *c
 	return func(c *cobra.Command, args []string) error {
 		// Default values
 		rootOpts.Target = "local"
-		u := unix.Utsname{}
-		if err := unix.Uname(&u); err != nil {
-			slog.Error("failed to retrieve default uname values", "err", err)
-			// this only affects logs!
-			rootOpts.KernelRelease = "1.0.0"
-			rootOpts.KernelVersion = "1"
-		} else {
-			rootOpts.KernelRelease = string(bytes.Trim(u.Release[:], "\x00"))
-			kv := string(bytes.Trim(u.Version[:], "\x00"))
-			kv = strings.Trim(kv, "#")
-			kv = strings.Split(kv, " ")[0]
-			rootOpts.KernelVersion = kv
-		}
 		rootOpts.Architecture = runtime.GOARCH
 		return rootCommand.c.PersistentPreRunE(c, args)
 	}
