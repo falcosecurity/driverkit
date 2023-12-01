@@ -86,12 +86,6 @@ func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Cli
 			log.Fatal(err)
 		}
 	}
-	// check if on a sles target type, which requires docker to run with `--net=host` for builder images to work
-	// for more info, see the suse container connect README: https://github.com/SUSE/container-suseconnect
-	var netMode = container.NetworkMode("default")
-	if b.TargetType == "sles" {
-		netMode = container.NetworkMode("host")
-	}
 
 	qemuImage, err := cli.ContainerCreate(ctx,
 		&container.Config{
@@ -99,9 +93,8 @@ func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Cli
 			Image: "multiarch/qemu-user-static",
 		},
 		&container.HostConfig{
-			AutoRemove:  true,
-			Privileged:  true,
-			NetworkMode: netMode,
+			AutoRemove: true,
+			Privileged: true,
 		}, nil, nil, "")
 	if err != nil {
 		slog.Error(err.Error())
@@ -212,8 +205,16 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		Image: builderImage,
 	}
 
+	// check if on a sles target type, which requires docker to run with `--net=host` for builder images to work
+	// for more info, see the suse container connect README: https://github.com/SUSE/container-suseconnect
+	var netMode = container.NetworkMode("default")
+	if b.TargetType == "sles" {
+		netMode = container.NetworkMode("host")
+	}
+
 	hostCfg := &container.HostConfig{
-		AutoRemove: true,
+		AutoRemove:  true,
+		NetworkMode: netMode,
 	}
 	uid := uuid.NewUUID()
 	name := fmt.Sprintf("driverkit-%s", string(uid))
