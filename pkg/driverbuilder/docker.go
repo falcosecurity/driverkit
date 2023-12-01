@@ -22,6 +22,14 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"log"
+	"log/slog"
+	"os"
+	"runtime"
+	"strconv"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
@@ -30,14 +38,7 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"github.com/falcosecurity/driverkit/pkg/signals"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"io"
-	"io/ioutil"
 	"k8s.io/apimachinery/pkg/util/uuid"
-	"log"
-	"log/slog"
-	"os"
-	"runtime"
-	"strconv"
 )
 
 // DockerBuildProcessorName is a constant containing the docker name.
@@ -85,14 +86,22 @@ func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Cli
 			log.Fatal(err)
 		}
 	}
+	// check if on a sles target type, which requires docker to run with `--net=host` for builder images to work
+	// for more info, see the suse container connect README: https://github.com/SUSE/container-suseconnect
+	var netMode = "default"
+	if b.TargetType == "sles" {
+		netMode = "host"
+	}
+
 	qemuImage, err := cli.ContainerCreate(ctx,
 		&container.Config{
 			Cmd:   []string{"--reset", "-p", "yes"},
 			Image: "multiarch/qemu-user-static",
 		},
 		&container.HostConfig{
-			AutoRemove: true,
-			Privileged: true,
+			AutoRemove:  true,
+			Privileged:  true,
+			NetworkMode: netMode,
 		}, nil, nil, "")
 	if err != nil {
 		slog.Error(err.Error())
