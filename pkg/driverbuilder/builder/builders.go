@@ -234,6 +234,16 @@ func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 		Debug("foundGCC", "version", b.GCCVersion)
 }
 
+type BuilderImageNetworkMode interface {
+	// sets the network mode of the builder image, allows individual builders to override
+	BuilderImageNetMode() string
+}
+
+// set the default builder image network mode to default
+func (b *Build) BuilderImageNetMode() string {
+	return "default"
+}
+
 func (b *Build) GetBuilderImage() string {
 	if b.hasCustomBuilderImage() {
 		// BuilderImage MUST have requested GCC installed inside
