@@ -205,9 +205,15 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		Image: builderImage,
 	}
 
+	// check for any overridden builder image network modes by the builder
+	var builderImageNetMode = container.NetworkMode("default")
+	if vv, ok := v.(builder.BuilderImageNetworkMode); ok {
+		builderImageNetMode = container.NetworkMode(vv.BuilderImageNetMode())
+	}
+
 	hostCfg := &container.HostConfig{
 		AutoRemove:  true,
-		NetworkMode: container.NetworkMode(b.BuilderImageNetworkMode),
+		NetworkMode: builderImageNetMode,
 	}
 
 	uid := uuid.NewUUID()

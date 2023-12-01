@@ -27,29 +27,28 @@ var defaultImageTag = "latest" // This is overwritten when using the Makefile to
 
 // Build contains the info about the on-going build.
 type Build struct {
-	TargetType              Type
-	KernelConfigData        string
-	KernelRelease           string
-	KernelVersion           string
-	DriverVersion           string
-	Architecture            string
-	ModuleFilePath          string
-	ProbeFilePath           string
-	ModuleDriverName        string
-	ModuleDeviceName        string
-	BuilderImage            string
-	BuilderRepos            []string
-	ImagesListers           []ImagesLister
-	KernelUrls              []string
-	GCCVersion              string
-	RepoOrg                 string
-	RepoName                string
-	Images                  ImagesMap
-	RegistryName            string
-	RegistryUser            string
-	RegistryPassword        string
-	RegistryPlainHTTP       bool
-	BuilderImageNetworkMode string
+	TargetType        Type
+	KernelConfigData  string
+	KernelRelease     string
+	KernelVersion     string
+	DriverVersion     string
+	Architecture      string
+	ModuleFilePath    string
+	ProbeFilePath     string
+	ModuleDriverName  string
+	ModuleDeviceName  string
+	BuilderImage      string
+	BuilderRepos      []string
+	ImagesListers     []ImagesLister
+	KernelUrls        []string
+	GCCVersion        string
+	RepoOrg           string
+	RepoName          string
+	Images            ImagesMap
+	RegistryName      string
+	RegistryUser      string
+	RegistryPassword  string
+	RegistryPlainHTTP bool
 }
 
 func (b *Build) KernelReleaseFromBuildConfig() kernelrelease.KernelRelease {
