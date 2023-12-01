@@ -205,15 +205,9 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		Image: builderImage,
 	}
 
-	// check if on a sles target type, which requires docker to run with `--net=host` for builder images to work
-	// for more info, see the suse container connect README: https://github.com/SUSE/container-suseconnect
-	var netMode = container.NetworkMode("default")
-	if b.TargetType == "sles" {
-		netMode = container.NetworkMode("host")
-	}
 	hostCfg := &container.HostConfig{
 		AutoRemove:  true,
-		NetworkMode: netMode,
+		NetworkMode: container.NetworkMode(b.BuilderImageNetworkMode),
 	}
 
 	uid := uuid.NewUUID()

@@ -62,3 +62,9 @@ func (v *sles) TemplateData(c Config, kr kernelrelease.KernelRelease, _ []string
 		KernelPackage:      kr.Fullversion + kr.FullExtraversion,
 	}
 }
+
+// sles requires docker to run with `--net=host` for builder images to work
+// for more info, see the suse container connect README: https://github.com/SUSE/container-suseconnect
+func (v *sles) BuilderImageNetMode() string {
+	return "host"
+}
