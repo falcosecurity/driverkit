@@ -239,11 +239,6 @@ type BuilderImageNetworkMode interface {
 	BuilderImageNetMode() string
 }
 
-// set the default builder image network mode to default
-func (b *Build) BuilderImageNetMode() string {
-	return "default"
-}
-
 func (b *Build) GetBuilderImage() string {
 	if b.hasCustomBuilderImage() {
 		// BuilderImage MUST have requested GCC installed inside
