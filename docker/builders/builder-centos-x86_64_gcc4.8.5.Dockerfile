@@ -21,7 +21,15 @@ RUN yum -y install centos-release-scl && \
 	wget \
 	binutils \
 	which \
-	make
+	make \
+	git
+
+# Install cmake3.x (on centos7 `cmake` package installs cmake2.x)
+RUN curl -L -o /tmp/cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v3.22.5/cmake-3.22.5-linux-$(uname -m).tar.gz; \
+    gzip -d /tmp/cmake.tar.gz; \
+    tar -xpf /tmp/cmake.tar --directory=/tmp; \
+    cp -R /tmp/cmake-3.22.5-linux-$(uname -m)/* /usr; \
+    rm -rf /tmp/cmake-3.22.5-linux-$(uname -m)/
 
 # Properly create soft link
 RUN ln -s /usr/bin/gcc /usr/bin/gcc-4.8.5
