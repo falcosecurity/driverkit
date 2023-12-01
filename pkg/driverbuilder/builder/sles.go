@@ -20,44 +20,44 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
-//go:embed templates/sle.sh
-var sleTemplate string
+//go:embed templates/sles.sh
+var slesTemplate string
 
-// TargetTypeSLE identifies the sle target.
-const TargetTypeSLE Type = "sle"
+// TargetTypeSLES identifies the sles target.
+const TargetTypeSLES Type = "sles"
 
-// sle is a driverkit target.
-type sle struct {
+// sles is a driverkit target.
+type sles struct {
 }
 
 func init() {
-	byTarget[TargetTypeSLE] = &sle{}
+	byTarget[TargetTypeSLES] = &sles{}
 }
 
-type sleTemplateData struct {
+type slesTemplateData struct {
 	commonTemplateData
 	KernelPackage string
 }
 
-func (v *sle) Name() string {
-	return TargetTypeSLE.String()
+func (v *sles) Name() string {
+	return TargetTypeSLES.String()
 }
 
-func (v *sle) TemplateScript() string {
-	return sleTemplate
+func (v *sles) TemplateScript() string {
+	return slesTemplate
 }
 
-func (v *sle) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
+func (v *sles) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return nil, nil
 }
 
-func (v *sle) MinimumURLs() int {
+func (v *sles) MinimumURLs() int {
 	// We don't need any url
 	return 0
 }
 
-func (v *sle) TemplateData(c Config, kr kernelrelease.KernelRelease, _ []string) interface{} {
-	return sleTemplateData{
+func (v *sles) TemplateData(c Config, kr kernelrelease.KernelRelease, _ []string) interface{} {
+	return slesTemplateData{
 		commonTemplateData: c.toTemplateData(v, kr),
 		KernelPackage:      kr.Fullversion + kr.FullExtraversion,
 	}
