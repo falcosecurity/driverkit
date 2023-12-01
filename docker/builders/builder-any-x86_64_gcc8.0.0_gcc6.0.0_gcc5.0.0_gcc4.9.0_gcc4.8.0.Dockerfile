@@ -40,7 +40,9 @@ RUN apt-get update \
 	zstd \
 	gawk \
 	mawk \
-    && rm -rf /var/lib/apt/lists/*
+	cmake \
+	git \
+	&& rm -rf /var/lib/apt/lists/*
 
 RUN if [ "$TARGETARCH" = "amd64" ] ; then apt-get install -y --no-install-recommends libmpx2; fi
 

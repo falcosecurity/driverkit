@@ -39,7 +39,9 @@ RUN apt-get update \
 	software-properties-common \
 	gpg \
 	zstd \
-    && rm -rf /var/lib/apt/lists/*
+	cmake \
+	git \
+	&& rm -rf /var/lib/apt/lists/*
 
 # Properly create soft link
 RUN ln -s /usr/bin/gcc-9 /usr/bin/gcc-9.0.0
