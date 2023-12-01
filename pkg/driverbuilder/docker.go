@@ -211,11 +211,11 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	if b.TargetType == "sles" {
 		netMode = container.NetworkMode("host")
 	}
-
 	hostCfg := &container.HostConfig{
 		AutoRemove:  true,
 		NetworkMode: netMode,
 	}
+
 	uid := uuid.NewUUID()
 	name := fmt.Sprintf("driverkit-%s", string(uid))
 
