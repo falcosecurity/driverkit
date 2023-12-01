@@ -88,9 +88,9 @@ func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Cli
 	}
 	// check if on a sles target type, which requires docker to run with `--net=host` for builder images to work
 	// for more info, see the suse container connect README: https://github.com/SUSE/container-suseconnect
-	var netMode = "default"
+	var netMode = container.NetworkMode("default")
 	if b.TargetType == "sles" {
-		netMode = "host"
+		netMode = container.NetworkMode("host")
 	}
 
 	qemuImage, err := cli.ContainerCreate(ctx,
