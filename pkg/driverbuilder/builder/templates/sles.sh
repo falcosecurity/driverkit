@@ -28,10 +28,7 @@ rm -Rf /tmp/module-download
 mkdir -p /tmp/module-download
 
 curl --silent -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
-mv /tmp/module-download/*/driver/* {{ .DriverBuildDir }}
-
-cp /driverkit/module-Makefile {{ .DriverBuildDir }}/Makefile
-bash /driverkit/fill-driver-config.sh {{ .DriverBuildDir }}
+mv /tmp/module-download/*/* {{ .DriverBuildDir }}
 
 # Fetch the kernel
 rm -Rf /tmp/kernel-download
@@ -47,10 +44,13 @@ done
 ls -alh /tmp/kernel-download/usr/src
 sourcedir="$(find . -type d -name "linux-*-obj" | head -n 1 | xargs readlink -f)/*/default"
 
+cd {{ .DriverBuildDir }}
+mkdir -p build && cd build
+cmake -DUSE_BUNDLED_DEPS=On -DCREATE_TEST_TARGETS=Off -DBUILD_LIBSCAP_GVISOR=Off -DBUILD_LIBSCAP_MODERN_BPF=Off -DENABLE_DRIVERS_TESTS=Off -DDRIVER_NAME={{ .ModuleDriverName }} -DBUILD_BPF=On ..
+
 {{ if .BuildModule }}
 # Build the module
-cd {{ .DriverBuildDir }}
-make CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=$sourcedir
+make CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=$sourcedir driver
 mv {{ .ModuleDriverName }}.ko {{ .ModuleFullPath }}
 strip -g {{ .ModuleFullPath }}
 # Print results
@@ -59,7 +59,6 @@ modinfo {{ .ModuleFullPath }}
 
 {{ if .BuildProbe }}
 # Build the eBPF probe
-cd {{ .DriverBuildDir }}/bpf
-make KERNELDIR=/tmp/kernel
+make KERNELDIR=$sourcedir bpf
 ls -l probe.o
 {{ end }}
