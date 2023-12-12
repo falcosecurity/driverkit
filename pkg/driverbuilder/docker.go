@@ -284,14 +284,14 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	}
 
 	if len(b.ModuleFilePath) > 0 {
-		if err := copyFromContainer(ctx, cli, cdata.ID, builder.ModuleFullPath, b.ModuleFilePath); err != nil {
+		if err := copyFromContainer(ctx, cli, cdata.ID, c.ToDriverFullPath(), b.ModuleFilePath); err != nil {
 			return err
 		}
 		slog.With("path", b.ModuleFilePath).Info("kernel module available")
 	}
 
 	if len(b.ProbeFilePath) > 0 {
-		if err := copyFromContainer(ctx, cli, cdata.ID, builder.ProbeFullPath, b.ProbeFilePath); err != nil {
+		if err := copyFromContainer(ctx, cli, cdata.ID, c.ToProbeFullPath(), b.ProbeFilePath); err != nil {
 			return err
 		}
 		slog.With("path", b.ProbeFilePath).Info("eBPF probe available")

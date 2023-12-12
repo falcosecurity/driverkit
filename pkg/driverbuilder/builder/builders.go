@@ -33,18 +33,6 @@ import (
 // DriverDirectory is the directory the processor uses to store the driver.
 const DriverDirectory = "/tmp/driver"
 
-// ModuleFileName is the standard file name for the kernel module.
-const ModuleFileName = "module.ko"
-
-// ProbeFileName is the standard file name for the eBPF probe.
-const ProbeFileName = "probe.o"
-
-// ModuleFullPath is the standard path for the kernel module. Builders must place the compiled module at this location.
-var ModuleFullPath = path.Join(DriverDirectory, ModuleFileName)
-
-// ProbeFullPath is the standard path for the eBPF probe. Builders must place the compiled probe at this location.
-var ProbeFullPath = path.Join(DriverDirectory, "bpf", ProbeFileName)
-
 var HeadersNotFoundErr = errors.New("kernel headers not found")
 
 // Config contains all the configurations needed to build the kernel module or the eBPF probe.
@@ -53,6 +41,14 @@ type Config struct {
 	DeviceName      string
 	DownloadBaseURL string
 	*Build
+}
+
+func (c Config) ToDriverFullPath() string {
+	return path.Join(DriverDirectory, "build", "driver", fmt.Sprintf("%s.ko", c.DriverName))
+}
+
+func (c Config) ToProbeFullPath() string {
+	return path.Join(DriverDirectory, "build", "driver", "bpf", "probe.o")
 }
 
 type commonTemplateData struct {
@@ -293,7 +289,7 @@ func (c Config) toTemplateData(b Builder, kr kernelrelease.KernelRelease) common
 		DriverBuildDir:    DriverDirectory,
 		ModuleDownloadURL: fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.DriverVersion),
 		ModuleDriverName:  c.DriverName,
-		ModuleFullPath:    ModuleFullPath,
+		ModuleFullPath:    c.ToDriverFullPath(),
 		BuildModule:       len(c.ModuleFilePath) > 0,
 		BuildProbe:        len(c.ProbeFilePath) > 0,
 		GCCVersion:        c.GCCVersion,

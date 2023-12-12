@@ -51,7 +51,6 @@ cmake -DUSE_BUNDLED_DEPS=On -DCREATE_TEST_TARGETS=Off -DBUILD_LIBSCAP_GVISOR=Off
 {{ if .BuildModule }}
 # Build the module
 make CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=$sourcedir driver
-mv {{ .ModuleDriverName }}.ko {{ .ModuleFullPath }}
 strip -g {{ .ModuleFullPath }}
 # Print results
 modinfo {{ .ModuleFullPath }}
@@ -60,5 +59,5 @@ modinfo {{ .ModuleFullPath }}
 {{ if .BuildProbe }}
 # Build the eBPF probe
 make KERNELDIR=$sourcedir bpf
-ls -l probe.o
+ls -l driver/bpf/probe.o
 {{ end }}
