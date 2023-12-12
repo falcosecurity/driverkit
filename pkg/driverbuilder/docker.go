@@ -29,6 +29,7 @@ import (
 	"os"
 	"runtime"
 	"strconv"
+	"strings"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -286,7 +287,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		return err
 	}
 
-	hr, err := cli.ContainerExecAttach(ctx, edata.ID, types.ExecStartCheck{Tty: false})
+	hr, err := cli.ContainerExecAttach(ctx, edata.ID, types.ExecStartCheck{})
 	if err != nil {
 		return err
 	}
@@ -396,20 +397,43 @@ func forwardLogs(logPipe io.Reader) {
 func multiplexedForwardLogs(logPipe io.Reader) {
 	hdr := make([]byte, 8)
 	for {
+		// Load size of message
 		_, err := logPipe.Read(hdr)
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
 			slog.With("err", err.Error()).Error("log pipe error")
+			return
 		}
 		count := binary.BigEndian.Uint32(hdr[4:])
+
+		// Read message
 		dat := make([]byte, count)
-		_, err = logPipe.Read(dat)
-		if err != nil {
-			slog.With("err", err.Error()).Error("log pipe error")
+		var readCnt int
+		for uint32(readCnt) < count {
+			readBytes, err := logPipe.Read(dat[readCnt:])
+			readCnt += readBytes
+			if err == io.EOF {
+				if uint32(readCnt) == count {
+					break
+				}
+				slog.With("err", err.Error()).Error("log pipe error")
+				return
+			}
+			if err != nil {
+				slog.With("err", err.Error()).Error("log pipe error")
+				return
+			}
 		}
-		slog.Debug(string(dat))
+
+		// Print message line by line
+		lines := strings.Split(string(dat), "\n")
+		for _, line := range lines {
+			if line != "" {
+				slog.Debug(line)
+			}
+		}
 	}
 	slog.Debug("log pipe close")
 }
