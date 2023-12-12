@@ -2,7 +2,6 @@ package driverbuilder
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	_ "embed"
 	"fmt"
@@ -51,37 +50,7 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 	}
 	c := b.ToConfig()
 
-	// Prepare driver config template
-	bufFillDriverConfig := bytes.NewBuffer(nil)
-	err = renderFillDriverConfig(bufFillDriverConfig, driverConfigData{DriverVersion: c.DriverVersion, DriverName: c.DriverName, DeviceName: c.DeviceName})
-	if err != nil {
-		return err
-	}
-
-	// Prepare makefile template
-	objList, err := LoadMakefileObjList(c)
-	if err != nil {
-		return err
-	}
-	bufMakefile := bytes.NewBuffer(nil)
-	err = renderMakefile(bufMakefile, makefileData{ModuleName: c.DriverName, ModuleBuildDir: builder.DriverDirectory, MakeObjList: objList})
-	if err != nil {
-		return err
-	}
-
-	// Create all local files
-	files := []dockerCopyFile{
-		{"/tmp/module-Makefile", bufMakefile.String()},
-		{"/tmp/fill-driver-config.sh", bufFillDriverConfig.String()},
-	}
-	for _, file := range files {
-		if err = os.WriteFile(file.Name, []byte(file.Body), 0o755); err != nil {
-			return err
-		}
-		defer os.Remove(file.Name)
-	}
-
-	defer os.Remove(builder.DriverDirectory)
+	defer os.RemoveAll(builder.DriverDirectory)
 
 	// Load gcc versions from system
 	var gccs []string
@@ -107,7 +76,7 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 		}
 	} else {
 		// We won't use it!
-		gccs = []string{"gcc"}
+		gccs = []string{"UNUSED"}
 	}
 
 	// Cannot fail
@@ -116,7 +85,7 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 	vv.UseDKMS = lbp.useDKMS
 
 	modulePath := vv.GetModuleFullPath(c, kr)
-	probePath := path.Join(vv.GetDriverBuildDir(), "bpf", builder.ProbeFileName)
+	probePath := path.Join(vv.GetDriverBuildDir(), "build", "driver", "bpf", builder.ProbeFileName)
 	for _, gcc := range gccs {
 		vv.GccPath = gcc
 
@@ -152,17 +121,25 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 				err = cmd.Wait()
 			}
 		}
-		if err == nil {
-			break
+
+		// If we built the probe, disable its build for subsequent attempts (with other available gccs)
+		if c.ProbeFilePath != "" {
+			if _, err = os.Stat(probePath); !os.IsNotExist(err) {
+				if err = copyDataToLocalPath(probePath, b.ProbeFilePath); err != nil {
+					return err
+				}
+				slog.With("path", b.ProbeFilePath).Info("eBPF probe available")
+				c.ProbeFilePath = ""
+			}
 		}
-		// If we received an error, perhaps we must just rebuilt the kmod.
+
+		// If we received an error, perhaps we just need to try another build for the kmod.
 		// Check if we were able to build anything.
 		koFiles, err := filepath.Glob(modulePath)
 		if err == nil && len(koFiles) > 0 {
+			// Since only kmod might need to get rebuilt
+			// with another gcc, break here if we actually built the kmod.
 			break
-		}
-		if _, err = os.Stat(probePath); !os.IsNotExist(err) {
-			c.ProbeFilePath = ""
 		}
 	}
 
@@ -178,14 +155,6 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 		}
 		slog.With("path", b.ModuleFilePath).Info("kernel module available")
 	}
-
-	if len(b.ProbeFilePath) > 0 {
-		if err = copyDataToLocalPath(probePath, b.ProbeFilePath); err != nil {
-			return err
-		}
-		slog.With("path", b.ProbeFilePath).Info("eBPF probe available")
-	}
-
 	return nil
 }
 
