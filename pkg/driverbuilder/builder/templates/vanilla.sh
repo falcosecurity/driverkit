@@ -30,9 +30,6 @@ mkdir -p /tmp/module-download
 curl --silent -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
 mv /tmp/module-download/*/* {{ .DriverBuildDir }}
 
-cp /driverkit/module-Makefile {{ .DriverBuildDir }}/Makefile
-bash /driverkit/fill-driver-config.sh {{ .DriverBuildDir }}
-
 # Fetch the kernel
 cd /tmp
 mkdir /tmp/kernel-download
