@@ -146,24 +146,6 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		return err
 	}
 
-	// Prepare driver config template
-	bufFillDriverConfig := bytes.NewBuffer(nil)
-	err = renderFillDriverConfig(bufFillDriverConfig, driverConfigData{DriverVersion: c.DriverVersion, DriverName: c.DriverName, DeviceName: c.DeviceName})
-	if err != nil {
-		return err
-	}
-
-	// Prepare makefile template
-	objList, err := LoadMakefileObjList(c)
-	if err != nil {
-		return err
-	}
-	bufMakefile := bytes.NewBuffer(nil)
-	err = renderMakefile(bufMakefile, makefileData{ModuleName: c.DriverName, ModuleBuildDir: builder.DriverDirectory, MakeObjList: objList})
-	if err != nil {
-		return err
-	}
-
 	configDecoded, err := base64.StdEncoding.DecodeString(b.KernelConfigData)
 	if err != nil {
 		return err
@@ -244,8 +226,6 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	files := []dockerCopyFile{
 		{"/driverkit/driverkit.sh", driverkitScript},
 		{"/driverkit/kernel.config", string(configDecoded)},
-		{"/driverkit/module-Makefile", bufMakefile.String()},
-		{"/driverkit/fill-driver-config.sh", bufFillDriverConfig.String()},
 	}
 
 	var buf bytes.Buffer
