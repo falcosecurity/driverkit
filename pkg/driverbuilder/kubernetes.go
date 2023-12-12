@@ -102,11 +102,11 @@ func (bp *KubernetesBuildProcessor) buildModule(b *builder.Build) error {
 		return err
 	}
 
-	if builder.ModuleFullPath != "" {
+	if c.ModuleFilePath != "" {
 		res = fmt.Sprintf("%s\n%s", "touch "+moduleLockFile, res)
 		res = fmt.Sprintf("%s\n%s", res, "rm "+moduleLockFile)
 	}
-	if builder.ProbeFullPath != "" {
+	if c.ProbeFilePath != "" {
 		res = fmt.Sprintf("%s\n%s", "touch "+probeLockFile, res)
 		res = fmt.Sprintf("%s\n%s", res, "rm "+probeLockFile)
 	}
@@ -224,10 +224,10 @@ func (bp *KubernetesBuildProcessor) buildModule(b *builder.Build) error {
 		return err
 	}
 	defer podClient.Delete(ctx, pod.Name, metav1.DeleteOptions{})
-	return bp.copyModuleAndProbeFromPodWithUID(ctx, b, namespace, string(uid))
+	return bp.copyModuleAndProbeFromPodWithUID(ctx, c, b, namespace, string(uid))
 }
 
-func (bp *KubernetesBuildProcessor) copyModuleAndProbeFromPodWithUID(ctx context.Context, build *builder.Build, namespace string, falcoBuilderUID string) error {
+func (bp *KubernetesBuildProcessor) copyModuleAndProbeFromPodWithUID(ctx context.Context, c builder.Config, build *builder.Build, namespace string, falcoBuilderUID string) error {
 	namespacedClient := bp.coreV1Client.Pods(namespace)
 	watch, err := namespacedClient.Watch(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", falcoBuilderUIDLabel, falcoBuilderUID),
@@ -255,15 +255,15 @@ func (bp *KubernetesBuildProcessor) copyModuleAndProbeFromPodWithUID(ctx context
 			}
 			if p.Status.Phase == corev1.PodRunning {
 				slog.With(falcoBuilderUIDLabel, falcoBuilderUID).Info("start downloading module and probe from pod")
-				if builder.ModuleFullPath != "" {
-					err = copySingleFileFromPod(build.ModuleFilePath, bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name, builder.ModuleFullPath, moduleLockFile)
+				if c.ModuleFilePath != "" {
+					err = copySingleFileFromPod(c.ModuleFilePath, bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name, c.ToDriverFullPath(), moduleLockFile)
 					if err != nil {
 						return err
 					}
 					slog.Info("Kernel Module extraction successful")
 				}
-				if builder.ProbeFullPath != "" {
-					err = copySingleFileFromPod(build.ProbeFilePath, bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name, builder.ProbeFullPath, probeLockFile)
+				if c.ProbeFilePath != "" {
+					err = copySingleFileFromPod(c.ProbeFilePath, bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name, c.ToProbeFullPath(), probeLockFile)
 					if err != nil {
 						return err
 					}

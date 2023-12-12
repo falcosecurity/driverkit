@@ -49,7 +49,6 @@ cmake -DUSE_BUNDLED_DEPS=On -DCREATE_TEST_TARGETS=Off -DBUILD_LIBSCAP_GVISOR=Off
 {{ if .BuildModule }}
 # Build the module
 make CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=/tmp/kernel LD=/usr/bin/ld.bfd CROSS_COMPILE="" driver
-mv driver/{{ .ModuleDriverName }}.ko {{ .ModuleFullPath }}
 strip -g {{ .ModuleFullPath }}
 # Print results
 modinfo {{ .ModuleFullPath }}

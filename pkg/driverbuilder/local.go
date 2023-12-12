@@ -10,7 +10,6 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"time"
 )
@@ -85,7 +84,7 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 	vv.UseDKMS = lbp.useDKMS
 
 	modulePath := vv.GetModuleFullPath(c, kr)
-	probePath := path.Join(vv.GetDriverBuildDir(), "build", "driver", "bpf", builder.ProbeFileName)
+	probePath := c.ToProbeFullPath()
 	for _, gcc := range gccs {
 		vv.GccPath = gcc
 
