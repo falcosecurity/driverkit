@@ -41,7 +41,7 @@ mv usr/src/kernels/*/* /tmp/kernel
 
 cd {{ .DriverBuildDir }}
 mkdir -p build && cd build
-cmake -DUSE_BUNDLED_DEPS=On -DCREATE_TEST_TARGETS=Off -DBUILD_LIBSCAP_GVISOR=Off -DBUILD_LIBSCAP_MODERN_BPF=Off -DENABLE_DRIVERS_TESTS=Off -DDRIVER_NAME={{ .ModuleDriverName }} -DBUILD_BPF=On ..
+{{ .CmakeCmd }}
 
 {{ if .BuildModule }}
 # Build the module
