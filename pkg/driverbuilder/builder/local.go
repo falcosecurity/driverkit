@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
+	"path/filepath"
 )
 
 // NOTE: since this is only used by local build,
@@ -67,12 +68,22 @@ func (l *LocalBuilder) GetModuleFullPath(c Config, kr kernelrelease.KernelReleas
 		// When using dkms, we will use a GLOB to match the pattern; ModuleFullPath won't be used in the templated script anyway.
 		return fmt.Sprintf("/var/lib/dkms/%s/%s/%s/%s/module/%s.*", c.DriverName, c.DriverVersion, kr.String(), kr.Architecture.ToNonDeb(), c.DriverName)
 	}
+	if l.SrcDir != "" {
+		return filepath.Join(l.SrcDir, fmt.Sprintf("%s.ko", c.DriverName))
+	}
 	return c.ToDriverFullPath()
+}
+
+func (l *LocalBuilder) GetProbeFullPath(c Config) string {
+	if l.SrcDir != "" {
+		return filepath.Join(l.SrcDir, "bpf", "probe.o")
+	}
+	return c.ToProbeFullPath()
 }
 
 func (l *LocalBuilder) GetDriverBuildDir() string {
 	driverBuildDir := DriverDirectory
-	if len(l.SrcDir) > 0 {
+	if l.SrcDir != "" {
 		driverBuildDir = l.SrcDir
 	}
 	return driverBuildDir
