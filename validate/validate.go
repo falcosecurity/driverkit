@@ -50,6 +50,7 @@ func init() {
 
 	V.RegisterValidation("loglevel", isLogLevel)
 	V.RegisterValidation("filepath", isFilePath)
+	V.RegisterValidation("abs_dirpath", isAbsDirPath)
 	V.RegisterValidation("sha1", isSHA1)
 	V.RegisterValidation("target", isTargetSupported)
 	V.RegisterValidation("architecture", isArchitectureSupported)
@@ -71,6 +72,19 @@ func init() {
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
 			t, _ := ut.T("filepath", fe.Field())
+
+			return t
+		},
+	)
+
+	V.RegisterTranslation(
+		"abs_dirpath",
+		T,
+		func(ut ut.Translator) error {
+			return ut.Add("abs_dirpath", "{0} must be a valid absolute dir path", true)
+		},
+		func(ut ut.Translator, fe validator.FieldError) string {
+			t, _ := ut.T("abs_dirpath", fe.Field())
 
 			return t
 		},

@@ -83,8 +83,9 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 	vv.SrcDir = lbp.srcDir
 	vv.UseDKMS = lbp.useDKMS
 
-	modulePath := vv.GetModuleFullPath(c, kr)
-	probePath := c.ToProbeFullPath()
+	// Fetch paths were kmod and probe will be built
+	srcModulePath := vv.GetModuleFullPath(c, kr)
+	srcProbePath := vv.GetProbeFullPath(c)
 	for _, gcc := range gccs {
 		vv.GccPath = gcc
 
@@ -123,8 +124,8 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 
 		// If we built the probe, disable its build for subsequent attempts (with other available gccs)
 		if c.ProbeFilePath != "" {
-			if _, err = os.Stat(probePath); !os.IsNotExist(err) {
-				if err = copyDataToLocalPath(probePath, b.ProbeFilePath); err != nil {
+			if _, err = os.Stat(srcProbePath); !os.IsNotExist(err) {
+				if err = copyDataToLocalPath(srcProbePath, b.ProbeFilePath); err != nil {
 					return err
 				}
 				slog.With("path", b.ProbeFilePath).Info("eBPF probe available")
@@ -134,7 +135,7 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 
 		// If we received an error, perhaps we just need to try another build for the kmod.
 		// Check if we were able to build anything.
-		koFiles, err := filepath.Glob(modulePath)
+		koFiles, err := filepath.Glob(srcModulePath)
 		if err == nil && len(koFiles) > 0 {
 			// Since only kmod might need to get rebuilt
 			// with another gcc, break here if we actually built the kmod.
@@ -145,9 +146,9 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 	if len(b.ModuleFilePath) > 0 {
 		// If we received an error, perhaps we must just rebuilt the kmod.
 		// Check if we were able to build anything.
-		koFiles, err := filepath.Glob(modulePath)
+		koFiles, err := filepath.Glob(srcModulePath)
 		if err != nil || len(koFiles) == 0 {
-			return fmt.Errorf("failed to find kernel module .ko file: %s", modulePath)
+			return fmt.Errorf("failed to find kernel module .ko file: %s", srcModulePath)
 		}
 		if err = copyDataToLocalPath(koFiles[0], b.ModuleFilePath); err != nil {
 			return err

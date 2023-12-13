@@ -34,10 +34,12 @@ mv /tmp/module-download/*/* {{ .DriverBuildDir }}
 {{ end }}
 
 {{ if or .BuildProbe (and  .BuildModule (not .UseDKMS)) }}
-echo "* Configuring sources with cmake"
 cd {{ .DriverBuildDir }}
+{{ if .DownloadSrc }}
+echo "* Configuring sources with cmake"
 mkdir -p build && cd build
 cmake -DUSE_BUNDLED_DEPS=On -DCREATE_TEST_TARGETS=Off -DBUILD_LIBSCAP_GVISOR=Off -DBUILD_LIBSCAP_MODERN_BPF=Off -DENABLE_DRIVERS_TESTS=Off -DDRIVER_NAME={{ .ModuleDriverName }} -DBUILD_BPF=On ..
+{{ end }}
 {{ end }}
 
 
@@ -52,8 +54,13 @@ dkms install --directive="MAKE='/tmp/falco-dkms-make'" -m "{{ .ModuleDriverName 
 rm -Rf "/tmp/falco-dkms-make"
 {{ else }}
 echo "* Building kmod"
-# Build the module
+{{ if .DownloadSrc }}
+# Build the module - cmake configured
 make CC={{ .GCCVersion }} driver
+{{ else }}
+# Build the module - preconfigured sources
+make CC={{ .GCCVersion }}
+{{ end }}
 strip -g {{ .ModuleFullPath }}
 # Print results
 modinfo {{ .ModuleFullPath }}
@@ -69,8 +76,16 @@ if [ ! -d /sys/kernel/debug/tracing ]; then
 fi
 
 # Build the eBPF probe
+{{ if .DownloadSrc }}
+# Build the eBPF probe - cmake configured
 make bpf
 ls -l driver/bpf/probe.o
+{{ else }}
+# Build the eBPF probe - preconfigured sources
+cd bpf
+make
+ls -l probe.o
+{{ end }}
 {{ end }}
 
 rm -Rf /tmp/module-download
