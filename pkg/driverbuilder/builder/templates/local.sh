@@ -55,12 +55,10 @@ rm -Rf "/tmp/falco-dkms-make"
 {{ else }}
 echo "* Building kmod"
 {{ if .DownloadSrc }}
-# Build the module - cmake configured
-make CC={{ .GCCVersion }} driver
-{{ else }}
-# Build the module - preconfigured sources
-make CC={{ .GCCVersion }}
+# Move to driver folder - cmake configured
+cd {{ .DriverBuildDir }}/driver
 {{ end }}
+make CC={{ .GCCVersion }}
 strip -g {{ .ModuleFullPath }}
 # Print results
 modinfo {{ .ModuleFullPath }}
@@ -69,23 +67,13 @@ modinfo {{ .ModuleFullPath }}
 
 {{ if .BuildProbe }}
 echo "* Building eBPF probe"
-
 if [ ! -d /sys/kernel/debug/tracing ]; then
   echo "* Mounting debugfs"
   mount -t debugfs nodev /sys/kernel/debug
 fi
-
-# Build the eBPF probe
-{{ if .DownloadSrc }}
-# Build the eBPF probe - cmake configured
-make bpf
-ls -l driver/bpf/probe.o
-{{ else }}
-# Build the eBPF probe - preconfigured sources
-cd bpf
+cd {{ .DriverBuildDir }}/bpf
 make
 ls -l probe.o
-{{ end }}
 {{ end }}
 
 rm -Rf /tmp/module-download
