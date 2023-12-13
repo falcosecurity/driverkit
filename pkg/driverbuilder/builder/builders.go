@@ -31,7 +31,25 @@ import (
 )
 
 // DriverDirectory is the directory the processor uses to store the driver.
-const DriverDirectory = "/tmp/driver"
+const (
+	DriverDirectory = "/tmp/driver"
+	cmakeCmdFmt     = `cmake -Wno-dev \
+  -DUSE_BUNDLED_DEPS=On \
+  -DCREATE_TEST_TARGETS=Off \
+  -DBUILD_LIBSCAP_GVISOR=Off \
+  -DBUILD_LIBSCAP_MODERN_BPF=Off \
+  -DENABLE_DRIVERS_TESTS=Off \
+  -DDRIVER_NAME=%s \
+  -DPROBE_NAME=%s \
+  -DBUILD_BPF=On \
+  -DDRIVER_VERSION=%s \
+  -DPROBE_VERSION=%s \
+  -DGIT_COMMIT=%s \
+  -DDRIVER_DEVICE_NAME=%s \
+  -DPROBE_DEVICE_NAME=%s \
+  .. && \
+  sed -i s/'DRIVER_COMMIT ""'/'DRIVER_COMMIT "%s"'/g driver/src/driver_config.h`
+)
 
 var HeadersNotFoundErr = errors.New("kernel headers not found")
 
@@ -59,6 +77,7 @@ type commonTemplateData struct {
 	BuildModule       bool
 	BuildProbe        bool
 	GCCVersion        string
+	CmakeCmd          string
 }
 
 // Builder represents a builder capable of generating a script for a driverkit target.
@@ -293,6 +312,15 @@ func (c Config) toTemplateData(b Builder, kr kernelrelease.KernelRelease) common
 		BuildModule:       len(c.ModuleFilePath) > 0,
 		BuildProbe:        len(c.ProbeFilePath) > 0,
 		GCCVersion:        c.GCCVersion,
+		CmakeCmd: fmt.Sprintf(cmakeCmdFmt,
+			c.DriverName,
+			c.DriverName,
+			c.DriverVersion,
+			c.DriverVersion,
+			c.DriverVersion,
+			c.DeviceName,
+			c.DeviceName,
+			c.DriverVersion),
 	}
 }
 
