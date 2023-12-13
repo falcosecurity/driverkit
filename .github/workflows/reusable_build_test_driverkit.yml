@@ -27,6 +27,14 @@ jobs:
         
       - name: Test
         run: make test
+        
+      - name: Set integration tests DRIVERVERSIONS env
+        if: inputs.arch == 'amd64'
+        run: echo "DRIVERVERSIONS=master 6.0.1+driver 2.0.0+driver 17f5df52a7d9ed6bb12d3b1768460def8439936d" >> $GITHUB_ENV
+        
+      - name: Set integration tests DRIVERVERSIONS env
+        if: inputs.arch == 'arm64'
+        run: echo "DRIVERVERSIONS=master 6.0.1+driver 2.0.0+driver" >> $GITHUB_ENV
       
       - name: Integration tests
         run: make integration_test

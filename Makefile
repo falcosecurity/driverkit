@@ -16,6 +16,8 @@ ifeq ($(COMMITS_FROM_GIT_TAG),0)
 	endif
 endif
 
+DRIVERVERSIONS ?= master
+
 DOCKER_ORG ?= falcosecurity
 
 ARCH := $(shell uname -m)
@@ -105,7 +107,9 @@ integration_test: $(test_configs)
 
 .PHONY: $(test_configs)
 $(test_configs): ${driverkit}
-	${driverkit} docker -c $@ --builderimage auto:master -l debug --timeout 600
+	$(foreach d,$(DRIVERVERSIONS),\
+		${driverkit} docker -c $@ --builderimage auto:master -l debug --timeout 600 --driverversion $d; \
+	)
 
 .PHONY: ${driverkit_docgen}
 ${driverkit_docgen}: ${PWD}/docgen
