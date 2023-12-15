@@ -31,6 +31,11 @@ jobs:
     needs: build-test-arm64
     with:
       arch: arm64
-    secrets: inherit  
+    secrets: inherit
+
+  images:
+    uses: ./.github/workflows/reusable_manifest_images.yml
+    needs: [push-images,push-images-arm64]
+    secrets: inherit
       
     

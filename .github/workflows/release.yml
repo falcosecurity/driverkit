@@ -36,7 +36,15 @@ jobs:
       arch: arm64
       tag: ${{ github.ref_name }}
       is_latest: true
-    secrets: inherit  
+    secrets: inherit
+
+  images:
+    uses: ./.github/workflows/reusable_manifest_images.yml
+    needs: [push-images,push-images-arm64]
+    with:
+      tag: ${{ github.ref_name }}
+      is_latest: true
+    secrets: inherit
 
   release:
     needs: [push-images,push-images-arm64]
