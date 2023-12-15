@@ -10,32 +10,26 @@ concurrency:
 
 jobs:
   build-test:
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
     uses: ./.github/workflows/reusable_build_test_driverkit.yml
     with:
-      arch: amd64
-  
-  build-test-arm64:
-    uses: ./.github/workflows/reusable_build_test_driverkit.yml
-    with:
-      arch: arm64
+      arch: ${{ matrix.arch }}
 
   push-images:
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
     uses: ./.github/workflows/reusable_build_push_images.yml
     needs: build-test
     with:
-      arch: amd64
-    secrets: inherit  
-      
-  push-images-arm64:
-    uses: ./.github/workflows/reusable_build_push_images.yml
-    needs: build-test-arm64
-    with:
-      arch: arm64
+      arch: ${{ matrix.arch }}
     secrets: inherit
 
   images:
     uses: ./.github/workflows/reusable_manifest_images.yml
-    needs: [push-images,push-images-arm64]
+    needs: push-images
     secrets: inherit
       
     
