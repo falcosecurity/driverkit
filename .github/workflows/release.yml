@@ -10,7 +10,7 @@ permissions:
   id-token: write # needed for keyless signing
 
 jobs:
-  build-test:
+  build-test-release:
     strategy:
       matrix:
         arch: [amd64, arm64]
@@ -18,7 +18,7 @@ jobs:
     with:
       arch: ${{ matrix.arch }}
 
-  push-images:
+  push-images-release:
     strategy:
       matrix:
         arch: [amd64, arm64]
@@ -30,7 +30,7 @@ jobs:
       is_latest: true
     secrets: inherit  
 
-  images:
+  images-release:
     uses: ./.github/workflows/reusable_manifest_images.yml
     needs: push-images
     with:

@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: true  
 
 jobs:
-  build-test:
+  build-test-master:
     strategy:
       matrix:
         arch: [amd64, arm64]
@@ -17,7 +17,7 @@ jobs:
     with:
       arch: ${{ matrix.arch }}
 
-  push-images:
+  push-images-master:
     strategy:
       matrix:
         arch: [amd64, arm64]
@@ -27,7 +27,7 @@ jobs:
       arch: ${{ matrix.arch }}
     secrets: inherit
 
-  images:
+  images-master:
     uses: ./.github/workflows/reusable_manifest_images.yml
     needs: push-images
     secrets: inherit
