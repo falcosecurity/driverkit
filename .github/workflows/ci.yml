@@ -12,19 +12,16 @@ concurrency:
 
 jobs:
   build-test:
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
     uses: ./.github/workflows/reusable_build_test_driverkit.yml
     with:
-      arch: amd64
+      arch: ${{ matrix.arch }}
 
-  build-test-arm64:
-    uses: ./.github/workflows/reusable_build_test_driverkit.yml
-    with:
-      arch: arm64
-      
   gomodtidy:
     name: Enforce go.mod tidiness
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
