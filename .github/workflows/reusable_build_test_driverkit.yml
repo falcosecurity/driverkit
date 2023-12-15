@@ -11,15 +11,16 @@ jobs:
   build-test:
     # See https://github.com/actions/runner/issues/409#issuecomment-1158849936
     runs-on: ${{ (inputs.arch == 'arm64' && 'actuated-arm64-8cpu-16gb') || 'ubuntu-latest' }}
-    container: golang:1.21-alpine
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Install deps
-        run: apk add gcc musl-dev make bash git binutils-gold
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.21'
 
       - name: Build
         run: make build
