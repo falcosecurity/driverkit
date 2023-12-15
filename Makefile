@@ -41,7 +41,7 @@ driverkit_docgen ?= _output/bin/docgen
 build: clean ${driverkit}
 
 ${driverkit}:
-	CGO_ENABLED=0 GOEXPERIMENT=loopvar go build -v -buildmode=pie -ldflags '${LDFLAGS}' -o $@ .
+	CGO_ENABLED=0 GOEXPERIMENT=loopvar go build -v -ldflags '${LDFLAGS}' -o $@ .
 
 .PHONY: release
 release: clean
@@ -101,7 +101,7 @@ manifest/latest:
 test:
 	go clean -testcache
 	GOEXPERIMENT=loopvar go test -v -cover -race ./...
-	GOEXPERIMENT=loopvar go test -v -cover -buildmode=pie ./cmd
+	GOEXPERIMENT=loopvar go test -v -cover ./cmd
 
 .PHONY: integration_test
 integration_test: $(test_configs)
