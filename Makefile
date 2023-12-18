@@ -87,15 +87,12 @@ manifest/all: manifest/driverkit
 
 .PHONY: manifest/driverkit
 manifest/driverkit:
-	$(DOCKER) manifest create $(IMAGE_NAME_DRIVERKIT):$(GIT_REF) $(IMAGE_NAME_DRIVERKIT):$(GIT_REF)_x86_64 $(IMAGE_NAME_DRIVERKIT):$(GIT_REF)_aarch64
-	$(DOCKER) manifest push $(IMAGE_NAME_DRIVERKIT):$(GIT_REF)
-	$(DOCKER) manifest create $(IMAGE_NAME_DRIVERKIT):$(GIT_COMMIT) $(IMAGE_NAME_DRIVERKIT):$(GIT_COMMIT)_x86_64 $(IMAGE_NAME_DRIVERKIT):$(GIT_COMMIT)_aarch64
-	$(DOCKER) manifest push $(IMAGE_NAME_DRIVERKIT):$(GIT_COMMIT)
+	$(DOCKER) buildx imagetools create -t $(IMAGE_NAME_DRIVERKIT):$(GIT_REF) $(IMAGE_NAME_DRIVERKIT):$(GIT_REF)_x86_64 $(IMAGE_NAME_DRIVERKIT):$(GIT_REF)_aarch64
+	$(DOCKER) buildx imagetools create -t $(IMAGE_NAME_DRIVERKIT):$(GIT_COMMIT) $(IMAGE_NAME_DRIVERKIT):$(GIT_COMMIT)_x86_64 $(IMAGE_NAME_DRIVERKIT):$(GIT_COMMIT)_aarch64
 
 .PHONY: manifest/latest
 manifest/latest:
-	$(DOCKER) manifest create $(IMAGE_NAME_DRIVERKIT):latest $(IMAGE_NAME_DRIVERKIT):latest_x86_64 $(IMAGE_NAME_DRIVERKIT):latest_aarch64
-	$(DOCKER) manifest push $(IMAGE_NAME_DRIVERKIT):latest
+	$(DOCKER) buildx imagetools create -t $(IMAGE_NAME_DRIVERKIT):latest $(IMAGE_NAME_DRIVERKIT):latest_x86_64 $(IMAGE_NAME_DRIVERKIT):latest_aarch64
 
 .PHONY: test
 test:
