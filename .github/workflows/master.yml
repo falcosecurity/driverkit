@@ -22,14 +22,14 @@ jobs:
       matrix:
         arch: [amd64, arm64]
     uses: ./.github/workflows/reusable_build_push_images.yml
-    needs: build-test
+    needs: build-test-master
     with:
       arch: ${{ matrix.arch }}
     secrets: inherit
 
   images-master:
     uses: ./.github/workflows/reusable_manifest_images.yml
-    needs: push-images
+    needs: push-images-master
     secrets: inherit
       
     
