@@ -68,6 +68,8 @@ func (v *debian) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []s
 	var KernelHeadersPattern string
 	if strings.HasSuffix(kr.Extraversion, "pve") {
 		KernelHeadersPattern = "linux-headers-*pve"
+	} else if strings.Contains(kr.FullExtraversion, "rpi") {
+		KernelHeadersPattern = "linux-headers-*-rpi-v*"
 	} else {
 		KernelHeadersPattern = "linux-headers-*" + kr.Architecture.String()
 	}
