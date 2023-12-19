@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/containerd/containerd v1.7.5 // indirect
+	github.com/containerd/containerd v1.7.11 // indirect
 	github.com/creasty/defaults v1.7.0
 	github.com/docker/docker v24.0.7+incompatible
 	github.com/go-playground/locales v0.14.1
@@ -38,7 +38,6 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
-	github.com/Microsoft/hcsshim v0.10.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
