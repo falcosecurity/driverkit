@@ -31,10 +31,9 @@ jobs:
           persist-credentials: false
 
       - name: Setup Go
-        uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v4.0.0
+        uses: actions/setup-go@v4
         with:
-          go-version: '1.21'
-          check-latest: true
+          go-version-file: 'go.mod'
 
       - name: Execute go mod tidy and check the outcome
         working-directory: ./
