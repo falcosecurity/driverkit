@@ -135,6 +135,11 @@ type GCCVersionRequestor interface {
 
 func defaultGCC(kr kernelrelease.KernelRelease) semver.Version {
 	switch kr.Major {
+	case 6:
+		if kr.Minor >= 6 {
+			return semver.Version{Major: 13}
+		}
+		return semver.Version{Major: 12}
 	case 5:
 		if kr.Minor >= 15 {
 			return semver.Version{Major: 12}
@@ -150,7 +155,7 @@ func defaultGCC(kr kernelrelease.KernelRelease) semver.Version {
 	case 2:
 		return semver.Version{Major: 4, Minor: 8}
 	default:
-		return semver.Version{Major: 12}
+		return semver.Version{Major: 13}
 	}
 }
 
