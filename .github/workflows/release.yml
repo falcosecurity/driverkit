@@ -51,9 +51,9 @@ jobs:
         run: git fetch --prune --force --tags
 
       - name: Setup Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
-          go-version: '1.21'
+          go-version-file: 'go.mod'
       
       - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@v5
