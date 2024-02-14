@@ -59,6 +59,12 @@ modinfo {{ .ModuleFullPath }}
 
 {{ if .BuildProbe }}
 echo "* Building eBPF probe"
+
+if [ ! -d /sys/kernel/debug/tracing ]; then
+  echo "* Mounting debugfs"
+  mount -t debugfs nodev /sys/kernel/debug
+fi
+
 # Build the eBPF probe
 cd {{ .DriverBuildDir }}/bpf
 make

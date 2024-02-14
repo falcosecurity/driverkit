@@ -128,6 +128,7 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 		ctx, cancelFunc := context.WithTimeout(context.Background(), time.Duration(lbp.timeout)*time.Second)
 		defer cancelFunc()
 		cmd := exec.CommandContext(ctx, "/bin/bash", "-c", driverkitScript)
+		cmd.Env = os.Environ()
 		// Append requested env variables to the command env
 		for key, val := range lbp.envMap {
 			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, val))
