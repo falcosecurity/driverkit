@@ -71,7 +71,8 @@ modinfo {{ .ModuleFullPath }}
 echo "* Building eBPF probe"
 if [ ! -d /sys/kernel/debug/tracing ]; then
   echo "* Mounting debugfs"
-  mount -t debugfs nodev /sys/kernel/debug
+  # Do not fail if this fails.
+  mount -t debugfs nodev /sys/kernel/debug || :
 fi
 
 {{ if .DownloadSrc }}

@@ -50,7 +50,6 @@ func init() {
 
 	V.RegisterValidation("loglevel", isLogLevel)
 	V.RegisterValidation("filepath", isFilePath)
-	V.RegisterValidation("abs_dirpath", isAbsDirPath)
 	V.RegisterValidation("sha1", isSHA1)
 	V.RegisterValidation("target", isTargetSupported)
 	V.RegisterValidation("architecture", isArchitectureSupported)
