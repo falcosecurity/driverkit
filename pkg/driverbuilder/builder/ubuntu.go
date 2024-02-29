@@ -70,7 +70,7 @@ func (v *ubuntu) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []s
 	// handle hwe kernels, which resolve to "generic" urls under /linux-hwe
 	// Example: http://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-hwe/linux-headers-4.18.0-24-generic_4.18.0-24.25~18.04.1_amd64.deb
 	headersPattern := ""
-	if flavor == "hwe" {
+	if flavor == "hwe" || flavor == "lts" {
 		headersPattern = "linux-headers*generic"
 	} else {
 		// some flavors (ex: lowlatency-hwe) only contain the first part of the flavor in the directory extracted from the .deb
