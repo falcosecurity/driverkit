@@ -259,6 +259,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		Env:          envs,
 		Cmd: []string{
 			"/bin/bash",
+			"-l",
 			"/driverkit/driverkit.sh",
 		},
 	})
