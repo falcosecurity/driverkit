@@ -1,0 +1,8 @@
+kernelversion: 1
+kernelrelease: 3.10.0-957.el7.x86_64
+target: centos
+kernelurls: [
+  "https://download.falco.org/fixtures/libs/kernel-devel-3.10.0-957.el7.x86_64.rpm",
+]
+output:
+  module: /tmp/centos_3_x86_64.ko
