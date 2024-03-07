@@ -47,6 +47,7 @@ const (
   -DGIT_COMMIT=%s \
   -DDRIVER_DEVICE_NAME=%s \
   -DPROBE_DEVICE_NAME=%s \
+  -DCMAKE_C_COMPILER=%s \
   .. && \
   sed -i s/'DRIVER_COMMIT ""'/'DRIVER_COMMIT "%s"'/g driver/src/driver_config.h`
 )
@@ -76,7 +77,6 @@ type commonTemplateData struct {
 	ModuleFullPath    string
 	BuildModule       bool
 	BuildProbe        bool
-	GCCVersion        string
 	CmakeCmd          string
 }
 
@@ -311,7 +311,6 @@ func (c Config) toTemplateData(b Builder, kr kernelrelease.KernelRelease) common
 		ModuleFullPath:    c.ToDriverFullPath(),
 		BuildModule:       len(c.ModuleFilePath) > 0,
 		BuildProbe:        len(c.ProbeFilePath) > 0,
-		GCCVersion:        c.GCCVersion,
 		CmakeCmd: fmt.Sprintf(cmakeCmdFmt,
 			c.DriverName,
 			c.DriverName,
@@ -320,6 +319,7 @@ func (c Config) toTemplateData(b Builder, kr kernelrelease.KernelRelease) common
 			c.DriverVersion,
 			c.DeviceName,
 			c.DeviceName,
+			"/usr/bin/gcc-"+c.GCCVersion,
 			c.DriverVersion),
 	}
 }

@@ -48,7 +48,7 @@ mkdir -p build && cd build
 
 {{ if .BuildModule }}
 # Build the module
-make CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=/tmp/kernel LD=/usr/bin/ld.bfd CROSS_COMPILE="" driver
+make KERNELDIR=/tmp/kernel LD=/usr/bin/ld.bfd CROSS_COMPILE="" driver
 strip -g {{ .ModuleFullPath }}
 # Print results
 modinfo {{ .ModuleFullPath }}

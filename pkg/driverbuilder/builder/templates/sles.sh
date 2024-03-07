@@ -50,7 +50,7 @@ mkdir -p build && cd build
 
 {{ if .BuildModule }}
 # Build the module
-make CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=$sourcedir driver
+make KERNELDIR=$sourcedir driver
 strip -g {{ .ModuleFullPath }}
 # Print results
 modinfo {{ .ModuleFullPath }}

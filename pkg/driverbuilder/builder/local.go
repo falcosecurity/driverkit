@@ -43,6 +43,7 @@ type localTemplateData struct {
 	DownloadSrc   bool
 	DriverVersion string
 	KernelRelease string
+	GCCPath       string
 }
 
 func (l *LocalBuilder) TemplateData(c Config, kr kernelrelease.KernelRelease, _ []string) interface{} {
@@ -54,7 +55,6 @@ func (l *LocalBuilder) TemplateData(c Config, kr kernelrelease.KernelRelease, _ 
 			ModuleFullPath:    l.GetModuleFullPath(c, kr),
 			BuildModule:       len(c.ModuleFilePath) > 0,
 			BuildProbe:        len(c.ProbeFilePath) > 0,
-			GCCVersion:        l.GccPath,
 			CmakeCmd: fmt.Sprintf(cmakeCmdFmt,
 				c.DriverName,
 				c.DriverName,
@@ -63,12 +63,14 @@ func (l *LocalBuilder) TemplateData(c Config, kr kernelrelease.KernelRelease, _ 
 				c.DriverVersion,
 				c.DeviceName,
 				c.DeviceName,
+				l.GccPath,
 				c.DriverVersion),
 		},
 		UseDKMS:       l.UseDKMS,
 		DownloadSrc:   len(l.SrcDir) == 0, // if no srcdir is provided, download src!
 		DriverVersion: c.DriverVersion,
 		KernelRelease: c.KernelRelease,
+		GCCPath:       l.GccPath,
 	}
 }
 

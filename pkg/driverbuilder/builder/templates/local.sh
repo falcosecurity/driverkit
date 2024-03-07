@@ -48,7 +48,7 @@ mkdir -p build && cd build
 echo "* Building kmod with DKMS"
 # Build the module using DKMS
 echo "#!/usr/bin/env bash" > "/tmp/falco-dkms-make"
-echo "make CC={{ .GCCVersion }} \$@" >> "/tmp/falco-dkms-make"
+echo "make CC={{ .GCCPath }} \$@" >> "/tmp/falco-dkms-make"
 chmod +x "/tmp/falco-dkms-make"
 dkms install --directive="MAKE='/tmp/falco-dkms-make'" -m "{{ .ModuleDriverName }}" -v "{{ .DriverVersion }}" -k "{{ .KernelRelease }}"
 rm -Rf "/tmp/falco-dkms-make"
@@ -56,10 +56,10 @@ rm -Rf "/tmp/falco-dkms-make"
 echo "* Building kmod"
 {{ if .DownloadSrc }}
 # Build the module - cmake configured
-make CC={{ .GCCVersion }} driver
+make driver
 {{ else }}
 # Build the module - preconfigured sources
-make CC={{ .GCCVersion }}
+make CC={{ .GCCPath }}
 {{ end }}
 strip -g {{ .ModuleFullPath }}
 # Print results
