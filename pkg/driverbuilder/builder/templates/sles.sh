@@ -41,7 +41,6 @@ do
     rpm2cpio $rpm | cpio --extract --make-directories
 done
 
-ls -alh /tmp/kernel-download/usr/src
 sourcedir="$(find . -type d -name "linux-*-obj" | head -n 1 | xargs readlink -f)/*/default"
 
 cd {{ .DriverBuildDir }}
