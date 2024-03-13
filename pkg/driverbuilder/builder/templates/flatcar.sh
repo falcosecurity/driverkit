@@ -22,37 +22,13 @@
 #
 set -xeuo pipefail
 
-rm -Rf {{ .DriverBuildDir }}
-mkdir {{ .DriverBuildDir }}
-rm -Rf /tmp/module-download
-mkdir -p /tmp/module-download
-
-curl --silent -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
-mv /tmp/module-download/*/* {{ .DriverBuildDir }}
-
-# Fetch the kernel
-mkdir /tmp/kernel-download
-cd /tmp/kernel-download
-curl --silent -SL {{ .KernelDownloadURL }} | tar -Jxf - -C /tmp/kernel-download
-rm -Rf /tmp/kernel
-mkdir -p /tmp/kernel
-mv /tmp/kernel-download/*/* /tmp/kernel
-
-# Prepare the kernel
-cd /tmp/kernel
-cp /driverkit/kernel.config /tmp/kernel.config
-
-sed -i -e 's|^\(EXTRAVERSION =\).*|\1 -flatcar|' Makefile
-make KCONFIG_CONFIG=/tmp/kernel.config oldconfig
-make KCONFIG_CONFIG=/tmp/kernel.config modules_prepare
-
 cd {{ .DriverBuildDir }}
 mkdir -p build && cd build
 {{ .CmakeCmd }}
 
 {{ if .BuildModule }}
 # Build the module
-make CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=/tmp/kernel driver
+make CC=/usr/bin/gcc-{{ .GCCVersion }} driver
 strip -g {{ .ModuleFullPath }}
 # Print results
 modinfo {{ .ModuleFullPath }}
@@ -60,6 +36,6 @@ modinfo {{ .ModuleFullPath }}
 
 {{ if .BuildProbe }}
 # Build the eBPF probe
-make KERNELDIR=/tmp/kernel bpf
+make bpf
 ls -l driver/bpf/probe.o
 {{ end }}

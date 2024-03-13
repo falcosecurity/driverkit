@@ -22,20 +22,14 @@
 #
 set -xeuo pipefail
 
-cd {{ .DriverBuildDir }}
-mkdir -p build && cd build
-{{ .CmakeCmd }}
+# Fetch the kernel
+mkdir /tmp/kernel-download
+cd /tmp/kernel-download
+curl --silent -o kernel-devel.pkg.tar.xz -SL {{ .KernelDownloadURL }}
+tar -xf kernel-devel.pkg.tar.xz
+rm -Rf /tmp/kernel
+mkdir -p /tmp/kernel
+mv usr/lib/modules/*/build/* /tmp/kernel
 
-{{ if .BuildModule }}
-# Build the module
-make CC=/usr/bin/gcc-{{ .GCCVersion }} LD=/usr/bin/ld.bfd CROSS_COMPILE="" driver
-strip -g {{ .ModuleFullPath }}
-# Print results
-modinfo {{ .ModuleFullPath }}
-{{ end }}
-
-{{ if .BuildProbe }}
-# Build the eBPF probe
-make bpf
-ls -l driver/bpf/probe.o
-{{ end }}
+# exit value
+echo /tmp/kernel

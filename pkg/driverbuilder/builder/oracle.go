@@ -22,6 +22,9 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
+//go:embed templates/oracle_kernel.sh
+var oracleKernelTemplate string
+
 //go:embed templates/oracle.sh
 var oracleTemplate string
 
@@ -37,12 +40,15 @@ type oracle struct {
 }
 
 type oracleTemplateData struct {
-	commonTemplateData
 	KernelDownloadURL string
 }
 
 func (c *oracle) Name() string {
 	return TargetTypeoracle.String()
+}
+
+func (c *oracle) TemplateKernelUrlsScript() string {
+	return oracleKernelTemplate
 }
 
 func (c *oracle) TemplateScript() string {
@@ -119,9 +125,8 @@ func (c *oracle) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return urls, nil
 }
 
-func (c *oracle) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (c *oracle) KernelTemplateData(_ kernelrelease.KernelRelease, urls []string) interface{} {
 	return oracleTemplateData{
-		commonTemplateData: cfg.toTemplateData(c, kr),
-		KernelDownloadURL:  urls[0],
+		KernelDownloadURL: urls[0],
 	}
 }

@@ -20,6 +20,9 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
+//go:embed templates/sles_kernel.sh
+var slesKernelTemplate string
+
 //go:embed templates/sles.sh
 var slesTemplate string
 
@@ -35,7 +38,6 @@ func init() {
 }
 
 type slesTemplateData struct {
-	commonTemplateData
 	KernelPackage string
 }
 
@@ -43,11 +45,15 @@ func (v *sles) Name() string {
 	return TargetTypeSLES.String()
 }
 
+func (v *sles) TemplateKernelUrlsScript() string {
+	return slesKernelTemplate
+}
+
 func (v *sles) TemplateScript() string {
 	return slesTemplate
 }
 
-func (v *sles) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
+func (v *sles) URLs(_ kernelrelease.KernelRelease) ([]string, error) {
 	return nil, nil
 }
 
@@ -56,10 +62,9 @@ func (v *sles) MinimumURLs() int {
 	return 0
 }
 
-func (v *sles) TemplateData(c Config, kr kernelrelease.KernelRelease, _ []string) interface{} {
+func (v *sles) KernelTemplateData(kr kernelrelease.KernelRelease, _ []string) interface{} {
 	return slesTemplateData{
-		commonTemplateData: c.toTemplateData(v, kr),
-		KernelPackage:      kr.Fullversion + kr.FullExtraversion,
+		KernelPackage: kr.Fullversion + kr.FullExtraversion,
 	}
 }
 

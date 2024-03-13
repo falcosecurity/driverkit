@@ -96,6 +96,16 @@ func (bp *KubernetesBuildProcessor) buildModule(b *builder.Build) error {
 
 	c := b.ToConfig()
 
+	libsDownloadScript, err := builder.LibsDownloadScript(c)
+	if err != nil {
+		return err
+	}
+
+	kernelDownloadScript, err := builder.KernelDownloadScript(v, c, kr)
+	if err != nil {
+		return err
+	}
+
 	// generate the build script from the builder
 	res, err := builder.Script(v, c, kr)
 	if err != nil {
@@ -117,7 +127,8 @@ func (bp *KubernetesBuildProcessor) buildModule(b *builder.Build) error {
 
 	buildCmd := []string{
 		"/bin/bash",
-		"/driverkit/driverkit.sh",
+		"-l",
+		"/driverkit/download-libs.sh && KERNELDIR=$(/driverkit/download-headers.sh) /driverkit/driverkit.sh",
 	}
 
 	commonMeta := metav1.ObjectMeta{
@@ -136,10 +147,12 @@ func (bp *KubernetesBuildProcessor) buildModule(b *builder.Build) error {
 	cm := &corev1.ConfigMap{
 		ObjectMeta: commonMeta,
 		Data: map[string]string{
-			"driverkit.sh":  res,
-			"kernel.config": string(configDecoded),
-			"downloader.sh": waitForLockAndCat,
-			"unlock.sh":     deleteLock,
+			"download-libs.sh":    libsDownloadScript,
+			"download-headers.sh": kernelDownloadScript,
+			"driverkit.sh":        res,
+			"kernel.config":       string(configDecoded),
+			"downloader.sh":       waitForLockAndCat,
+			"unlock.sh":           deleteLock,
 		},
 	}
 	// Construct environment variable array of corev1.EnvVar

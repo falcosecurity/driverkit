@@ -21,6 +21,9 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
+//go:embed templates/alinux_kernel.sh
+var alinuxKernelTemplate string
+
 //go:embed templates/alinux.sh
 var alinuxTemplate string
 
@@ -32,7 +35,6 @@ func init() {
 }
 
 type alinuxTemplateData struct {
-	commonTemplateData
 	KernelDownloadURL string
 }
 
@@ -43,6 +45,10 @@ func (c *alinux) Name() string {
 	return TargetTypeAlinux.String()
 }
 
+func (c *alinux) TemplateKernelUrlsScript() string {
+	return alinuxKernelTemplate
+}
+
 func (c *alinux) TemplateScript() string {
 	return alinuxTemplate
 }
@@ -51,10 +57,9 @@ func (c *alinux) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchAlinuxKernelURLS(kr), nil
 }
 
-func (c *alinux) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (c *alinux) KernelTemplateData(_ kernelrelease.KernelRelease, urls []string) interface{} {
 	return alinuxTemplateData{
-		commonTemplateData: cfg.toTemplateData(c, kr),
-		KernelDownloadURL:  urls[0],
+		KernelDownloadURL: urls[0],
 	}
 }
 

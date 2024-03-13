@@ -20,6 +20,9 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
+//go:embed templates/redhat_kernel.sh
+var redhatKernelTemplate string
+
 //go:embed templates/redhat.sh
 var redhatTemplate string
 
@@ -35,7 +38,6 @@ func init() {
 }
 
 type redhatTemplateData struct {
-	commonTemplateData
 	KernelPackage string
 }
 
@@ -43,11 +45,15 @@ func (v *redhat) Name() string {
 	return TargetTypeRedhat.String()
 }
 
+func (v *redhat) TemplateKernelUrlsScript() string {
+	return redhatKernelTemplate
+}
+
 func (v *redhat) TemplateScript() string {
 	return redhatTemplate
 }
 
-func (v *redhat) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
+func (v *redhat) URLs(_ kernelrelease.KernelRelease) ([]string, error) {
 	return nil, nil
 }
 
@@ -56,9 +62,8 @@ func (v *redhat) MinimumURLs() int {
 	return 0
 }
 
-func (v *redhat) TemplateData(c Config, kr kernelrelease.KernelRelease, _ []string) interface{} {
+func (v *redhat) KernelTemplateData(kr kernelrelease.KernelRelease, _ []string) interface{} {
 	return redhatTemplateData{
-		commonTemplateData: c.toTemplateData(v, kr),
-		KernelPackage:      kr.Fullversion + kr.FullExtraversion,
+		KernelPackage: kr.Fullversion + kr.FullExtraversion,
 	}
 }

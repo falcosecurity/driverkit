@@ -16,6 +16,7 @@ package builder
 
 import (
 	"bytes"
+	_ "embed"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -51,6 +52,9 @@ const (
   sed -i s/'DRIVER_COMMIT ""'/'DRIVER_COMMIT "%s"'/g driver/src/driver_config.h`
 )
 
+//go:embed templates/libs_download.sh
+var libsDownloadTemplate string
+
 var HeadersNotFoundErr = errors.New("kernel headers not found")
 
 // Config contains all the configurations needed to build the kernel module or the eBPF probe.
@@ -70,33 +74,67 @@ func (c Config) ToProbeFullPath() string {
 }
 
 type commonTemplateData struct {
-	DriverBuildDir    string
-	ModuleDownloadURL string
-	ModuleDriverName  string
-	ModuleFullPath    string
-	BuildModule       bool
-	BuildProbe        bool
-	GCCVersion        string
-	CmakeCmd          string
+	DriverBuildDir   string
+	ModuleDriverName string
+	ModuleFullPath   string
+	BuildModule      bool
+	BuildProbe       bool
+	GCCVersion       string
+	CmakeCmd         string
 }
 
 // Builder represents a builder capable of generating a script for a driverkit target.
 type Builder interface {
 	Name() string
+	TemplateKernelUrlsScript() string
 	TemplateScript() string
 	URLs(kr kernelrelease.KernelRelease) ([]string, error)
-	TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} // error return type is managed
+	KernelTemplateData(kr kernelrelease.KernelRelease, urls []string) interface{} // error return type is managed
 }
 
-// MinimumURLsBuilder is an optional interface
+// MinimumURLsBuilder is an optional interface implemented by builders
 // to specify minimum number of requested headers urls
 type MinimumURLsBuilder interface {
 	MinimumURLs() int
 }
 
-func Script(b Builder, c Config, kr kernelrelease.KernelRelease) (string, error) {
-	t := template.New(b.Name())
-	parsed, err := t.Parse(b.TemplateScript())
+// TemplateDataSpecifier is an optional interface implemented by builders
+// to specify a custom template data instead of the default one.
+type TemplateDataSpecifier interface {
+	TemplateData(c Config, kr kernelrelease.KernelRelease) interface{}
+}
+
+type libsDownloadTemplateData struct {
+	DriverBuildDir    string
+	ModuleDownloadURL string
+}
+
+// LibsDownloadScript returns the script that downloads and configures libs repo at requested commit/tag
+func LibsDownloadScript(c Config) (string, error) {
+	t := template.New("download-libs")
+	parsed, err := t.Parse(libsDownloadTemplate)
+	if err != nil {
+		return "", err
+	}
+
+	td := libsDownloadTemplateData{
+		DriverBuildDir:    DriverDirectory,
+		ModuleDownloadURL: fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.DriverVersion),
+	}
+
+	buf := bytes.NewBuffer(nil)
+	err = parsed.Execute(buf, td)
+	if err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
+}
+
+// KernelDownloadScript returns the script that will download and extract kernel headers
+func KernelDownloadScript(b Builder, c Config, kr kernelrelease.KernelRelease) (string, error) {
+	t := template.New("download-kernel")
+	parsed, err := t.Parse(b.TemplateKernelUrlsScript())
 	if err != nil {
 		return "", err
 	}
@@ -129,7 +167,7 @@ func Script(b Builder, c Config, kr kernelrelease.KernelRelease) (string, error)
 		return "", fmt.Errorf("not enough headers packages found; expected %d, found %d", minimumURLs, len(urls))
 	}
 
-	td := b.TemplateData(c, kr, urls)
+	td := b.KernelTemplateData(kr, urls)
 	if tdErr, ok := td.(error); ok {
 		return "", tdErr
 	}
@@ -139,6 +177,31 @@ func Script(b Builder, c Config, kr kernelrelease.KernelRelease) (string, error)
 	if err != nil {
 		return "", err
 	}
+
+	return buf.String(), nil
+}
+
+// Script retrieves the actually drivers building script
+func Script(b Builder, c Config, kr kernelrelease.KernelRelease) (string, error) {
+	t := template.New(b.Name())
+	parsed, err := t.Parse(b.TemplateScript())
+	if err != nil {
+		return "", err
+	}
+
+	var td interface{}
+	if bb, ok := b.(TemplateDataSpecifier); ok {
+		td = bb.TemplateData(c, kr)
+	} else {
+		td = c.toTemplateData(b, kr)
+	}
+
+	buf := bytes.NewBuffer(nil)
+	err = parsed.Execute(buf, td)
+	if err != nil {
+		return "", err
+	}
+
 	return buf.String(), nil
 }
 
@@ -305,13 +368,12 @@ func Targets() []string {
 func (c Config) toTemplateData(b Builder, kr kernelrelease.KernelRelease) commonTemplateData {
 	c.setGCCVersion(b, kr)
 	return commonTemplateData{
-		DriverBuildDir:    DriverDirectory,
-		ModuleDownloadURL: fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.DriverVersion),
-		ModuleDriverName:  c.DriverName,
-		ModuleFullPath:    c.ToDriverFullPath(),
-		BuildModule:       len(c.ModuleFilePath) > 0,
-		BuildProbe:        len(c.ProbeFilePath) > 0,
-		GCCVersion:        c.GCCVersion,
+		DriverBuildDir:   DriverDirectory,
+		ModuleDriverName: c.DriverName,
+		ModuleFullPath:   c.ToDriverFullPath(),
+		BuildModule:      len(c.ModuleFilePath) > 0,
+		BuildProbe:       len(c.ProbeFilePath) > 0,
+		GCCVersion:       c.GCCVersion,
 		CmakeCmd: fmt.Sprintf(cmakeCmdFmt,
 			c.DriverName,
 			c.DriverName,

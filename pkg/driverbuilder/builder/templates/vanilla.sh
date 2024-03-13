@@ -22,38 +22,6 @@
 #
 set -xeuo pipefail
 
-rm -Rf {{ .DriverBuildDir }}
-mkdir {{ .DriverBuildDir }}
-rm -Rf /tmp/module-download
-mkdir -p /tmp/module-download
-
-curl --silent -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
-mv /tmp/module-download/*/* {{ .DriverBuildDir }}
-
-# Fetch the kernel
-cd /tmp
-mkdir /tmp/kernel-download
-{{ if .IsTarGz }}
-curl --silent -SL {{ .KernelDownloadURL }} | tar -zxf - -C /tmp/kernel-download
-{{ else }}
-curl --silent -SL {{ .KernelDownloadURL }} | tar -Jxf - -C /tmp/kernel-download
-{{ end }}
-rm -Rf /tmp/kernel
-mkdir -p /tmp/kernel
-mv /tmp/kernel-download/*/* /tmp/kernel
-
-# Prepare the kernel
-cd /tmp/kernel
-cp /driverkit/kernel.config /tmp/kernel.config
-
-{{ if .KernelLocalVersion}}
-sed -i 's/^CONFIG_LOCALVERSION=.*$/CONFIG_LOCALVERSION="{{ .KernelLocalVersion }}"/' /tmp/kernel.config
-{{ end }}
-
-make KCONFIG_CONFIG=/tmp/kernel.config oldconfig
-make KCONFIG_CONFIG=/tmp/kernel.config prepare
-make KCONFIG_CONFIG=/tmp/kernel.config modules_prepare
-
 export KBUILD_MODPOST_WARN=1
 
 cd {{ .DriverBuildDir }}
@@ -62,7 +30,7 @@ mkdir -p build && cd build
 
 {{ if .BuildModule }}
 # Build the module
-make CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=/tmp/kernel driver
+make CC=/usr/bin/gcc-{{ .GCCVersion }} driver
 strip -g {{ .ModuleFullPath }}
 # Print results
 modinfo {{ .ModuleFullPath }}
@@ -70,6 +38,6 @@ modinfo {{ .ModuleFullPath }}
 
 {{ if .BuildProbe }}
 # Build the eBPF probe
-make KERNELDIR=/tmp/kernel bpf
+make bpf
 ls -l driver/bpf/probe.o
 {{ end }}

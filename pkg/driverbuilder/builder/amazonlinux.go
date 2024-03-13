@@ -35,6 +35,9 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
+//go:embed templates/amazonlinux_kernel.sh
+var amazonlinuxKernelTemplate string
+
 //go:embed templates/amazonlinux.sh
 var amazonlinuxTemplate string
 
@@ -80,13 +83,14 @@ func init() {
 }
 
 type amazonlinuxTemplateData struct {
-	commonTemplateData
 	KernelDownloadURLs []string
 }
 
 func (a *amazonlinux) Name() string {
 	return TargetTypeAmazonLinux.String()
 }
+
+func (a *amazonlinux) TemplateKernelUrlsScript() string { return amazonlinuxKernelTemplate }
 
 func (a *amazonlinux) TemplateScript() string {
 	return amazonlinuxTemplate
@@ -96,9 +100,8 @@ func (a *amazonlinux) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchAmazonLinuxPackagesURLs(a, kr)
 }
 
-func (a *amazonlinux) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (a *amazonlinux) KernelTemplateData(_ kernelrelease.KernelRelease, urls []string) interface{} {
 	return amazonlinuxTemplateData{
-		commonTemplateData: c.toTemplateData(a, kr),
 		KernelDownloadURLs: urls,
 	}
 }

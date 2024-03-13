@@ -22,6 +22,9 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
+//go:embed templates/opensuse_kernel.sh
+var opensuseKernelTemplate string
+
 //go:embed templates/opensuse.sh
 var opensuseTemplate string
 
@@ -44,7 +47,7 @@ var baseURLs []string = []string{
 }
 
 // all known releases - will need to expand as more are added
-var releases []string = []string{
+var releases = []string{
 	// openSUSE leap
 	"43.2",
 	"15.0",
@@ -69,7 +72,6 @@ type opensuse struct {
 }
 
 type opensuseTemplateData struct {
-	commonTemplateData
 	KernelDownloadURLs []string
 }
 
@@ -79,6 +81,10 @@ func (o *opensuse) MinimumURLs() int {
 
 func (o *opensuse) Name() string {
 	return TargetTypeOpenSUSE.String()
+}
+
+func (o *opensuse) TemplateKernelUrlsScript() string {
+	return opensuseKernelTemplate
 }
 
 func (o *opensuse) TemplateScript() string {
@@ -259,9 +265,8 @@ func validateURLs(urls []string, kernelDefaultDevelPattern string, kernelDevelNo
 
 }
 
-func (o *opensuse) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (o *opensuse) KernelTemplateData(_ kernelrelease.KernelRelease, urls []string) interface{} {
 	return opensuseTemplateData{
-		commonTemplateData: cfg.toTemplateData(o, kr),
 		KernelDownloadURLs: urls,
 	}
 }

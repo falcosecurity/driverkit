@@ -20,18 +20,7 @@
 # looking for it in a bunch of ways. Convenient when running Falco inside
 # a container or in other weird environments.
 #
-set -xeuo pipefail
-
-{{ if .DownloadSrc }}
-echo "* Downloading driver sources"
-rm -Rf {{ .DriverBuildDir }}
-mkdir {{ .DriverBuildDir }}
-rm -Rf /tmp/module-download
-mkdir -p /tmp/module-download
-
-curl --silent -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
-mv /tmp/module-download/*/* {{ .DriverBuildDir }}
-{{ end }}
+set -xeo pipefail
 
 {{ if or .BuildProbe (and  .BuildModule (not .UseDKMS)) }}
 cd {{ .DriverBuildDir }}
@@ -50,7 +39,11 @@ echo "* Building kmod with DKMS"
 echo "#!/usr/bin/env bash" > "/tmp/falco-dkms-make"
 echo "make CC={{ .GCCVersion }} \$@" >> "/tmp/falco-dkms-make"
 chmod +x "/tmp/falco-dkms-make"
-dkms install --directive="MAKE='/tmp/falco-dkms-make'" -m "{{ .ModuleDriverName }}" -v "{{ .DriverVersion }}" -k "{{ .KernelRelease }}"
+if [[ -n "${KERNELDIR}" ]]; then
+  dkms install --kernelsourcedir ${KERNELDIR} --directive="MAKE='/tmp/falco-dkms-make'" -m "{{ .ModuleDriverName }}" -v "{{ .DriverVersion }}" -k "{{ .KernelRelease }}"
+else
+  dkms install --directive="MAKE='/tmp/falco-dkms-make'" -m "{{ .ModuleDriverName }}" -v "{{ .DriverVersion }}" -k "{{ .KernelRelease }}"
+fi
 rm -Rf "/tmp/falco-dkms-make"
 {{ else }}
 echo "* Building kmod"
@@ -86,5 +79,3 @@ make
 ls -l probe.o
 {{ end }}
 {{ end }}
-
-rm -Rf /tmp/module-download

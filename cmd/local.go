@@ -72,7 +72,7 @@ func NewLocalCmd(rootCommand *RootCmd, rootOpts *RootOptions, rootFlags *pflag.F
 	})
 	flagSet.BoolVar(&opts.useDKMS, "dkms", false, "Enforce usage of DKMS to build the kernel module.")
 	flagSet.StringVar(&opts.srcDir, "src-dir", "", "Enforce usage of local source dir to build drivers.")
-	flagSet.StringToStringVar(&opts.envMap, "env", nil, "Env variables to be enforced during the driver build.")
+	flagSet.StringToStringVar(&opts.envMap, "env", make(map[string]string), "Env variables to be enforced during the driver build.")
 	localCmd.PersistentFlags().AddFlagSet(flagSet)
 	return localCmd
 }

@@ -22,6 +22,9 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
+//go:embed templates/vanilla_kernel.sh
+var vanillaKernelTemplate string
+
 //go:embed templates/vanilla.sh
 var vanillaTemplate string
 
@@ -37,7 +40,6 @@ func init() {
 }
 
 type vanillaTemplateData struct {
-	commonTemplateData
 	KernelDownloadURL  string
 	KernelLocalVersion string
 	IsTarGz            bool
@@ -45,6 +47,10 @@ type vanillaTemplateData struct {
 
 func (v *vanilla) Name() string {
 	return TargetTypeVanilla.String()
+}
+
+func (v *vanilla) TemplateKernelUrlsScript() string {
+	return vanillaKernelTemplate
 }
 
 func (v *vanilla) TemplateScript() string {
@@ -55,9 +61,8 @@ func (v *vanilla) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return []string{fetchVanillaKernelURLFromKernelVersion(kr)}, nil
 }
 
-func (v *vanilla) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (v *vanilla) KernelTemplateData(kr kernelrelease.KernelRelease, urls []string) interface{} {
 	return vanillaTemplateData{
-		commonTemplateData: c.toTemplateData(v, kr),
 		KernelDownloadURL:  urls[0],
 		KernelLocalVersion: kr.FullExtraversion,
 		IsTarGz:            strings.HasSuffix(urls[0], ".tar.gz"), // Since RC have a tar.gz format, we need to inform the build script

@@ -22,6 +22,9 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
+//go:embed templates/fedora_kernel.sh
+var fedoraKernelTemplate string
+
 //go:embed templates/fedora.sh
 var fedoraTemplate string
 
@@ -37,13 +40,14 @@ type fedora struct {
 }
 
 type fedoraTemplateData struct {
-	commonTemplateData
 	KernelDownloadURL string
 }
 
 func (c *fedora) Name() string {
 	return TargetTypeFedora.String()
 }
+
+func (c *fedora) TemplateKernelUrlsScript() string { return fedoraKernelTemplate }
 
 func (c *fedora) TemplateScript() string {
 	return fedoraTemplate
@@ -87,9 +91,8 @@ func (c *fedora) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return urls, nil
 }
 
-func (c *fedora) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (c *fedora) KernelTemplateData(_ kernelrelease.KernelRelease, urls []string) interface{} {
 	return fedoraTemplateData{
-		commonTemplateData: cfg.toTemplateData(c, kr),
-		KernelDownloadURL:  urls[0],
+		KernelDownloadURL: urls[0],
 	}
 }

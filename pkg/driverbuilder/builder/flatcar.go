@@ -25,6 +25,9 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
+//go:embed templates/flatcar_kernel.sh
+var flatcarKernelTemplate string
+
 //go:embed templates/flatcar.sh
 var flatcarTemplate string
 
@@ -36,7 +39,6 @@ func init() {
 }
 
 type flatcarTemplateData struct {
-	commonTemplateData
 	KernelDownloadURL string
 }
 
@@ -47,6 +49,10 @@ type flatcar struct {
 
 func (f *flatcar) Name() string {
 	return TargetTypeFlatcar.String()
+}
+
+func (f *flatcar) TemplateKernelUrlsScript() string {
+	return flatcarKernelTemplate
 }
 
 func (f *flatcar) TemplateScript() string {
@@ -60,7 +66,7 @@ func (f *flatcar) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchFlatcarKernelURLS(f.info.KernelVersion), nil
 }
 
-func (f *flatcar) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (f *flatcar) KernelTemplateData(kr kernelrelease.KernelRelease, urls []string) interface{} {
 	// This happens when `kernelurls` option is passed,
 	// therefore URLs() method is not called.
 	if f.info == nil {
@@ -70,8 +76,7 @@ func (f *flatcar) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []
 	}
 
 	return flatcarTemplateData{
-		commonTemplateData: c.toTemplateData(f, kr),
-		KernelDownloadURL:  urls[0],
+		KernelDownloadURL: urls[0],
 	}
 }
 

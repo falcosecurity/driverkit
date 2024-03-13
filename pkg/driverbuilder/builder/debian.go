@@ -25,6 +25,9 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
+//go:embed templates/debian_kernel.sh
+var debianKernelTemplate string
+
 //go:embed templates/debian.sh
 var debianTemplate string
 
@@ -42,7 +45,6 @@ func init() {
 }
 
 type debianTemplateData struct {
-	commonTemplateData
 	KernelDownloadURLS   []string
 	KernelLocalVersion   string
 	KernelHeadersPattern string
@@ -56,6 +58,8 @@ func (v *debian) Name() string {
 	return TargetTypeDebian.String()
 }
 
+func (v *debian) TemplateKernelUrlsScript() string { return debianKernelTemplate }
+
 func (v *debian) TemplateScript() string {
 	return debianTemplate
 }
@@ -64,7 +68,7 @@ func (v *debian) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchDebianKernelURLs(kr)
 }
 
-func (v *debian) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (v *debian) KernelTemplateData(kr kernelrelease.KernelRelease, urls []string) interface{} {
 	var KernelHeadersPattern string
 	if strings.HasSuffix(kr.Extraversion, "pve") {
 		KernelHeadersPattern = "linux-headers-*pve"
@@ -75,7 +79,6 @@ func (v *debian) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []s
 	}
 
 	return debianTemplateData{
-		commonTemplateData:   c.toTemplateData(v, kr),
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
 		KernelHeadersPattern: KernelHeadersPattern,

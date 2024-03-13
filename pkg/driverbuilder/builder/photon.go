@@ -24,6 +24,9 @@ import (
 // TargetTypePhoton identifies the Photon target.
 const TargetTypePhoton Type = "photon"
 
+//go:embed templates/photonos_kernel.sh
+var photonKernelTemplate string
+
 //go:embed templates/photonos.sh
 var photonTemplate string
 
@@ -36,12 +39,15 @@ type photon struct {
 }
 
 type photonTemplateData struct {
-	commonTemplateData
 	KernelDownloadURL string
 }
 
 func (p *photon) Name() string {
 	return TargetTypePhoton.String()
+}
+
+func (p *photon) TemplateKernelUrlsScript() string {
+	return photonKernelTemplate
 }
 
 func (p *photon) TemplateScript() string {
@@ -52,10 +58,9 @@ func (p *photon) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchPhotonKernelURLS(kr), nil
 }
 
-func (p *photon) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (p *photon) KernelTemplateData(_ kernelrelease.KernelRelease, urls []string) interface{} {
 	return photonTemplateData{
-		commonTemplateData: cfg.toTemplateData(p, kr),
-		KernelDownloadURL:  urls[0],
+		KernelDownloadURL: urls[0],
 	}
 }
 

@@ -22,23 +22,6 @@
 #
 set -xeuo pipefail
 
-rm -Rf {{ .DriverBuildDir }}
-mkdir {{ .DriverBuildDir }}
-rm -Rf /tmp/module-download
-mkdir -p /tmp/module-download
-
-curl --silent -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
-mv /tmp/module-download/*/* {{ .DriverBuildDir }}
-
-# Fetch the kernel
-mkdir /tmp/kernel-download
-cd /tmp/kernel-download
-curl --silent -o kernel-devel.rpm -SL {{ .KernelDownloadURL }}
-rpm2cpio kernel-devel.rpm | cpio --extract --make-directories
-rm -Rf /tmp/kernel
-mkdir -p /tmp/kernel
-mv usr/src/kernels/*/* /tmp/kernel
-
 cd {{ .DriverBuildDir }}
 sed -i 's/$(MAKE) -C $(KERNELDIR)/$(MAKE) KCFLAGS="-Wno-incompatible-pointer-types" -C $(KERNELDIR)/g' driver/Makefile.in
 mkdir -p build && cd build
@@ -46,7 +29,7 @@ mkdir -p build && cd build
 
 {{ if .BuildModule }}
 # Build the module
-make CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=/tmp/kernel driver
+make CC=/usr/bin/gcc-{{ .GCCVersion }} driver
 strip -g {{ .ModuleFullPath }}
 # Print results
 modinfo {{ .ModuleFullPath }}
@@ -54,6 +37,6 @@ modinfo {{ .ModuleFullPath }}
 
 {{ if .BuildProbe }}
 # Build the eBPF probe
-make KERNELDIR=/tmp/kernel bpf
+make bpf
 ls -l driver/bpf/probe.o
 {{ end }}
