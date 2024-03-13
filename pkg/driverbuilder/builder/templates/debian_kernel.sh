@@ -30,8 +30,12 @@ curl --silent -o kernel.deb -SL {{ $url }}
 ar x kernel.deb
 tar -xf data.tar.xz
 {{ end }}
+
 cd usr/src/
 sourcedir=$(find . -type d -name "{{ .KernelHeadersPattern }}" | head -n 1 | xargs readlink -f)
+
+# Patch makefile to avoid using absolute `/usr/src` path; instead use `..` relative one.
+sed -i 's/\/usr\/src/../g' $sourcedir/Makefile
 
 # exit value
 echo $sourcedir
