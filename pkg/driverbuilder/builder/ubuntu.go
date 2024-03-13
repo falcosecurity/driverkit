@@ -23,6 +23,9 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
+//go:embed templates/ubuntu_kernel.sh
+var ubuntuKernelTemplate string
+
 //go:embed templates/ubuntu.sh
 var ubuntuTemplate string
 
@@ -34,7 +37,6 @@ const TargetTypeUbuntu Type = "ubuntu"
 const ubuntuRequiredURLs = 2
 
 type ubuntuTemplateData struct {
-	commonTemplateData
 	KernelDownloadURLS   []string
 	KernelLocalVersion   string
 	KernelHeadersPattern string
@@ -51,6 +53,10 @@ func (v *ubuntu) Name() string {
 	return TargetTypeUbuntu.String()
 }
 
+func (v *ubuntu) TemplateKernelUrlsScript() string {
+	return ubuntuKernelTemplate
+}
+
 func (v *ubuntu) TemplateScript() string {
 	return ubuntuTemplate
 }
@@ -63,7 +69,7 @@ func (v *ubuntu) MinimumURLs() int {
 	return ubuntuRequiredURLs
 }
 
-func (v *ubuntu) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (v *ubuntu) KernelTemplateData(kr kernelrelease.KernelRelease, urls []string) interface{} {
 	// parse the flavor out of the kernelrelease extraversion
 	_, flavor := parseUbuntuExtraVersion(kr.Extraversion)
 
@@ -79,7 +85,6 @@ func (v *ubuntu) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []s
 	}
 
 	return ubuntuTemplateData{
-		commonTemplateData:   c.toTemplateData(v, kr),
 		KernelDownloadURLS:   urls,
 		KernelLocalVersion:   kr.FullExtraversion,
 		KernelHeadersPattern: headersPattern,

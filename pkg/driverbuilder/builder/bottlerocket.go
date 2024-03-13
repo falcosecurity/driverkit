@@ -35,9 +35,8 @@ func (b *bottlerocket) Name() string {
 	return TargetTypeBottlerocket.String()
 }
 
-func (b *bottlerocket) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (b *bottlerocket) KernelTemplateData(kr kernelrelease.KernelRelease, urls []string) interface{} {
 	return vanillaTemplateData{
-		commonTemplateData: c.toTemplateData(b, kr),
 		KernelDownloadURL:  urls[0],
 		KernelLocalVersion: kr.FullExtraversion,
 	}

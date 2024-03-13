@@ -22,20 +22,16 @@
 #
 set -xeuo pipefail
 
-cd {{ .DriverBuildDir }}
-mkdir -p build && cd build
-{{ .CmakeCmd }}
+# Fetch the kernel
+mkdir /tmp/kernel-download
+cd /tmp/kernel-download
+{{range $url := .KernelDownloadURLs}}
+curl --silent -o kernel-devel.rpm -SL {{ $url }}
+# cpio will warn *extremely verbose* when trying to duplicate over the same directory - redirect stderr to null
+rpm2cpio kernel-devel.rpm | cpio --quiet --extract --make-directories 2> /dev/null
+{{end}}
+cd /tmp/kernel-download/usr/src
+sourcedir="$(find . -type d -name "linux-*-obj" | head -n 1 | xargs readlink -f)/*/default"
 
-{{ if .BuildModule }}
-# Build the module
-make CC=/usr/bin/gcc-{{ .GCCVersion }} LD=/usr/bin/ld.bfd CROSS_COMPILE="" driver
-strip -g {{ .ModuleFullPath }}
-# Print results
-modinfo {{ .ModuleFullPath }}
-{{ end }}
-
-{{ if .BuildProbe }}
-# Build the eBPF probe
-make bpf
-ls -l driver/bpf/probe.o
-{{ end }}
+# exit value
+echo $sourcedir

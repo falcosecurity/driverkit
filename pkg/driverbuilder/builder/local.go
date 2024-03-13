@@ -24,6 +24,10 @@ func (l *LocalBuilder) Name() string {
 	return "local"
 }
 
+func (l *LocalBuilder) TemplateKernelUrlsScript() string {
+	panic("cannot be called on local builder")
+}
+
 func (l *LocalBuilder) TemplateScript() string {
 	return localTemplate
 }
@@ -45,16 +49,19 @@ type localTemplateData struct {
 	KernelRelease string
 }
 
-func (l *LocalBuilder) TemplateData(c Config, kr kernelrelease.KernelRelease, _ []string) interface{} {
+func (l *LocalBuilder) KernelTemplateData(_ kernelrelease.KernelRelease, _ []string) interface{} {
+	panic("cannot be called on local builder")
+}
+
+func (l *LocalBuilder) TemplateData(c Config, kr kernelrelease.KernelRelease) interface{} {
 	return localTemplateData{
 		commonTemplateData: commonTemplateData{
-			DriverBuildDir:    l.GetDriverBuildDir(),
-			ModuleDownloadURL: fmt.Sprintf("%s/%s.tar.gz", c.DownloadBaseURL, c.DriverVersion),
-			ModuleDriverName:  c.DriverName,
-			ModuleFullPath:    l.GetModuleFullPath(c, kr),
-			BuildModule:       len(c.ModuleFilePath) > 0,
-			BuildProbe:        len(c.ProbeFilePath) > 0,
-			GCCVersion:        l.GccPath,
+			DriverBuildDir:   l.GetDriverBuildDir(),
+			ModuleDriverName: c.DriverName,
+			ModuleFullPath:   l.GetModuleFullPath(c, kr),
+			BuildModule:      len(c.ModuleFilePath) > 0,
+			BuildProbe:       len(c.ProbeFilePath) > 0,
+			GCCVersion:       l.GccPath,
 			CmakeCmd: fmt.Sprintf(cmakeCmdFmt,
 				c.DriverName,
 				c.DriverName,

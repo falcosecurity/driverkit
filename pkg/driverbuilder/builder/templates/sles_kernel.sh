@@ -22,20 +22,17 @@
 #
 set -xeuo pipefail
 
-cd {{ .DriverBuildDir }}
-mkdir -p build && cd build
-{{ .CmakeCmd }}
+# Fetch the kernel
+rm -Rf /tmp/kernel-download
+mkdir /tmp/kernel-download
+cd /tmp/kernel-download
+zypper --non-interactive install --download-only kernel-default-devel={{ .KernelPackage }} kernel-devel={{ .KernelPackage }}
+mv -v $(find /var/cache/zypp/packages -name kernel*.rpm) /tmp/kernel-download
+for rpm in /tmp/kernel-download/*.rpm
+do
+    rpm2cpio $rpm | cpio --extract --make-directories
+done
+sourcedir="$(find . -type d -name "linux-*-obj" | head -n 1 | xargs readlink -f)/*/default"
 
-{{ if .BuildModule }}
-# Build the module
-make CC=/usr/bin/gcc-{{ .GCCVersion }} LD=/usr/bin/ld.bfd CROSS_COMPILE="" driver
-strip -g {{ .ModuleFullPath }}
-# Print results
-modinfo {{ .ModuleFullPath }}
-{{ end }}
-
-{{ if .BuildProbe }}
-# Build the eBPF probe
-make bpf
-ls -l driver/bpf/probe.o
-{{ end }}
+# exit value
+echo $sourcedir

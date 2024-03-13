@@ -22,6 +22,9 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
+//go:embed templates/centos_kernel.sh
+var centosKernelTemplate string
+
 //go:embed templates/centos.sh
 var centosTemplate string
 
@@ -37,13 +40,14 @@ type centos struct {
 }
 
 type centosTemplateData struct {
-	commonTemplateData
 	KernelDownloadURL string
 }
 
 func (c *centos) Name() string {
 	return TargetTypeCentos.String()
 }
+
+func (c *centos) TemplateKernelUrlsScript() string { return centosKernelTemplate }
 
 func (c *centos) TemplateScript() string {
 	return centosTemplate
@@ -176,10 +180,9 @@ func (c *centos) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return urls, nil
 }
 
-func (c *centos) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (c *centos) KernelTemplateData(_ kernelrelease.KernelRelease, urls []string) interface{} {
 	return centosTemplateData{
-		commonTemplateData: cfg.toTemplateData(c, kr),
-		KernelDownloadURL:  urls[0],
+		KernelDownloadURL: urls[0],
 	}
 }
 

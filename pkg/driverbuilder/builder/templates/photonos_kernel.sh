@@ -22,20 +22,17 @@
 #
 set -xeuo pipefail
 
-cd {{ .DriverBuildDir }}
-mkdir -p build && cd build
-{{ .CmakeCmd }}
+# Fetch the kernel
+mkdir /tmp/kernel-download
+cd /tmp/kernel-download
+curl --silent -o kernel-devel.rpm -SL {{ .KernelDownloadURL }}
+rpm2cpio kernel-devel.rpm | cpio --extract --make-directories
+rm -Rf /tmp/kernel
+mkdir -p /tmp/kernel
+# eg: linux-aws-headers-$kernelrelease
+# eg: linux-headers-$kernelrelease-rt
+# eg: linux-headers-$kernelrelease
+mv usr/src/linux-*headers-*/* /tmp/kernel
 
-{{ if .BuildModule }}
-# Build the module
-make CC=/usr/bin/gcc-{{ .GCCVersion }} LD=/usr/bin/ld.bfd CROSS_COMPILE="" driver
-strip -g {{ .ModuleFullPath }}
-# Print results
-modinfo {{ .ModuleFullPath }}
-{{ end }}
-
-{{ if .BuildProbe }}
-# Build the eBPF probe
-make bpf
-ls -l driver/bpf/probe.o
-{{ end }}
+# exit value
+echo /tmp/kernel

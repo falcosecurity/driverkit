@@ -35,9 +35,8 @@ func (b *talos) Name() string {
 	return TargetTypeTalos.String()
 }
 
-func (b *talos) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (b *talos) KernelTemplateData(kr kernelrelease.KernelRelease, urls []string) interface{} {
 	return vanillaTemplateData{
-		commonTemplateData: c.toTemplateData(b, kr),
 		KernelDownloadURL:  urls[0],
 		KernelLocalVersion: kr.FullExtraversion,
 	}

@@ -22,33 +22,13 @@
 #
 set -xeuo pipefail
 
-rm -Rf {{ .DriverBuildDir }}
-mkdir {{ .DriverBuildDir }}
-rm -Rf /tmp/module-download
-mkdir -p /tmp/module-download
-
-curl --silent -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
-mv /tmp/module-download/*/* {{ .DriverBuildDir }}
-
-# Fetch the kernel
-mkdir /tmp/kernel-download
-cd /tmp/kernel-download
-{{range $url := .KernelDownloadURLS}}
-curl --silent -o kernel.deb -SL {{ $url }}
-ar x kernel.deb
-tar -xf data.tar.*
-{{end}}
-
-cd /tmp/kernel-download/usr/src/
-sourcedir=$(find . -type d -name "{{ .KernelHeadersPattern }}" | head -n 1 | xargs readlink -f)
-
 cd {{ .DriverBuildDir }}
 mkdir -p build && cd build
 {{ .CmakeCmd }}
 
 {{ if .BuildModule }}
 # Build the module
-make CC=/usr/bin/gcc-{{ .GCCVersion }} KERNELDIR=$sourcedir driver
+make CC=/usr/bin/gcc-{{ .GCCVersion }} driver
 strip -g {{ .ModuleFullPath }}
 # Print results
 modinfo {{ .ModuleFullPath }}
@@ -56,6 +36,6 @@ modinfo {{ .ModuleFullPath }}
 
 {{ if .BuildProbe }}
 # Build the eBPF probe
-make KERNELDIR=$sourcedir bpf
+make bpf
 ls -l driver/bpf/probe.o
 {{ end }}

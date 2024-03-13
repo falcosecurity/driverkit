@@ -38,7 +38,7 @@ func (lbp *LocalBuildProcessor) String() string {
 
 func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 	slog.Debug("doing a new local build")
-
+	
 	// We don't want to download headers
 	kr := b.KernelReleaseFromBuildConfig()
 
@@ -86,6 +86,19 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 	// Fetch paths were kmod and probe will be built
 	srcModulePath := vv.GetModuleFullPath(c, kr)
 	srcProbePath := vv.GetProbeFullPath(c)
+
+	if len(lbp.srcDir) == 0 {
+		// Download src!
+		libsDownloadScript, err := builder.LibsDownloadScript(c)
+		if err != nil {
+			return err
+		}
+		_, err = exec.Command("/bin/bash", "-c", libsDownloadScript).CombinedOutput()
+		if err != nil {
+			return err
+		}
+	}
+
 	for _, gcc := range gccs {
 		vv.GccPath = gcc
 
@@ -102,10 +115,12 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 		for key, val := range lbp.envMap {
 			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, val))
 		}
+
 		stdout, err := cmd.StdoutPipe()
+		cmd.Stderr = cmd.Stdout // redirect stderr to stdout so that we catch it
 		if err != nil {
-			slog.Warn("Failed to pipe output. Trying without piping.", "err", err)
-			_, err = cmd.Output()
+			slog.Warn("Failed to pipe stdout. Trying without piping.", "err", err)
+			_, err = cmd.CombinedOutput()
 		} else {
 			defer stdout.Close()
 			err = cmd.Start()

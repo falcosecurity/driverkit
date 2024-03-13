@@ -22,6 +22,9 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
+//go:embed templates/archlinux_kernel.sh
+var archlinuxKernelTemplate string
+
 //go:embed templates/archlinux.sh
 var archlinuxTemplate string
 
@@ -37,13 +40,14 @@ type archlinux struct {
 }
 
 type archlinuxTemplateData struct {
-	commonTemplateData
 	KernelDownloadURL string
 }
 
 func (c *archlinux) Name() string {
 	return TargetTypeArchlinux.String()
 }
+
+func (c *archlinux) TemplateKernelUrlsScript() string { return archlinuxKernelTemplate }
 
 func (c *archlinux) TemplateScript() string {
 	return archlinuxTemplate
@@ -140,9 +144,8 @@ func (c *archlinux) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return urls, nil
 }
 
-func (c *archlinux) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (c *archlinux) KernelTemplateData(_ kernelrelease.KernelRelease, urls []string) interface{} {
 	return archlinuxTemplateData{
-		commonTemplateData: cfg.toTemplateData(c, kr),
-		KernelDownloadURL:  urls[0],
+		KernelDownloadURL: urls[0],
 	}
 }

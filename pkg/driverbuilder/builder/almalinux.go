@@ -21,6 +21,9 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
+//go:embed templates/almalinux_kernel.sh
+var almaKernelTemplate string
+
 //go:embed templates/almalinux.sh
 var almaTemplate string
 
@@ -32,7 +35,6 @@ func init() {
 }
 
 type almaTemplateData struct {
-	commonTemplateData
 	KernelDownloadURL string
 }
 
@@ -44,6 +46,10 @@ func (c *alma) Name() string {
 	return TargetTypeAlma.String()
 }
 
+func (c *alma) TemplateKernelUrlsScript() string {
+	return almaKernelTemplate
+}
+
 func (c *alma) TemplateScript() string {
 	return almaTemplate
 }
@@ -52,10 +58,9 @@ func (c *alma) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchAlmaKernelURLS(kr), nil
 }
 
-func (c *alma) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (c *alma) KernelTemplateData(_ kernelrelease.KernelRelease, urls []string) interface{} {
 	return almaTemplateData{
-		commonTemplateData: cfg.toTemplateData(c, kr),
-		KernelDownloadURL:  urls[0],
+		KernelDownloadURL: urls[0],
 	}
 }
 

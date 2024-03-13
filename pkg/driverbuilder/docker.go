@@ -140,6 +140,16 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	}
 	c := b.ToConfig()
 
+	libsDownloadScript, err := builder.LibsDownloadScript(c)
+	if err != nil {
+		return err
+	}
+
+	kernelDownloadScript, err := builder.KernelDownloadScript(v, c, kr)
+	if err != nil {
+		return err
+	}
+
 	// Generate the build script from the builder
 	driverkitScript, err := builder.Script(v, c, kr)
 	if err != nil {
@@ -218,13 +228,28 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		}
 	}()
 
-	err = cli.ContainerStart(ctx, cdata.ID, types.ContainerStartOptions{})
+	err = cli.ContainerStart(ctx, cdata.ID, container.StartOptions{})
 	if err != nil {
 		return err
 	}
 
+	runCmd :=
+		`
+#!/bin/bash
+
+chmod +x /driverkit/download-libs.sh
+chmod +x /driverkit/download-headers.sh
+chmod +x /driverkit/driverkit.sh
+
+/driverkit/download-libs.sh
+KERNELDIR=$(/driverkit/download-headers.sh) /driverkit/driverkit.sh
+`
+
 	files := []dockerCopyFile{
+		{"/driverkit/download-libs.sh", libsDownloadScript},
+		{"/driverkit/download-headers.sh", kernelDownloadScript},
 		{"/driverkit/driverkit.sh", driverkitScript},
+		{"/driverkit/cmd.sh", runCmd},
 		{"/driverkit/kernel.config", string(configDecoded)},
 	}
 
@@ -260,7 +285,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		Cmd: []string{
 			"/bin/bash",
 			"-l",
-			"/driverkit/driverkit.sh",
+			"/driverkit/cmd.sh",
 		},
 	})
 

@@ -22,20 +22,12 @@
 #
 set -xeuo pipefail
 
-cd {{ .DriverBuildDir }}
-mkdir -p build && cd build
-{{ .CmakeCmd }}
+rm -Rf {{ .DriverBuildDir }}
+mkdir {{ .DriverBuildDir }}
+rm -Rf /tmp/module-download
+mkdir -p /tmp/module-download
 
-{{ if .BuildModule }}
-# Build the module
-make CC=/usr/bin/gcc-{{ .GCCVersion }} LD=/usr/bin/ld.bfd CROSS_COMPILE="" driver
-strip -g {{ .ModuleFullPath }}
-# Print results
-modinfo {{ .ModuleFullPath }}
-{{ end }}
+curl --silent -SL {{ .ModuleDownloadURL }} | tar -xzf - -C /tmp/module-download
+mv /tmp/module-download/*/* {{ .DriverBuildDir }}
 
-{{ if .BuildProbe }}
-# Build the eBPF probe
-make bpf
-ls -l driver/bpf/probe.o
-{{ end }}
+rm -Rf /tmp/module-download

@@ -36,9 +36,8 @@ func (m *minikube) Name() string {
 	return TargetTypeMinikube.String()
 }
 
-func (m *minikube) TemplateData(c Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (m *minikube) KernelTemplateData(kr kernelrelease.KernelRelease, urls []string) interface{} {
 	return vanillaTemplateData{
-		commonTemplateData: c.toTemplateData(m, kr),
 		KernelDownloadURL:  urls[0],
 		KernelLocalVersion: kr.FullExtraversion,
 	}

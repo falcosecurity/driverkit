@@ -21,6 +21,9 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
+//go:embed templates/rocky_kernel.sh
+var rockyKernelTemplate string
+
 //go:embed templates/rocky.sh
 var rockyTemplate string
 
@@ -32,7 +35,6 @@ func init() {
 }
 
 type rockyTemplateData struct {
-	commonTemplateData
 	KernelDownloadURL string
 }
 
@@ -44,6 +46,10 @@ func (c *rocky) Name() string {
 	return TargetTypeRocky.String()
 }
 
+func (c *rocky) TemplateKernelUrlsScript() string {
+	return rockyKernelTemplate
+}
+
 func (c *rocky) TemplateScript() string {
 	return rockyTemplate
 }
@@ -52,10 +58,9 @@ func (c *rocky) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchRockyKernelURLS(kr), nil
 }
 
-func (c *rocky) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (c *rocky) KernelTemplateData(_ kernelrelease.KernelRelease, urls []string) interface{} {
 	return rockyTemplateData{
-		commonTemplateData: cfg.toTemplateData(c, kr),
-		KernelDownloadURL:  urls[0],
+		KernelDownloadURL: urls[0],
 	}
 }
 
