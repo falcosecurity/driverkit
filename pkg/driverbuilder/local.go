@@ -4,31 +4,39 @@ import (
 	"bufio"
 	"context"
 	_ "embed"
+	"errors"
 	"fmt"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"io"
 	"log/slog"
 	"os"
 	"os/exec"
+	"os/user"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
-const LocalBuildProcessorName = "local"
+const (
+	LocalBuildProcessorName = "local"
+	kernelDirEnv            = "KERNELDIR"
+)
 
 type LocalBuildProcessor struct {
-	timeout int
-	useDKMS bool
-	srcDir  string
-	envMap  map[string]string
+	timeout         int
+	useDKMS         bool
+	downloadHeaders bool
+	srcDir          string
+	envMap          map[string]string
 }
 
-func NewLocalBuildProcessor(timeout int, useDKMS bool, srcDir string, envMap map[string]string) *LocalBuildProcessor {
+func NewLocalBuildProcessor(timeout int, useDKMS, downloadHeaders bool, srcDir string, envMap map[string]string) *LocalBuildProcessor {
 	return &LocalBuildProcessor{
-		timeout: timeout,
-		useDKMS: useDKMS,
-		srcDir:  srcDir,
-		envMap:  envMap,
+		timeout:         timeout,
+		useDKMS:         useDKMS,
+		srcDir:          srcDir,
+		envMap:          envMap,
+		downloadHeaders: downloadHeaders,
 	}
 }
 
@@ -38,9 +46,50 @@ func (lbp *LocalBuildProcessor) String() string {
 
 func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 	slog.Debug("doing a new local build")
-	
+
+	if lbp.useDKMS {
+		currentUser, err := user.Current()
+		if err != nil {
+			return err
+		}
+		if currentUser.Username != "root" {
+			return errors.New("must be run as root for DKMS build")
+		}
+	}
+
 	// We don't want to download headers
 	kr := b.KernelReleaseFromBuildConfig()
+
+	if lbp.downloadHeaders {
+		// Download headers for current distro
+		realBuilder, err := builder.Factory(b.TargetType)
+		// Since this can be used by external projects, it is not an issue
+		// if an unsupported target is passed.
+		// Go on skipping automatic kernel headers download.
+		if err == nil {
+			slog.Info("Trying automatic kernel headers download.")
+			kernelDownloadScript, err := builder.KernelDownloadScript(realBuilder, nil, kr)
+			if err == nil {
+				out, err := exec.Command("bash", "-c", kernelDownloadScript).Output()
+				if err == nil {
+					path := strings.TrimSuffix(string(out), "\n")
+					// add the kerneldir path to env
+					lbp.envMap[kernelDirEnv] = path
+					defer func() {
+						_ = os.RemoveAll("/tmp/kernel-download")
+						_ = os.RemoveAll(path)
+					}()
+				} else {
+					slog.Warn("Failed to download headers.", "err", err)
+				}
+			}
+		} else {
+			slog.Info("Skipping kernel headers automatic download.", "err", err)
+		}
+	}
+
+	// From now on, we use the local builder
+	b.TargetType = LocalBuildProcessorName
 
 	// create a builder based on the choosen build type
 	v, err := builder.Factory(b.TargetType)
@@ -88,6 +137,7 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 	srcProbePath := vv.GetProbeFullPath(c)
 
 	if len(lbp.srcDir) == 0 {
+		slog.Info("Downloading driver sources.")
 		// Download src!
 		libsDownloadScript, err := builder.LibsDownloadScript(c)
 		if err != nil {
@@ -117,11 +167,11 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 		}
 
 		stdout, err := cmd.StdoutPipe()
-		cmd.Stderr = cmd.Stdout // redirect stderr to stdout so that we catch it
 		if err != nil {
 			slog.Warn("Failed to pipe stdout. Trying without piping.", "err", err)
 			_, err = cmd.CombinedOutput()
 		} else {
+			cmd.Stderr = cmd.Stdout // redirect stderr to stdout so that we catch it
 			defer stdout.Close()
 			err = cmd.Start()
 			if err != nil {

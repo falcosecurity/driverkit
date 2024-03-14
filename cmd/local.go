@@ -7,23 +7,21 @@ import (
 	"github.com/spf13/viper"
 	"log/slog"
 	"os"
-	"os/user"
-	"runtime"
 )
 
 type localCmdOptions struct {
-	useDKMS bool
-	srcDir  string
-	envMap  map[string]string
+	useDKMS         bool
+	downloadHeaders bool
+	srcDir          string
+	envMap          map[string]string
 }
 
 // NewLocalCmd creates the `driverkit local` command.
-func NewLocalCmd(rootCommand *RootCmd, rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Command {
+func NewLocalCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Command {
 	opts := localCmdOptions{}
 	localCmd := &cobra.Command{
-		Use:               "local",
-		Short:             "Build Falco kernel modules and eBPF probes in local env with local kernel sources and gcc/clang.",
-		PersistentPreRunE: persistentPreRunFunc(rootCommand, rootOpts),
+		Use:   "local",
+		Short: "Build Falco kernel modules and eBPF probes in local env with local kernel sources and gcc/clang.",
 		Run: func(c *cobra.Command, args []string) {
 			slog.With("processor", c.Name()).Info("driver building, it will take a few seconds")
 			if !configOptions.DryRun {
@@ -31,18 +29,11 @@ func NewLocalCmd(rootCommand *RootCmd, rootOpts *RootOptions, rootFlags *pflag.F
 				if !b.HasOutputs() {
 					return
 				}
-				if opts.useDKMS {
-					currentUser, err := user.Current()
-					if err != nil {
-						slog.With("err", err.Error()).Error("Failed to retrieve user. Exiting.")
-						os.Exit(1)
-					}
-					if currentUser.Username != "root" {
-						slog.Error("Must be run as root for DKMS build.")
-						os.Exit(1)
-					}
-				}
-				if err := driverbuilder.NewLocalBuildProcessor(viper.GetInt("timeout"), opts.useDKMS, opts.srcDir, opts.envMap).Start(b); err != nil {
+				if err := driverbuilder.NewLocalBuildProcessor(viper.GetInt("timeout"),
+					opts.useDKMS,
+					opts.downloadHeaders,
+					opts.srcDir,
+					opts.envMap).Start(b); err != nil {
 					slog.With("err", err.Error()).Error("exiting")
 					os.Exit(1)
 				}
@@ -52,7 +43,6 @@ func NewLocalCmd(rootCommand *RootCmd, rootOpts *RootOptions, rootFlags *pflag.F
 	// Add root flags, but not the ones unneeded
 	unusedFlagsSet := map[string]struct{}{
 		"architecture":        {},
-		"target":              {},
 		"kernelurls":          {},
 		"builderrepo":         {},
 		"builderimage":        {},
@@ -71,18 +61,9 @@ func NewLocalCmd(rootCommand *RootCmd, rootOpts *RootOptions, rootFlags *pflag.F
 		}
 	})
 	flagSet.BoolVar(&opts.useDKMS, "dkms", false, "Enforce usage of DKMS to build the kernel module.")
+	flagSet.BoolVar(&opts.downloadHeaders, "download-headers", false, "Try to automatically download kernel headers.")
 	flagSet.StringVar(&opts.srcDir, "src-dir", "", "Enforce usage of local source dir to build drivers.")
 	flagSet.StringToStringVar(&opts.envMap, "env", make(map[string]string), "Env variables to be enforced during the driver build.")
 	localCmd.PersistentFlags().AddFlagSet(flagSet)
 	return localCmd
-}
-
-// Partially overrides rootCmd.persistentPreRunFunc setting some defaults before config init/validation stage.
-func persistentPreRunFunc(rootCommand *RootCmd, rootOpts *RootOptions) func(c *cobra.Command, args []string) error {
-	return func(c *cobra.Command, args []string) error {
-		// Default values
-		rootOpts.Target = "local"
-		rootOpts.Architecture = runtime.GOARCH
-		return rootCommand.c.PersistentPreRunE(c, args)
-	}
 }
