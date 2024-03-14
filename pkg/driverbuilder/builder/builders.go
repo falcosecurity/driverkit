@@ -132,7 +132,7 @@ func LibsDownloadScript(c Config) (string, error) {
 }
 
 // KernelDownloadScript returns the script that will download and extract kernel headers
-func KernelDownloadScript(b Builder, c Config, kr kernelrelease.KernelRelease) (string, error) {
+func KernelDownloadScript(b Builder, kernelurls []string, kr kernelrelease.KernelRelease) (string, error) {
 	t := template.New("download-kernel")
 	parsed, err := t.Parse(b.TemplateKernelUrlsScript())
 	if err != nil {
@@ -145,7 +145,7 @@ func KernelDownloadScript(b Builder, c Config, kr kernelrelease.KernelRelease) (
 		minimumURLs = bb.MinimumURLs()
 	}
 
-	if c.KernelUrls == nil {
+	if kernelurls == nil {
 		urls, err = b.URLs(kr)
 		if err != nil {
 			return "", err
@@ -157,7 +157,7 @@ func KernelDownloadScript(b Builder, c Config, kr kernelrelease.KernelRelease) (
 			urls, err = GetResolvingURLs(urls)
 		}
 	} else {
-		urls, err = GetResolvingURLs(c.KernelUrls)
+		urls, err = GetResolvingURLs(kernelurls)
 	}
 	if err != nil {
 		return "", err

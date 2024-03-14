@@ -145,7 +145,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		return err
 	}
 
-	kernelDownloadScript, err := builder.KernelDownloadScript(v, c, kr)
+	kernelDownloadScript, err := builder.KernelDownloadScript(v, c.KernelUrls, kr)
 	if err != nil {
 		return err
 	}

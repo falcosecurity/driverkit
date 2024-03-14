@@ -54,6 +54,12 @@ func (c *archlinux) TemplateScript() string {
 }
 
 func (c *archlinux) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
+	// uname -r returns "6.8.1-arch1-1" but headers URL is "6.8.1.arch1-1"
+	// Also, for 0-patch releases, like: "6.8.0-arch1-1", headers url is "6.8.arch1-1"
+	kr.FullExtraversion = strings.Replace(kr.FullExtraversion, "-arch", ".arch", 1)
+	if kr.Patch == 0 {
+		kr.Fullversion = strings.TrimSuffix(kr.Fullversion, ".0")
+	}
 
 	urls := []string{}
 	possibleCompressionSuffixes := []string{
