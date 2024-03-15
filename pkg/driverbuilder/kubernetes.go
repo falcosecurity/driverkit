@@ -112,6 +112,11 @@ func (bp *KubernetesBuildProcessor) buildModule(b *builder.Build) error {
 		return err
 	}
 
+	// We run a script that downloads libs,
+	// download and extracts kernelURLs saving its output to KERNELDIR env variable,
+	// then finally runs the build script.
+	res = fmt.Sprintf("%s\nexport KERNELDIR=$(%s)\n%s", libsDownloadScript, kernelDownloadScript, res)
+
 	if c.ModuleFilePath != "" {
 		res = fmt.Sprintf("%s\n%s", "touch "+moduleLockFile, res)
 		res = fmt.Sprintf("%s\n%s", res, "rm "+moduleLockFile)
@@ -128,7 +133,7 @@ func (bp *KubernetesBuildProcessor) buildModule(b *builder.Build) error {
 	buildCmd := []string{
 		"/bin/bash",
 		"-l",
-		"/driverkit/download-libs.sh && KERNELDIR=$(/driverkit/download-headers.sh) /driverkit/driverkit.sh",
+		"/driverkit/driverkit.sh",
 	}
 
 	commonMeta := metav1.ObjectMeta{
@@ -176,13 +181,19 @@ func (bp *KubernetesBuildProcessor) buildModule(b *builder.Build) error {
 	secuContext := corev1.PodSecurityContext{
 		RunAsUser: &bp.runAsUser,
 	}
+
+	imagePullSecrets := make([]corev1.LocalObjectReference, 0)
+	if bp.imagePullSecret != "" {
+		imagePullSecrets = append(imagePullSecrets, corev1.LocalObjectReference{Name: bp.imagePullSecret})
+	}
+
 	pod := &corev1.Pod{
 		ObjectMeta: commonMeta,
 		Spec: corev1.PodSpec{
 			ActiveDeadlineSeconds: pointer.Int64Ptr(deadline),
 			RestartPolicy:         corev1.RestartPolicyNever,
 			SecurityContext:       &secuContext,
-			ImagePullSecrets:      []corev1.LocalObjectReference{{Name: bp.imagePullSecret}},
+			ImagePullSecrets:      imagePullSecrets,
 			Containers: []corev1.Container{
 				{
 					Name:            name,
