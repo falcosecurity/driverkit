@@ -194,6 +194,7 @@ func (bp *KubernetesBuildProcessor) buildModule(b *builder.Build) error {
 			RestartPolicy:         corev1.RestartPolicyNever,
 			SecurityContext:       &secuContext,
 			ImagePullSecrets:      imagePullSecrets,
+			NodeSelector:          map[string]string{corev1.LabelArchStable: kr.Architecture.String()},
 			Containers: []corev1.Container{
 				{
 					Name:            name,
@@ -235,6 +236,10 @@ func (bp *KubernetesBuildProcessor) buildModule(b *builder.Build) error {
 			},
 		},
 	}
+
+	slog.
+		With("name", pod.Name, "spec", pod.Spec.String()).
+		Debug("starting pod")
 
 	ctx := context.Background()
 	ctx = signals.WithStandardSignals(ctx)
