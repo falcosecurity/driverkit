@@ -17,6 +17,7 @@ package builder
 import (
 	_ "embed"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -134,9 +135,18 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 	matchExtraGroupCommon := "common"
 
 	// match for kernel versions like 4.19.0-6-cloud-amd64
-	if strings.Contains(kr.FullExtraversion, "-cloud") {
-		extraVersionPartial = strings.TrimSuffix(extraVersionPartial, "-cloud")
-		matchExtraGroup = "cloud-" + matchExtraGroup
+	supportedExtraFlavors := []string{"cloud", "rt", "rpi"}
+	for _, supportedExtraFlavor := range supportedExtraFlavors {
+		if strings.Contains(kr.FullExtraversion, "-"+supportedExtraFlavor) {
+			extraVersionPartial = strings.TrimSuffix(extraVersionPartial, "-"+supportedExtraFlavor)
+			matchExtraGroup = supportedExtraFlavor + "-" + matchExtraGroup
+
+			// rpi and rt have a different common package, named `common-{rt,rpi}`
+			if supportedExtraFlavor == "rt" || supportedExtraFlavor == "rpi" {
+				matchExtraGroupCommon += "-" + supportedExtraFlavor
+			}
+			break
+		}
 	}
 
 	// download index
@@ -145,7 +155,7 @@ func fetchDebianHeadersURLFromRelease(baseURL string, kr kernelrelease.KernelRel
 		return nil, err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
