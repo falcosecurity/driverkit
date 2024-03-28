@@ -102,7 +102,7 @@ func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Cli
 		os.Exit(1)
 	}
 
-	if err = cli.ContainerStart(ctx, qemuImage.ID, types.ContainerStartOptions{}); err != nil {
+	if err = cli.ContainerStart(ctx, qemuImage.ID, container.StartOptions{}); err != nil {
 		panic(err)
 	}
 
