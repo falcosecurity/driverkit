@@ -113,9 +113,9 @@ func (bp *KubernetesBuildProcessor) buildModule(b *builder.Build) error {
 	}
 
 	// We run a script that downloads libs,
-	// download and extracts kernelURLs saving its output to KERNELDIR env variable,
+	// then downloads and extracts kernelURLs exporting KERNELDIR env variable,
 	// then finally runs the build script.
-	res = fmt.Sprintf("%s\nexport KERNELDIR=$(%s)\n%s", libsDownloadScript, kernelDownloadScript, res)
+	res = fmt.Sprintf("%s\n%s\n%s", libsDownloadScript, kernelDownloadScript, res)
 
 	if c.ModuleFilePath != "" {
 		res = fmt.Sprintf("%s\n%s", "touch "+moduleLockFile, res)

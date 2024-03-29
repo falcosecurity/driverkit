@@ -38,4 +38,4 @@ sourcedir=$(find . -type d -name "{{ .KernelHeadersPattern }}" | head -n 1 | xar
 sed -i 's/\/usr\/src/../g' $sourcedir/Makefile
 
 # exit value
-echo $sourcedir
+export KERNELDIR=$sourcedir

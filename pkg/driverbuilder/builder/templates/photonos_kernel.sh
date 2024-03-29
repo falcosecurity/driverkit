@@ -35,4 +35,4 @@ mkdir -p /tmp/kernel
 mv usr/src/linux-*headers-*/* /tmp/kernel
 
 # exit value
-echo /tmp/kernel
+export KERNELDIR=/tmp/kernel

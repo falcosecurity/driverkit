@@ -47,4 +47,4 @@ make KCONFIG_CONFIG=/tmp/kernel.config prepare
 make KCONFIG_CONFIG=/tmp/kernel.config modules_prepare
 
 # exit value
-echo /tmp/kernel
+export KERNELDIR=/tmp/kernel
