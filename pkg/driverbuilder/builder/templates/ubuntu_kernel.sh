@@ -34,4 +34,4 @@ cd /tmp/kernel-download/usr/src/
 sourcedir=$(find . -type d -name "{{ .KernelHeadersPattern }}" | head -n 1 | xargs readlink -f)
 
 # exit value
-echo $sourcedir
+export KERNELDIR=$sourcedir

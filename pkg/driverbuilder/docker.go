@@ -233,6 +233,13 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		return err
 	}
 
+	// We make all 3 scripts executables,
+	// then:
+	// * download libs at required version
+	// * download and extract headers
+	//   * each download-headers script will export KERNELDIR variable internally
+	//   * we source download-headers.sh so that KERNELDIR is then visible to driverkit.sh
+	// * we finally make the actual build of the drivers
 	runCmd :=
 		`
 #!/bin/bash
@@ -242,7 +249,8 @@ chmod +x /driverkit/download-headers.sh
 chmod +x /driverkit/driverkit.sh
 
 /driverkit/download-libs.sh
-KERNELDIR=$(/driverkit/download-headers.sh) /driverkit/driverkit.sh
+. /driverkit/download-headers.sh
+/driverkit/driverkit.sh
 `
 
 	files := []dockerCopyFile{

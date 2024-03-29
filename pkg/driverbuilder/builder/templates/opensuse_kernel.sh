@@ -34,4 +34,4 @@ cd /tmp/kernel-download/usr/src
 sourcedir="$(find . -type d -name "linux-*-obj" | head -n 1 | xargs readlink -f)/*/default"
 
 # exit value
-echo $sourcedir
+export KERNELDIR=$sourcedir

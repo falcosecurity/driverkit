@@ -32,4 +32,4 @@ mkdir -p /tmp/kernel
 mv usr/lib/modules/*/build/* /tmp/kernel
 
 # exit value
-echo /tmp/kernel
+export KERNELDIR=/tmp/kernel
