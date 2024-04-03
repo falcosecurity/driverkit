@@ -13,7 +13,8 @@ If that distribution is not yet supported by driverkit, the Falco Drivers Build 
 Adding support for a new distro is a multiple-step work:
 * first of all, a new builder on driverkit must be created
 * secondly, [kernel-crawler](https://github.com/falcosecurity/kernel-crawler) must also be updated to support the new distro; see [below](#5-kernel-crawler) section
-* lastly, [test-infra](https://github.com/falcosecurity/test-infra) must be updated to add the new [prow config](https://github.com/falcosecurity/test-infra/tree/master/config/jobs/build-drivers) for new distro related jobs
+* third, [dbg-go](https://github.com/falcosecurity/dbg-go) must [bump driverkit](https://github.com/falcosecurity/dbg-go?tab=readme-ov-file#bumping-driverkit) and enable support to generate configs for the new distro: https://github.com/falcosecurity/dbg-go/blob/main/pkg/root/distro.go#L30.
+* lastly, [test-infra](https://github.com/falcosecurity/test-infra) must be updated to add the new [prow config](https://github.com/falcosecurity/test-infra/tree/master/config/jobs/build-drivers) for new distro related jobs and `dbg-go` images must be bumped, see https://github.com/falcosecurity/test-infra/tree/master/images/build-drivers and https://github.com/falcosecurity/test-infra/tree/master/images/update-dbg.
 
 Here, we will only focus about driverkit part.
 
@@ -58,15 +59,19 @@ you just registered.
 Here's a very minimalistic example:
 
 ```go
-func (c archlinux) Name() string {
+func (c *archlinux) Name() string {
     return TargetTypeArchlinux.String()
 }
 
-func (c archlinux) TemplateScript() string {
-	return archlinuxTemplate
+func (c *archlinux) TemplateKernelUrlsScript() string { 
+	return archlinuxKernelTemplate 
 }
 
-func (c archlinux) URLs(cfg Config, kr kernelrelease.KernelRelease) ([]string, error) {
+func (c *archlinux) TemplateScript() string {
+    return archlinuxTemplate
+}
+
+func (c archlinux) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
     urls := []string{}
     if kr.Architecture == kernelrelease.ArchitectureAmd64 {
         urls = append(urls, fmt.Sprintf("https://archive.archlinux.org/packages/l/linux-headers/linux-headers-%s.%s-%d-%s.pkg.tar.xz",
@@ -75,7 +80,7 @@ func (c archlinux) URLs(cfg Config, kr kernelrelease.KernelRelease) ([]string, e
             cfg.KernelVersion,
             kr.Architecture.ToNonDeb()))
     } else {
-        urls = append(urls, fmt.Sprintf("http://tardis.tiny-vps.com/aarm/packages/l/linux-%s-headers/linux-%s-headers-%s-%d-%s.pkg.tar.xz",
+        urls = append(urls, fmt.Sprintf("https://alaa.ad24.cz/packages/l/linux-%s-headers/linux-%s-headers-%s-%d-%s.pkg.tar.xz",
             kr.Architecture.ToNonDeb(),
             kr.Architecture.ToNonDeb(),
             kr.Fullversion,
@@ -85,17 +90,17 @@ func (c archlinux) URLs(cfg Config, kr kernelrelease.KernelRelease) ([]string, e
     return urls, nil
 }
 
-func (c archlinux) TemplateData(cfg Config, kr kernelrelease.KernelRelease, urls []string) interface{} {
+func (c *archlinux) KernelTemplateData(_ kernelrelease.KernelRelease, urls []string) interface{} {
     return archlinuxTemplateData{
-        commonTemplateData: cfg.toTemplateData(),
-        KernelDownloadURL:  urls[0],
+        KernelDownloadURL: urls[0],
     }
 }
 ```
 
 Essentially, the various methods that you are implementing are needed to:
-* fill the script template (see below), that is a `bash` script that will be executed by driverkit at build time
-* fetch kernel headers urls that will later be downloaded inside the builder container, and used for the driver build
+* fill the kernel download/extract script template, a `bash` script responsible to fetch and extract the kernel headers for the distro
+* fill the build script template (see below), that is a `bash` script that will be executed by driverkit at build time
+* return a list of possible kernel headers urls that will later be downloaded by the kernel download script, and then used for the driver build
 
 Under `pkg/driverbuilder/builder/templates` folder, you can find all the template scripts for the supported builders.  
 Adding a new template there and using `go:embed` to include it in your builder, allows leaner code
@@ -103,14 +108,57 @@ without mixing up templates and builder logic.
 For example:
 
 ```go
+//go:embed templates/archlinux_kernel.sh
+var archlinuxKernelTemplate string
+
 //go:embed templates/archlinux.sh
 var archlinuxTemplate string
 ```
 
-Depending on how the distro works, the script will need to fetch the kernel headers for it at the specific kernel version specified
-in the `Config` struct at `c.Build.KernelVersion`.
+Depending on how the distro works, the "kernel" template script will fetch the kernel headers for it at the specific kernel version specified
+in the `Config` struct at `c.Build.KernelVersion`, and then extracting them.  
+Finally, the script will also `export` the `KERNELDIR` variable to be consumed by the actual build script.  
+Example kernel download template for archlinux:
+```bash
+set -xeuo pipefail
+
+# Fetch the kernel
+mkdir /tmp/kernel-download
+cd /tmp/kernel-download
+curl --silent -o kernel-devel.pkg.tar.xz -SL {{ .KernelDownloadURL }}
+tar -xf kernel-devel.pkg.tar.xz
+rm -Rf /tmp/kernel
+mkdir -p /tmp/kernel
+mv usr/lib/modules/*/build/* /tmp/kernel
+
+# exit value
+export KERNELDIR=/tmp/kernel
+```
+
 Once you have those, based on what that kernel can do and based on what was configured
-by the user you will need to build the kernel module driver and/or the eBPF probe driver.
+by the user, the build script will build the kernel module driver and/or the eBPF probe driver.
+Example build template for archlinux:
+```bash
+set -xeuo pipefail
+
+cd {{ .DriverBuildDir }}
+mkdir -p build && cd build
+{{ .CmakeCmd }}
+
+{{ if .BuildModule }}
+# Build the module
+make CC=/usr/bin/gcc-{{ .GCCVersion }} driver
+strip -g {{ .ModuleFullPath }}
+# Print results
+modinfo {{ .ModuleFullPath }}
+{{ end }}
+
+{{ if .BuildProbe }}
+# Build the eBPF probe
+make bpf
+ls -l driver/bpf/probe.o
+{{ end }}
+```
 
 How does this work?
 
