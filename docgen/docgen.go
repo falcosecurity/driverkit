@@ -18,8 +18,6 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"io/ioutil"
-	"log/slog"
 	"os"
 	"path"
 	"strings"
@@ -61,7 +59,22 @@ func main() {
 	flag.Parse()
 
 	// Get root command
-	driverkit := cmd.NewRootCmd()
+	configOpts, err := cmd.NewConfigOptions()
+	if err != nil {
+		// configOpts will never be nil here
+		if configOpts != nil {
+			configOpts.Printer.Logger.Fatal("error setting driverkit config options defaults",
+				configOpts.Printer.Logger.Args("err", err.Error()))
+		} else {
+			os.Exit(1)
+		}
+	}
+	rootOpts, err := cmd.NewRootOptions()
+	if err != nil {
+		configOpts.Printer.Logger.Fatal("error setting driverkit root options defaults",
+			configOpts.Printer.Logger.Args("err", err.Error()))
+	}
+	driverkit := cmd.NewRootCmd(configOpts, rootOpts)
 	root := driverkit.Command()
 	num := len(root.Commands()) + 1
 
@@ -84,23 +97,20 @@ func main() {
 	}
 
 	// Generate markdown docs
-	err := doc.GenMarkdownTreeCustom(root, outputDir, prepender(num), linker)
+	err = doc.GenMarkdownTreeCustom(root, outputDir, prepender(num), linker)
 	if err != nil {
-		slog.With("err", err.Error()).Error("markdown generation")
-		os.Exit(1)
+		configOpts.Printer.Logger.Fatal("markdown generation", configOpts.Printer.Logger.Args("err", err.Error()))
 	}
 
 	if targetWebsite {
 		err = os.Rename(path.Join(outputDir, "driverkit.md"), path.Join(outputDir, "_index.md"))
 		if err != nil {
-			slog.With("err", err.Error()).Error("renaming main docs page")
-			os.Exit(1)
+			configOpts.Printer.Logger.Fatal("renaming main docs page", configOpts.Printer.Logger.Args("err", err.Error()))
 		}
 	}
 
 	if err = stripSensitive(); err != nil {
-		slog.With("err", err.Error()).Error("error replacing sensitive data")
-		os.Exit(1)
+		configOpts.Printer.Logger.Fatal("error replacing sensitive data", configOpts.Printer.Logger.Args("err", err.Error()))
 	}
 }
 
@@ -117,7 +127,7 @@ func stripSensitive() error {
 
 	for _, file := range files {
 		filePath := path.Join(outputDir, file.Name())
-		file, err := ioutil.ReadFile(filePath)
+		file, err := os.ReadFile(filePath)
 		if err != nil {
 			return err
 		}
@@ -127,7 +137,7 @@ func stripSensitive() error {
 			target := []byte(os.Getenv(s))
 			file = bytes.ReplaceAll(file, target, append(envMark, []byte(s)...))
 		}
-		if err = ioutil.WriteFile(filePath, file, 0666); err != nil {
+		if err = os.WriteFile(filePath, file, 0666); err != nil {
 			return err
 		}
 	}

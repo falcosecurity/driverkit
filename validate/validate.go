@@ -48,7 +48,6 @@ func init() {
 		return name
 	})
 
-	V.RegisterValidation("loglevel", isLogLevel)
 	V.RegisterValidation("filepath", isFilePath)
 	V.RegisterValidation("sha1", isSHA1)
 	V.RegisterValidation("target", isTargetSupported)
@@ -149,19 +148,6 @@ func init() {
 		},
 		func(ut ut.Translator, fe validator.FieldError) string {
 			t, _ := ut.T("required_builderimage_with_target_redhat", "builder image") // fixme ? tag "name" does not work when used at struct level
-
-			return t
-		},
-	)
-
-	V.RegisterTranslation(
-		"loglevel",
-		T,
-		func(ut ut.Translator) error {
-			return ut.Add("loglevel", "{0} must be a valid slog level", true)
-		},
-		func(ut ut.Translator, fe validator.FieldError) string {
-			t, _ := ut.T("loglevel", fe.Field())
 
 			return t
 		},

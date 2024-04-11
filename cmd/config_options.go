@@ -15,51 +15,123 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
 	"fmt"
-	"log/slog"
+	"github.com/falcosecurity/falcoctl/pkg/options"
+	"github.com/falcosecurity/falcoctl/pkg/output"
+	"github.com/mitchellh/go-homedir"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
+	"io"
 	"os"
+	"strings"
 
 	"github.com/creasty/defaults"
 	"github.com/falcosecurity/driverkit/validate"
 	"github.com/go-playground/validator/v10"
+	"github.com/pterm/pterm"
 )
 
 var validProcessors = []string{"docker", "kubernetes", "kubernetes-in-cluster", "local"}
 var aliasProcessors = []string{"docker", "k8s", "k8s-ic"}
-var configOptions *ConfigOptions
 
 // ConfigOptions represent the persistent configuration flags of driverkit.
 type ConfigOptions struct {
 	ConfigFile string
-	LogLevel   string `validate:"loglevel" name:"log level" default:"INFO"`
 	Timeout    int    `validate:"number,min=30" default:"120" name:"timeout"`
 	ProxyURL   string `validate:"omitempty,proxy" name:"proxy url"`
 	DryRun     bool
 
-	configErrors bool
+	// Printer used by all commands to output messages.
+	Printer *output.Printer
+	// Writer is used to write the output of the printer.
+	Writer   io.Writer
+	logLevel *options.LogLevel
+}
+
+func (co *ConfigOptions) initPrinter() {
+	logLevel := co.logLevel.ToPtermLogLevel()
+	co.Printer = output.NewPrinter(logLevel, pterm.LogFormatterColorful, co.Writer)
 }
 
 // NewConfigOptions creates an instance of ConfigOptions.
-func NewConfigOptions() *ConfigOptions {
-	o := &ConfigOptions{}
-	if err := defaults.Set(o); err != nil {
-		slog.With("err", err.Error(), "options", "ConfigOptions").Error("error setting driverkit options defaults")
-		os.Exit(1)
+func NewConfigOptions() (*ConfigOptions, error) {
+	o := &ConfigOptions{
+		Writer:   os.Stdout,
+		logLevel: options.NewLogLevel(),
 	}
-	return o
+	o.initPrinter()
+	if err := defaults.Set(o); err != nil {
+		// Return ConfigOptions anyway because we need the logger
+		return o, err
+	}
+	return o, nil
 }
 
 // Validate validates the ConfigOptions fields.
-func (co *ConfigOptions) Validate() []error {
+func (co *ConfigOptions) validate() []error {
 	if err := validate.V.Struct(co); err != nil {
-		errors := err.(validator.ValidationErrors)
-		errArr := []error{}
-		for _, e := range errors {
+		var errs validator.ValidationErrors
+		errors.As(err, &errs)
+		var errArr []error
+		for _, e := range errs {
 			// Translate each error one at a time
 			errArr = append(errArr, fmt.Errorf(e.Translate(validate.T)))
 		}
-		co.configErrors = true
 		return errArr
 	}
 	return nil
+}
+
+// AddFlags registers the common flags.
+func (co *ConfigOptions) AddFlags(flags *pflag.FlagSet) {
+	flags.StringVarP(&co.ConfigFile, "config", "c", co.ConfigFile, "config file path (default $HOME/.driverkit.yaml if exists)")
+	flags.VarP(co.logLevel, "loglevel", "l", "Set level for logs "+co.logLevel.Allowed())
+	flags.IntVar(&co.Timeout, "timeout", co.Timeout, "timeout in seconds")
+	flags.StringVar(&co.ProxyURL, "proxy", co.ProxyURL, "the proxy to use to download data")
+	flags.BoolVar(&co.DryRun, "dryrun", co.DryRun, "do not actually perform the action")
+}
+
+// Init reads in config file and ENV variables if set.
+func (co *ConfigOptions) Init() bool {
+	configErr := false
+	if errs := co.validate(); errs != nil {
+		for _, err := range errs {
+			co.Printer.Logger.Error("error validating config options",
+				co.Printer.Logger.Args("err", err.Error()))
+		}
+		configErr = true
+	}
+	if co.ConfigFile != "" {
+		viper.SetConfigFile(co.ConfigFile)
+	} else {
+		// Find home directory.
+		home, err := homedir.Dir()
+		if err != nil {
+			co.Printer.Logger.Error("error getting the home directory",
+				co.Printer.Logger.Args("err", err.Error()))
+			// not setting configErr = true because we fallback to `$HOME/.driverkit.yaml` and try with it
+		}
+
+		viper.AddConfigPath(home)
+		viper.SetConfigName(".driverkit")
+	}
+
+	viper.AutomaticEnv()
+	viper.SetEnvPrefix("driverkit")
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+
+	// If a config file is found, read it in.
+	if err := viper.ReadInConfig(); err == nil {
+		co.Printer.Logger.Info("using config file",
+			co.Printer.Logger.Args("file", viper.ConfigFileUsed()))
+	} else {
+		var configFileNotFoundError viper.ConfigFileNotFoundError
+		if errors.As(err, &configFileNotFoundError) {
+			// Config file not found, ignore ...
+			co.Printer.Logger.Debug("running without a configuration file")
+		}
+	}
+	co.initPrinter()
+	return configErr
 }

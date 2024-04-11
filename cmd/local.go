@@ -1,12 +1,10 @@
 package cmd
 
 import (
+	"bytes"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
-	"log/slog"
-	"os"
 )
 
 type localCmdOptions struct {
@@ -17,27 +15,36 @@ type localCmdOptions struct {
 }
 
 // NewLocalCmd creates the `driverkit local` command.
-func NewLocalCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Command {
+func NewLocalCmd(configOpts *ConfigOptions, rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Command {
 	opts := localCmdOptions{}
 	localCmd := &cobra.Command{
 		Use:   "local",
 		Short: "Build Falco kernel modules and eBPF probes in local env with local kernel sources and gcc/clang.",
-		Run: func(c *cobra.Command, args []string) {
-			slog.With("processor", c.Name()).Info("driver building, it will take a few seconds")
-			if !configOptions.DryRun {
-				b := rootOpts.ToBuild()
+		RunE: func(c *cobra.Command, args []string) error {
+			configOpts.Printer.Logger.Info("starting build",
+				configOpts.Printer.Logger.Args("processor", c.Name()))
+			if !configOpts.DryRun {
+				// Since we use a spinner, cache log data to a bytesbuffer;
+				// we will later print it once we stop the spinner.
+				var buf bytes.Buffer
+				b := rootOpts.ToBuild(configOpts.Printer.WithWriter(&buf))
+				defer func() {
+					configOpts.Printer.DefaultText.Print(buf.String())
+				}()
 				if !b.HasOutputs() {
-					return
+					return nil
 				}
-				if err := driverbuilder.NewLocalBuildProcessor(viper.GetInt("timeout"),
-					opts.useDKMS,
+				configOpts.Printer.Spinner, _ = configOpts.Printer.Spinner.Start("driver building, it will take a few seconds")
+				defer func() {
+					_ = configOpts.Printer.Spinner.Stop()
+				}()
+				return driverbuilder.NewLocalBuildProcessor(opts.useDKMS,
 					opts.downloadHeaders,
 					opts.srcDir,
-					opts.envMap).Start(b); err != nil {
-					slog.With("err", err.Error()).Error("exiting")
-					os.Exit(1)
-				}
+					opts.envMap,
+					configOpts.Timeout).Start(b)
 			}
+			return nil
 		},
 	}
 	// Add root flags, but not the ones unneeded

@@ -17,6 +17,7 @@ package builder
 import (
 	"context"
 	"fmt"
+	"github.com/falcosecurity/falcoctl/pkg/output"
 	"strings"
 
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
@@ -49,6 +50,8 @@ type Build struct {
 	RegistryUser      string
 	RegistryPassword  string
 	RegistryPlainHTTP bool
+
+	*output.Printer
 }
 
 func (b *Build) KernelReleaseFromBuildConfig() kernelrelease.KernelRelease {

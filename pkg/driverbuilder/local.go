@@ -8,8 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
+	"github.com/falcosecurity/falcoctl/pkg/output"
 	"io"
-	"log/slog"
 	"os"
 	"os/exec"
 	"os/user"
@@ -23,20 +23,25 @@ const (
 )
 
 type LocalBuildProcessor struct {
-	timeout         int
 	useDKMS         bool
 	downloadHeaders bool
 	srcDir          string
 	envMap          map[string]string
+	timeout         int
+	*output.Printer
 }
 
-func NewLocalBuildProcessor(timeout int, useDKMS, downloadHeaders bool, srcDir string, envMap map[string]string) *LocalBuildProcessor {
+func NewLocalBuildProcessor(useDKMS, downloadHeaders bool,
+	srcDir string,
+	envMap map[string]string,
+	timeout int,
+) *LocalBuildProcessor {
 	return &LocalBuildProcessor{
-		timeout:         timeout,
 		useDKMS:         useDKMS,
 		srcDir:          srcDir,
 		envMap:          envMap,
 		downloadHeaders: downloadHeaders,
+		timeout:         timeout,
 	}
 }
 
@@ -45,8 +50,7 @@ func (lbp *LocalBuildProcessor) String() string {
 }
 
 func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
-	slog.Debug("doing a new local build")
-
+	lbp.Printer = b.Printer
 	if lbp.useDKMS {
 		currentUser, err := user.Current()
 		if err != nil {
@@ -67,8 +71,8 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 		// if an unsupported target is passed.
 		// Go on skipping automatic kernel headers download.
 		if err == nil {
-			slog.Info("Trying automatic kernel headers download")
-			kernelDownloadScript, err := builder.KernelDownloadScript(realBuilder, nil, kr)
+			lbp.Logger.Info("Trying automatic kernel headers download")
+			kernelDownloadScript, err := builder.KernelDownloadScript(realBuilder, nil, kr, lbp.Printer)
 			// Patch kernel download script to echo KERNELDIR.
 			// We need to capture KERNELDIR to later pass it as env variable to the build.
 			kernelDownloadScript += "\necho $KERNELDIR"
@@ -83,7 +87,7 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 					for scanner.Scan() {
 						path = scanner.Text()
 					}
-					slog.Info("Setting KERNELDIR env var", "path", path)
+					lbp.Logger.Info("Setting KERNELDIR env var", lbp.Logger.Args("path", path))
 					// add the kerneldir path to env
 					lbp.envMap[kernelDirEnv] = path
 					defer func() {
@@ -91,11 +95,11 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 						_ = os.RemoveAll(path)
 					}()
 				} else {
-					slog.Warn("Failed to download headers", "err", err)
+					lbp.Logger.Warn("Failed to download headers", lbp.Logger.Args("err", err))
 				}
 			}
 		} else {
-			slog.Info("Skipping kernel headers automatic download", "err", err)
+			lbp.Logger.Info("Skipping kernel headers automatic download", lbp.Logger.Args("err", err))
 		}
 	}
 
@@ -148,7 +152,7 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 	srcProbePath := vv.GetProbeFullPath(c)
 
 	if len(lbp.srcDir) == 0 {
-		slog.Info("Downloading driver sources")
+		lbp.Logger.Info("Downloading driver sources")
 		// Download src!
 		libsDownloadScript, err := builder.LibsDownloadScript(c)
 		if err != nil {
@@ -179,14 +183,14 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
-			slog.Warn("Failed to pipe stdout", "err", err)
+			lbp.Logger.Warn("Failed to pipe stdout", lbp.Logger.Args("err", err))
 			_, err = cmd.CombinedOutput()
 		} else {
 			cmd.Stderr = cmd.Stdout // redirect stderr to stdout so that we catch it
 			defer stdout.Close()
 			err = cmd.Start()
 			if err != nil {
-				slog.Warn("Failed to execute command", "err", err)
+				lbp.Logger.Warn("Failed to execute command", lbp.Logger.Args("err", err))
 			} else {
 				// print the output of the subprocess line by line
 				scanner := bufio.NewScanner(stdout)
@@ -204,7 +208,7 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 				if err = copyDataToLocalPath(srcProbePath, b.ProbeFilePath); err != nil {
 					return err
 				}
-				slog.With("path", b.ProbeFilePath).Info("eBPF probe available")
+				lbp.Logger.Info("eBPF probe available", lbp.Logger.Args("path", b.ProbeFilePath))
 				c.ProbeFilePath = ""
 			}
 		}
@@ -229,7 +233,7 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 		if err = copyDataToLocalPath(koFiles[0], b.ModuleFilePath); err != nil {
 			return err
 		}
-		slog.With("path", b.ModuleFilePath).Info("kernel module available")
+		lbp.Logger.Info("kernel module available", lbp.Logger.Args("path", b.ModuleFilePath))
 	}
 	return nil
 }

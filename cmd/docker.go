@@ -15,32 +15,38 @@ limitations under the License.
 package cmd
 
 import (
-	"log/slog"
-	"os"
-
+	"bytes"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 )
 
 // NewDockerCmd creates the `driverkit docker` command.
-func NewDockerCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Command {
+func NewDockerCmd(configOpts *ConfigOptions, rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Command {
 	dockerCmd := &cobra.Command{
 		Use:   "docker",
 		Short: "Build Falco kernel modules and eBPF probes against a docker daemon.",
-		Run: func(c *cobra.Command, args []string) {
-			slog.With("processor", c.Name()).Info("driver building, it will take a few seconds")
-			if !configOptions.DryRun {
-				b := rootOpts.ToBuild()
+		RunE: func(c *cobra.Command, args []string) error {
+			configOpts.Printer.Logger.Info("starting build",
+				configOpts.Printer.Logger.Args("processor", c.Name()))
+			if !configOpts.DryRun {
+				// Since we use a spinner, cache log data to a bytesbuffer;
+				// we will later print it once we stop the spinner.
+				var buf bytes.Buffer
+				b := rootOpts.ToBuild(configOpts.Printer.WithWriter(&buf))
+				defer func() {
+					configOpts.Printer.DefaultText.Print(buf.String())
+				}()
 				if !b.HasOutputs() {
-					return
+					return nil
 				}
-				if err := driverbuilder.NewDockerBuildProcessor(viper.GetInt("timeout"), viper.GetString("proxy")).Start(b); err != nil {
-					slog.With("err", err.Error()).Error("exiting")
-					os.Exit(1)
-				}
+				configOpts.Printer.Spinner, _ = configOpts.Printer.Spinner.Start("driver building, it will take a few seconds")
+				defer func() {
+					_ = configOpts.Printer.Spinner.Stop()
+				}()
+				return driverbuilder.NewDockerBuildProcessor(configOpts.Timeout, configOpts.ProxyURL).Start(b)
 			}
+			return nil
 		},
 	}
 	// Add root flags

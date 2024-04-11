@@ -17,6 +17,7 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"github.com/spf13/pflag"
 	"os"
 	"strings"
 	"text/template"
@@ -46,12 +47,12 @@ func validateArgs() cobra.PositionalArgs {
 		if len(args) == 0 {
 			return nil
 		}
-		return cobra.ExactValidArgs(1)(c, args)
+		return cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs)(c, args)
 	}
 }
 
 // NewCompletionCmd ...
-func NewCompletionCmd() *cobra.Command {
+func NewCompletionCmd(_ *ConfigOptions, _ *RootOptions, _ *pflag.FlagSet) *cobra.Command {
 	var long bytes.Buffer
 	tmpl := template.Must(template.New("long").Parse(longUsageTemplate))
 	tmpl.Execute(&long, map[string]interface{}{

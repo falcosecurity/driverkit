@@ -20,7 +20,8 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"log/slog"
+	"github.com/falcosecurity/falcoctl/pkg/output"
+	"k8s.io/cli-runtime/pkg/genericiooptions"
 	"os"
 	"time"
 
@@ -50,13 +51,21 @@ type KubernetesBuildProcessor struct {
 	imagePullSecret string
 	timeout         int
 	proxy           string
+	*output.Printer
 }
 
 // NewKubernetesBuildProcessor constructs a KubernetesBuildProcessor
 // starting from a kubernetes.Clientset. bufferSize represents the length of the
 // channel we use to do the builds. A bigger bufferSize will mean that we can save more Builds
 // for processing, however setting this to a big value will have impacts
-func NewKubernetesBuildProcessor(corev1Client v1.CoreV1Interface, clientConfig *restclient.Config, runAsUser int64, namespace string, imagePullSecret string, timeout int, proxy string) *KubernetesBuildProcessor {
+func NewKubernetesBuildProcessor(corev1Client v1.CoreV1Interface,
+	clientConfig *restclient.Config,
+	runAsUser int64,
+	namespace string,
+	imagePullSecret string,
+	timeout int,
+	proxy string,
+) *KubernetesBuildProcessor {
 	return &KubernetesBuildProcessor{
 		coreV1Client:    corev1Client,
 		clientConfig:    clientConfig,
@@ -73,11 +82,8 @@ func (bp *KubernetesBuildProcessor) String() string {
 }
 
 func (bp *KubernetesBuildProcessor) Start(b *builder.Build) error {
-	slog.Debug("doing a new kubernetes build")
-	return bp.buildModule(b)
-}
+	bp.Printer = b.Printer
 
-func (bp *KubernetesBuildProcessor) buildModule(b *builder.Build) error {
 	deadline := int64(bp.timeout)
 	namespace := bp.namespace
 	uid := uuid.NewUUID()
@@ -101,7 +107,7 @@ func (bp *KubernetesBuildProcessor) buildModule(b *builder.Build) error {
 		return err
 	}
 
-	kernelDownloadScript, err := builder.KernelDownloadScript(v, c.KernelUrls, kr)
+	kernelDownloadScript, err := builder.KernelDownloadScript(v, c.KernelUrls, kr, bp.Printer)
 	if err != nil {
 		return err
 	}
@@ -237,9 +243,8 @@ func (bp *KubernetesBuildProcessor) buildModule(b *builder.Build) error {
 		},
 	}
 
-	slog.
-		With("name", pod.Name, "spec", pod.Spec.String()).
-		Debug("starting pod")
+	bp.Logger.Debug("starting pod",
+		bp.Logger.Args("name", pod.Name, "spec", pod.Spec.String()))
 
 	ctx := context.Background()
 	ctx = signals.WithStandardSignals(ctx)
@@ -276,33 +281,35 @@ func (bp *KubernetesBuildProcessor) copyModuleAndProbeFromPodWithUID(ctx context
 			event := <-watch.ResultChan()
 			p, ok := event.Object.(*corev1.Pod)
 			if !ok {
-				slog.Error("unexpected type when watching pods")
+				bp.Logger.Error("unexpected type when watching pods")
 				continue
 			}
 			if p.Status.Phase == corev1.PodPending {
 				continue
 			}
 			if p.Status.Phase == corev1.PodRunning {
-				slog.With(falcoBuilderUIDLabel, falcoBuilderUID).Info("start downloading module and probe from pod")
+				bp.Logger.Info("start downloading module and probe from pod",
+					bp.Logger.Args(falcoBuilderUIDLabel, falcoBuilderUID))
 				if c.ModuleFilePath != "" {
 					err = copySingleFileFromPod(c.ModuleFilePath, bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name, c.ToDriverFullPath(), moduleLockFile)
 					if err != nil {
 						return err
 					}
-					slog.Info("Kernel Module extraction successful")
+					bp.Logger.Info("Kernel Module extraction successful")
 				}
 				if c.ProbeFilePath != "" {
 					err = copySingleFileFromPod(c.ProbeFilePath, bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name, c.ToProbeFullPath(), probeLockFile)
 					if err != nil {
 						return err
 					}
-					slog.Info("Probe Module extraction successful")
+					bp.Logger.Info("Probe Module extraction successful")
 				}
 				err = unlockPod(bp.coreV1Client, bp.clientConfig, p)
 				if err != nil {
 					return err
 				}
-				slog.With(falcoBuilderUIDLabel, falcoBuilderUID).Info("completed downloading from pod")
+				bp.Logger.Info("completed downloading from pod",
+					bp.Logger.Args(falcoBuilderUIDLabel, falcoBuilderUID))
 			}
 			return nil
 		}
@@ -314,7 +321,7 @@ func unlockPod(podClient v1.PodsGetter, clientConfig *restclient.Config, pod *co
 		PodClient: podClient,
 		Config:    clientConfig,
 		StreamOptions: exec.StreamOptions{
-			IOStreams: genericclioptions.IOStreams{
+			IOStreams: genericiooptions.IOStreams{
 				Out:    bytes.NewBuffer([]byte{}),
 				ErrOut: bytes.NewBuffer([]byte{}),
 			},

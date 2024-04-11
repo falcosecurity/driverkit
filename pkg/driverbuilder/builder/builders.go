@@ -19,10 +19,9 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"log/slog"
+	"github.com/falcosecurity/falcoctl/pkg/output"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"strings"
 	"text/template"
@@ -132,7 +131,11 @@ func LibsDownloadScript(c Config) (string, error) {
 }
 
 // KernelDownloadScript returns the script that will download and extract kernel headers
-func KernelDownloadScript(b Builder, kernelurls []string, kr kernelrelease.KernelRelease) (string, error) {
+func KernelDownloadScript(b Builder,
+	kernelurls []string,
+	kr kernelrelease.KernelRelease,
+	printer *output.Printer,
+) (string, error) {
 	t := template.New("download-kernel")
 	parsed, err := t.Parse(b.TemplateKernelUrlsScript())
 	if err != nil {
@@ -166,6 +169,9 @@ func KernelDownloadScript(b Builder, kernelurls []string, kr kernelrelease.Kerne
 	if len(urls) < minimumURLs {
 		return "", fmt.Errorf("not enough headers packages found; expected %d, found %d", minimumURLs, len(urls))
 	}
+
+	printer.Logger.Debug("kernel headers found",
+		printer.Logger.Args("urls", urls))
 
 	td := b.KernelTemplateData(kr, urls)
 	if tdErr, ok := td.(error); ok {
@@ -297,8 +303,10 @@ func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 		proposedGCCs := make([]semver.Version, 0)
 		for _, img := range b.Images {
 			proposedGCCs = append(proposedGCCs, img.GCCVersion)
-			slog.With("image", img.Name, "targetGCC", targetGCC.String()).
-				Debug("proposedGCC", "version", img.GCCVersion.String())
+			b.Logger.Debug("proposed GCC",
+				b.Logger.Args("image", img.Name,
+					"targetGCC", targetGCC.String(),
+					"proposedGCC", img.GCCVersion.String()))
 		}
 
 		// Now, sort versions and fetch
@@ -313,8 +321,8 @@ func (b *Build) setGCCVersion(builder Builder, kr kernelrelease.KernelRelease) {
 		}
 		b.GCCVersion = lastGCC.String()
 	}
-	slog.With("targetGCC", targetGCC.String()).
-		Debug("foundGCC", "version", b.GCCVersion)
+	b.Logger.Debug("found GCC",
+		b.Logger.Args("targetGCC", targetGCC.String(), "version", b.GCCVersion))
 }
 
 type BuilderImageNetworkMode interface {
@@ -389,13 +397,11 @@ func (c Config) toTemplateData(b Builder, kr kernelrelease.KernelRelease) common
 func resolveURLReference(u string) string {
 	uu, err := url.Parse(u)
 	if err != nil {
-		slog.Error(err.Error())
-		os.Exit(1)
+		panic(err)
 	}
 	base, err := url.Parse(uu.Host)
 	if err != nil {
-		slog.Error(err.Error())
-		os.Exit(1)
+		panic(err)
 	}
 	return base.ResolveReference(uu).String()
 }
@@ -415,7 +421,6 @@ func GetResolvingURLs(urls []string) ([]string, error) {
 		}
 		if res.StatusCode == http.StatusOK {
 			results = append(results, u)
-			slog.With("url", u).Debug("kernel header url found")
 		}
 	}
 	if len(results) == 0 {
