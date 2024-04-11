@@ -19,7 +19,6 @@ package cmd
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -131,6 +130,8 @@ var tests = []testCase{
 			"ubuntu-aws",
 			"--output-module",
 			"/tmp/falco-ubuntu-aws.ko",
+			"--output-probe",
+			"/tmp/falco-ubuntu-aws.o",
 			"--loglevel",
 			"debug",
 		},
@@ -143,6 +144,7 @@ var tests = []testCase{
 		env: map[string]string{
 			"DRIVERKIT_KERNELVERSION": "59",
 			"DRIVERKIT_OUTPUT_MODULE": "/tmp/falco-ubuntu-aws.ko",
+			"DRIVERKIT_OUTPUT_PROBE":  "/tmp/falco-ubuntu-aws.o",
 		},
 		args: []string{
 			"docker",
@@ -321,6 +323,7 @@ func run(t *testing.T, test testCase) {
 	var buf bytes.Buffer
 	configOpts.setOutput(&buf, true)
 	c := NewRootCmd(configOpts, rootOpts)
+	c.SetOutput(&buf)
 	if len(test.args) == 0 || (test.args[0] != "__complete" && test.args[0] != "__completeNoDesc" && test.args[0] != "help" && test.args[0] != "completion") {
 		test.args = append(test.args, "--dryrun")
 	}
@@ -338,6 +341,8 @@ func run(t *testing.T, test testCase) {
 		} else {
 			assert.Error(t, err, test.expect.err)
 		}
+		// Exactly same behavior as rootCmd.Start(), but here we use ERROR instead of FATAL to avoid leaving
+		configOpts.Printer.Logger.Error("error executing driverkit", configOpts.Printer.Logger.Args("err", err.Error()))
 	}
 	out := buf.String()
 	res := stripansi.Strip(out)
@@ -365,7 +370,7 @@ type testTemplateData struct {
 }
 
 func readTemplateFile(t *testing.T, s string) string {
-	out, err := ioutil.ReadFile("testdata/templates/" + s)
+	out, err := os.ReadFile("testdata/templates/" + s)
 	assert.NilError(t, err)
 	return string(out)
 }

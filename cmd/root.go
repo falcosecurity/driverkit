@@ -15,7 +15,9 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"sort"
 	"strings"
@@ -31,10 +33,11 @@ import (
 
 func persistentValidateFunc(rootCommand *RootCmd, configOpts *ConfigOptions, rootOpts *RootOptions) func(c *cobra.Command, args []string) error {
 	return func(c *cobra.Command, args []string) error {
+		var validationError = errors.New("exiting for validation errors")
 		configErr := configOpts.Init()
 		// Early exit if detect some error into config flags
 		if configErr {
-			return fmt.Errorf("exiting for validation errors")
+			return validationError
 		}
 		// Merge environment variables or config file values into the RootOptions instance
 		skip := map[string]bool{ // do not merge these
@@ -89,7 +92,7 @@ func persistentValidateFunc(rootCommand *RootCmd, configOpts *ConfigOptions, roo
 					configOpts.Printer.Logger.Error("error validating build options",
 						configOpts.Printer.Logger.Args("err", err.Error()))
 				}
-				return fmt.Errorf("exiting for validation errors")
+				return validationError
 			}
 			rootOpts.Log(configOpts.Printer)
 		}
@@ -112,6 +115,7 @@ func NewRootCmd(configOpts *ConfigOptions, rootOpts *RootOptions) *RootCmd {
 		Args:                  cobra.OnlyValidArgs,
 		DisableFlagsInUseLine: true,
 		DisableAutoGenTag:     true,
+		SilenceErrors:         true,
 		SilenceUsage:          true,
 		Version:               version.String(),
 		RunE: func(c *cobra.Command, args []string) error {
@@ -187,6 +191,12 @@ func (r *RootCmd) Command() *cobra.Command {
 // SetArgs proxies the arguments to the underlying cobra.Command.
 func (r *RootCmd) SetArgs(args []string) {
 	r.c.SetArgs(args)
+}
+
+// SetOutput sets the main command output writer.
+func (r *RootCmd) SetOutput(w io.Writer) {
+	r.c.SetOut(w)
+	r.c.SetErr(w)
 }
 
 // Execute proxies the cobra.Command execution.

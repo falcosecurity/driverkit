@@ -7,4 +7,5 @@ kernelurls: [
 target: ubuntu-aws
 output:
     module: /tmp/falco-ubuntu-aws.ko
+    probe: /tmp/falco-ubuntu-aws.o
 driverversion: master

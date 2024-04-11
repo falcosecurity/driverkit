@@ -22,7 +22,7 @@ driverkit kubernetes-in-cluster [flags]
       --kernelrelease string       kernel release to build the module for, it can be found by executing 'uname -v'
       --kernelurls strings         list of kernel header urls (e.g. --kernelurls <URL1> --kernelurls <URL2> --kernelurls "<URL3>,<URL4>")
       --kernelversion string       kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v' (default "1")
-  -l, --loglevel string            Set level for logs (info, warn, debug, trace) (default "info")
+  -l, --loglevel string            set level for logs (info, warn, debug, trace) (default "info")
       --moduledevicename string    kernel module device name (the default is falco, so the device will be under /dev/falco*) (default "falco")
       --moduledrivername string    kernel module driver name, i.e. the name you see when you check installed modules via lsmod (default "falco")
   -n, --namespace string           If present, the namespace scope for the pods and its config  (default "default")

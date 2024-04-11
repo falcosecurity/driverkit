@@ -1,3 +1,13 @@
-level=DEBUG msg="running without a configuration file"
-level=DEBUG msg="running with options" output-module=/tmp/falco-ubuntu-azure.ko output-probe="" driverversion=master kernelrelease=4.15.0-1057-azure kernelversion=62 target=ubuntu-azure arch={{ .CurrentArch }} kernelurls="[http://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-azure/linux-azure-headers-4.15.0-1057_4.15.0-1057.62_all.deb http://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-azure/linux-headers-4.15.0-1057-azure_4.15.0-1057.62_amd64.deb]" repo-org=falcosecurity repo-name=libs
-level=INFO msg="driver building, it will take a few seconds" processor=docker
+DEBUG running without a configuration file 
+DEBUG running with options
+    ├ output-module: /tmp/falco-ubuntu-azure.ko
+    ├ output-probe: /tmp/falco-ubuntu-aws.o
+    ├ driverversion: master
+    ├ kernelrelease: 4.15.0-1057-azure
+    ├ kernelversion: 62
+    ├ target: ubuntu-azure
+    ├ arch: {{ .CurrentArch }}
+    ├ kernelurls: [http://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-azure/linux-azure-headers-4.15.0-1057_4.15.0-1057.62_all.deb http://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-azure/linux-headers-4.15.0-1057-azure_4.15.0-1057.62_amd64.deb]
+    ├ repo-org: falcosecurity
+    └ repo-name: libs
+INFO  starting build processor: docker

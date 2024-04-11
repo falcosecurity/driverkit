@@ -1,8 +1,4 @@
-level=DEBUG msg="running without a configuration file"
-level=ERROR msg="error validating build options" err="builder image is a required field when target is redhat"
-Error: exiting for validation errors
-Usage:
-  driverkit docker [flags]
-
-{{ .Flags }}
-
+DEBUG running without a configuration file 
+ERROR error validating build options
+    └ err: builder image is a required field when target is redhat
+ERROR error executing driverkit err: exiting for validation errors
