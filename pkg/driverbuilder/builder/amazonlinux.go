@@ -25,7 +25,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -212,7 +211,6 @@ func buildMirror(a amazonBuilder, r string, kv kernelrelease.KernelRelease) (str
 	}
 
 	mirror := fmt.Sprintf("%s/%s", baseURL, "mirror.list")
-	slog.With("url", mirror, "version", r).Debug("looking for repo...")
 	return mirror, nil
 }
 
@@ -261,7 +259,6 @@ func fetchAmazonLinuxPackagesURLs(a amazonBuilder, kv kernelrelease.KernelReleas
 		}
 		// Download the repo database
 		repoRes, err := http.Get(repoDatabaseURL)
-		slog.With("url", repoDatabaseURL).Debug("downloading...")
 		if err != nil {
 			return nil, err
 		}
@@ -292,7 +289,6 @@ func fetchAmazonLinuxPackagesURLs(a amazonBuilder, kv kernelrelease.KernelReleas
 			return nil, err
 		}
 		defer db.Close()
-		slog.With("db", dbFile.Name()).Debug("connecting to database...")
 		// Query the database
 		rel := strings.TrimPrefix(strings.TrimSuffix(kv.FullExtraversion, fmt.Sprintf(".%s", kv.Architecture.ToNonDeb())), "-")
 		q := fmt.Sprintf("SELECT location_href FROM packages WHERE name LIKE 'kernel-devel%%' AND version='%s' AND release='%s'", kv.Fullversion, rel)

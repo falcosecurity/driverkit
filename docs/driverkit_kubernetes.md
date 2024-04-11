@@ -22,6 +22,7 @@ driverkit kubernetes [flags]
       --cluster string                 the name of the kubeconfig cluster to use
   -c, --config string                  config file path (default $HOME/.driverkit.yaml if exists)
       --context string                 the name of the kubeconfig context to use
+      --disable-compression            if true, opt-out of response compression for all requests to the server
       --driverversion string           driver version as a git commit hash or as a git tag (default "master")
       --dryrun                         do not actually perform the action
       --gccversion string              enforce a specific gcc version for the build
@@ -33,7 +34,7 @@ driverkit kubernetes [flags]
       --kernelurls strings             list of kernel header urls (e.g. --kernelurls <URL1> --kernelurls <URL2> --kernelurls "<URL3>,<URL4>")
       --kernelversion string           kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v' (default "1")
       --kubeconfig string              path to the kubeconfig file to use for CLI requests
-  -l, --loglevel string                log level (default "info")
+  -l, --loglevel string                Set level for logs (info, warn, debug, trace) (default "info")
       --moduledevicename string        kernel module device name (the default is falco, so the device will be under /dev/falco*) (default "falco")
       --moduledrivername string        kernel module driver name, i.e. the name you see when you check installed modules via lsmod (default "falco")
   -n, --namespace string               If present, the namespace scope for the pods and its config  (default "default")
@@ -49,7 +50,7 @@ driverkit kubernetes [flags]
       --request-timeout string         the length of time to wait before giving up on a single server request, non-zero values should contain a corresponding time unit (e.g, 1s, 2m, 3h), a value of zero means don't timeout requests (default "0")
       --run-as-user int                Pods runner user
   -s, --server string                  the address and port of the Kubernetes API server
-  -t, --target string                  the system to target the build for, one of [alinux,almalinux,amazonlinux,amazonlinux2,amazonlinux2022,amazonlinux2023,arch,bottlerocket,centos,debian,fedora,flatcar,minikube,ol,opensuse,photon,redhat,rocky,talos,ubuntu,vanilla]
+  -t, --target string                  the system to target the build for, one of [alinux,almalinux,amazonlinux,amazonlinux2,amazonlinux2022,amazonlinux2023,arch,bottlerocket,centos,debian,fedora,flatcar,minikube,ol,opensuse,photon,redhat,rocky,sles,talos,ubuntu,vanilla]
       --timeout int                    timeout in seconds (default 120)
       --tls-server-name string         server name to use for server certificate validation, if it is not provided, the hostname used to contact the server is used
       --token string                   bearer token for authentication to the API server

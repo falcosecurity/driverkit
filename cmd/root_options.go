@@ -15,9 +15,13 @@ limitations under the License.
 package cmd
 
 import (
+	"errors"
 	"fmt"
-	"log/slog"
+	"github.com/falcosecurity/falcoctl/pkg/output"
+	"github.com/spf13/pflag"
 	"os"
+	"runtime"
+	"strings"
 
 	"github.com/creasty/defaults"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
@@ -68,21 +72,21 @@ func init() {
 }
 
 // NewRootOptions ...
-func NewRootOptions() *RootOptions {
+func NewRootOptions() (*RootOptions, error) {
 	rootOpts := &RootOptions{}
 	if err := defaults.Set(rootOpts); err != nil {
-		slog.With("err", err.Error(), "options", "RootOptions").Error("error setting driverkit options defaults")
-		os.Exit(1)
+		return nil, err
 	}
-	return rootOpts
+	return rootOpts, nil
 }
 
 // Validate validates the RootOptions fields.
 func (ro *RootOptions) Validate() []error {
 	if err := validate.V.Struct(ro); err != nil {
-		errors := err.(validator.ValidationErrors)
+		var errs validator.ValidationErrors
+		errors.As(err, &errs)
 		errArr := []error{}
-		for _, e := range errors {
+		for _, e := range errs {
 			// Translate each error one at a time
 			errArr = append(errArr, fmt.Errorf(e.Translate(validate.T)))
 		}
@@ -99,25 +103,52 @@ func (ro *RootOptions) Validate() []error {
 	return nil
 }
 
+func (ro *RootOptions) AddFlags(flags *pflag.FlagSet, targets []string) {
+	flags.StringVar(&ro.Output.Module, "output-module", ro.Output.Module, "filepath where to save the resulting kernel module")
+	flags.StringVar(&ro.Output.Probe, "output-probe", ro.Output.Probe, "filepath where to save the resulting eBPF probe")
+	flags.StringVar(&ro.Architecture, "architecture", runtime.GOARCH, "target architecture for the built driver, one of "+kernelrelease.SupportedArchs.String())
+	flags.StringVar(&ro.DriverVersion, "driverversion", ro.DriverVersion, "driver version as a git commit hash or as a git tag")
+	flags.StringVar(&ro.KernelVersion, "kernelversion", ro.KernelVersion, "kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v'")
+	flags.StringVar(&ro.KernelRelease, "kernelrelease", ro.KernelRelease, "kernel release to build the module for, it can be found by executing 'uname -v'")
+	flags.StringVarP(&ro.Target, "target", "t", ro.Target, "the system to target the build for, one of ["+strings.Join(targets, ",")+"]")
+	flags.StringVar(&ro.KernelConfigData, "kernelconfigdata", ro.KernelConfigData, "base64 encoded kernel config data: in some systems it can be found under the /boot directory, in other it is gzip compressed under /proc")
+	flags.StringVar(&ro.ModuleDeviceName, "moduledevicename", ro.ModuleDeviceName, "kernel module device name (the default is falco, so the device will be under /dev/falco*)")
+	flags.StringVar(&ro.ModuleDriverName, "moduledrivername", ro.ModuleDriverName, "kernel module driver name, i.e. the name you see when you check installed modules via lsmod")
+	flags.StringVar(&ro.BuilderImage, "builderimage", ro.BuilderImage, "docker image to be used to build the kernel module and eBPF probe. If not provided, an automatically selected image will be used.")
+	flags.StringSliceVar(&ro.BuilderRepos, "builderrepo", ro.BuilderRepos, "list of docker repositories or yaml file (absolute path) containing builder images index with the format 'images: [ { target:<target>, name:<image-name>, arch: <arch>, tag: <imagetag>, gcc_versions: [ <gcc-tag> ] },...]', in descending priority order. Used to search for builder images. eg: --builderrepo myorg/driverkit-builder --builderrepo falcosecurity/driverkit-builder --builderrepo '/path/to/my/index.yaml'.")
+	flags.StringVar(&ro.GCCVersion, "gccversion", ro.GCCVersion, "enforce a specific gcc version for the build")
+
+	flags.StringSliceVar(&ro.KernelUrls, "kernelurls", nil, "list of kernel header urls (e.g. --kernelurls <URL1> --kernelurls <URL2> --kernelurls \"<URL3>,<URL4>\")")
+
+	flags.StringVar(&ro.Repo.Org, "repo-org", ro.Repo.Org, "repository github organization")
+	flags.StringVar(&ro.Repo.Name, "repo-name", ro.Repo.Name, "repository github name")
+
+	flags.StringVar(&ro.Registry.Name, "registry-name", ro.Registry.Name, "registry name to which authenticate")
+	flags.StringVar(&ro.Registry.Username, "registry-user", ro.Registry.Username, "registry username")
+	flags.StringVar(&ro.Registry.Password, "registry-password", ro.Registry.Password, "registry password")
+	flags.BoolVar(&ro.Registry.PlainHTTP, "registry-plain-http", ro.Registry.PlainHTTP, "allows interacting with remote registry via plain http requests")
+}
+
 // Log emits a log line containing the receiving RootOptions for debugging purposes.
 //
 // Call it only after validation.
-func (ro *RootOptions) Log() {
-	slog.Debug("running with options",
-		"output-module", ro.Output.Module,
-		"output-probe", ro.Output.Probe,
-		"driverversion", ro.DriverVersion,
-		"kernelrelease", ro.KernelRelease,
-		"kernelversion", ro.KernelVersion,
-		"target", ro.Target,
-		"arch", ro.Architecture,
-		"kernelurls", ro.KernelUrls,
-		"repo-org", ro.Repo.Org,
-		"repo-name", ro.Repo.Name,
-	)
+func (ro *RootOptions) Log(printer *output.Printer) {
+	printer.Logger.Debug("running with options",
+		printer.Logger.Args(
+			"output-module", ro.Output.Module,
+			"output-probe", ro.Output.Probe,
+			"driverversion", ro.DriverVersion,
+			"kernelrelease", ro.KernelRelease,
+			"kernelversion", ro.KernelVersion,
+			"target", ro.Target,
+			"arch", ro.Architecture,
+			"kernelurls", ro.KernelUrls,
+			"repo-org", ro.Repo.Org,
+			"repo-name", ro.Repo.Name,
+		))
 }
 
-func (ro *RootOptions) ToBuild() *builder.Build {
+func (ro *RootOptions) ToBuild(printer *output.Printer) *builder.Build {
 	kernelConfigData := ro.KernelConfigData
 	if len(kernelConfigData) == 0 {
 		kernelConfigData = "bm8tZGF0YQ==" // no-data
@@ -145,6 +176,7 @@ func (ro *RootOptions) ToBuild() *builder.Build {
 		RegistryUser:      ro.Registry.Username,
 		RegistryPassword:  ro.Registry.Password,
 		RegistryPlainHTTP: ro.Registry.PlainHTTP,
+		Printer:           printer,
 	}
 
 	// loop over BuilderRepos to build the list ImagesListers based on the value of the builderRepo:
@@ -160,7 +192,8 @@ func (ro *RootOptions) ToBuild() *builder.Build {
 			imageLister, err = builder.NewRepoImagesLister(builderRepo, build)
 		}
 		if err != nil {
-			slog.With("err", err.Error()).Warn("Skipping repo", "repo", builderRepo)
+			printer.Logger.Warn("skipping repo",
+				printer.Logger.Args("repo", builderRepo, "err", err.Error()))
 		} else {
 			build.ImagesListers = append(build.ImagesListers, imageLister)
 		}
@@ -170,11 +203,13 @@ func (ro *RootOptions) ToBuild() *builder.Build {
 	kr := build.KernelReleaseFromBuildConfig()
 	if len(build.ModuleFilePath) > 0 && !kr.SupportsModule() {
 		build.ModuleFilePath = ""
-		slog.Warn("Skipping build attempt of module for unsupported kernel release", "kernelrelease", kr.String())
+		printer.Logger.Warn("skipping build attempt of module for unsupported kernel release",
+			printer.Logger.Args("kernelrelease", kr.String()))
 	}
 	if len(build.ProbeFilePath) > 0 && !kr.SupportsProbe() {
 		build.ProbeFilePath = ""
-		slog.Warn("Skipping build attempt of probe for unsupported kernel release", "kernelrelease", kr.String())
+		printer.Logger.Warn("skipping build attempt of probe for unsupported kernel release",
+			printer.Logger.Args("kernelrelease", kr.String()))
 	}
 	return build
 }

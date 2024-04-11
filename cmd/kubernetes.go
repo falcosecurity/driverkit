@@ -15,8 +15,8 @@ limitations under the License.
 package cmd
 
 import (
-	"log/slog"
-	"os"
+	"bytes"
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"regexp"
 	"strings"
 
@@ -24,12 +24,11 @@ import (
 	"github.com/falcosecurity/driverkit/pkg/kubernetes/factory"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 )
 
 // NewKubernetesCmd creates the `driverkit kubernetes` command.
-func NewKubernetesCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Command {
+func NewKubernetesCmd(configOpts *ConfigOptions, rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Command {
 	kubernetesCmd := &cobra.Command{
 		Use:     "kubernetes",
 		Short:   "Build Falco kernel modules and eBPF probes against a Kubernetes cluster.",
@@ -58,34 +57,36 @@ func NewKubernetesCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Co
 
 	kubefactory := factory.NewFactory(configFlags)
 
-	kubernetesCmd.Run = func(cmd *cobra.Command, args []string) {
-		slog.With("processor", cmd.Name()).Info("driver building, it will take a few seconds")
-		if !configOptions.DryRun {
-			if err := kubernetesRun(cmd, args, kubefactory, rootOpts); err != nil {
-				slog.With("err", err.Error()).Error("exiting")
-				os.Exit(1)
+	kubernetesCmd.RunE = func(c *cobra.Command, args []string) error {
+		configOpts.Printer.Logger.Info("starting build",
+			configOpts.Printer.Logger.Args("processor", c.Name()))
+		if !configOpts.DryRun {
+			// Since we use a spinner, cache log data to a bytesbuffer;
+			// we will later print it once we stop the spinner.
+			var buf bytes.Buffer
+			b := rootOpts.ToBuild(configOpts.Printer.WithWriter(&buf))
+			defer func() {
+				configOpts.Printer.DefaultText.Print(buf.String())
+			}()
+			if !b.HasOutputs() {
+				return nil
 			}
+			configOpts.Printer.Spinner, _ = configOpts.Printer.Spinner.Start("driver building, it will take a few seconds")
+			defer func() {
+				_ = configOpts.Printer.Spinner.Stop()
+			}()
+			return kubernetesRun(kubefactory, b, configOpts)
 		}
+		return nil
 	}
 
 	return kubernetesCmd
 }
 
-func kubernetesRun(cmd *cobra.Command, args []string, kubefactory factory.Factory, rootOpts *RootOptions) error {
-	f := cmd.Flags()
-	b := rootOpts.ToBuild()
-	if !b.HasOutputs() {
-		return nil
-	}
-
-	namespaceStr, err := f.GetString("namespace")
-	if err != nil {
-		return err
-	}
-	if len(namespaceStr) == 0 {
-		namespaceStr = "default"
-	}
-
+func kubernetesRun(kubefactory factory.Factory,
+	b *builder.Build,
+	configOpts *ConfigOptions,
+) error {
 	kc, err := kubefactory.KubernetesClientSet()
 	if err != nil {
 		return err
@@ -98,6 +99,12 @@ func kubernetesRun(cmd *cobra.Command, args []string, kubefactory factory.Factor
 		return err
 	}
 
-	buildProcessor := driverbuilder.NewKubernetesBuildProcessor(kc.CoreV1(), clientConfig, kubernetesOptions.RunAsUser, kubernetesOptions.Namespace, kubernetesOptions.ImagePullSecret, viper.GetInt("timeout"), viper.GetString("proxy"))
+	buildProcessor := driverbuilder.NewKubernetesBuildProcessor(kc.CoreV1(),
+		clientConfig,
+		kubernetesOptions.RunAsUser,
+		kubernetesOptions.Namespace,
+		kubernetesOptions.ImagePullSecret,
+		configOpts.Timeout,
+		configOpts.ProxyURL)
 	return buildProcessor.Start(b)
 }

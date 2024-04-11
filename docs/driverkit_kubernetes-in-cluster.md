@@ -22,7 +22,7 @@ driverkit kubernetes-in-cluster [flags]
       --kernelrelease string       kernel release to build the module for, it can be found by executing 'uname -v'
       --kernelurls strings         list of kernel header urls (e.g. --kernelurls <URL1> --kernelurls <URL2> --kernelurls "<URL3>,<URL4>")
       --kernelversion string       kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v' (default "1")
-  -l, --loglevel string            log level (default "INFO")
+  -l, --loglevel string            Set level for logs (info, warn, debug, trace) (default "info")
       --moduledevicename string    kernel module device name (the default is falco, so the device will be under /dev/falco*) (default "falco")
       --moduledrivername string    kernel module driver name, i.e. the name you see when you check installed modules via lsmod (default "falco")
   -n, --namespace string           If present, the namespace scope for the pods and its config  (default "default")
@@ -36,7 +36,7 @@ driverkit kubernetes-in-cluster [flags]
       --repo-name string           repository github name (default "libs")
       --repo-org string            repository github organization (default "falcosecurity")
       --run-as-user int            Pods runner user
-  -t, --target string              the system to target the build for, one of [alinux,almalinux,amazonlinux,amazonlinux2,amazonlinux2022,amazonlinux2023,arch,bottlerocket,centos,debian,fedora,flatcar,minikube,ol,opensuse,photon,redhat,rocky,talos,ubuntu,vanilla]
+  -t, --target string              the system to target the build for, one of [alinux,almalinux,amazonlinux,amazonlinux2,amazonlinux2022,amazonlinux2023,arch,bottlerocket,centos,debian,fedora,flatcar,minikube,ol,opensuse,photon,redhat,rocky,sles,talos,ubuntu,vanilla]
       --timeout int                timeout in seconds (default 120)
 ```
 

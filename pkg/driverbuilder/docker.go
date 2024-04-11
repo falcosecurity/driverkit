@@ -22,11 +22,10 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
+	"github.com/docker/docker/api/types/image"
+	"github.com/falcosecurity/falcoctl/pkg/output"
 	"io"
-	"io/ioutil"
 	"log"
-	"log/slog"
-	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -49,6 +48,7 @@ type DockerBuildProcessor struct {
 	clean   bool
 	timeout int
 	proxy   string
+	*output.Printer
 }
 
 // NewDockerBuildProcessor ...
@@ -63,7 +63,7 @@ func (bp *DockerBuildProcessor) String() string {
 	return DockerBuildProcessorName
 }
 
-func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Client) {
+func (bp *DockerBuildProcessor) mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Client) {
 	var err error
 	if b.Architecture == runtime.GOARCH {
 		// Nothing to do
@@ -71,18 +71,19 @@ func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Cli
 	}
 
 	if runtime.GOARCH != kernelrelease.ArchitectureAmd64 {
-		log.Fatal("qemu-user-static image is only available for x86_64 hosts: https://github.com/multiarch/qemu-user-static#supported-host-architectures")
+		bp.Logger.Fatal("qemu-user-static image is only available for x86_64 hosts: https://github.com/multiarch/qemu-user-static#supported-host-architectures")
 	}
 
-	slog.Debug("using qemu for cross build")
+	bp.Logger.Debug("using qemu for cross build")
 	if _, _, err = cli.ImageInspectWithRaw(ctx, "multiarch/qemu-user-static"); client.IsErrNotFound(err) {
-		slog.With("image", "multiarch/qemu-user-static").Debug("pulling qemu static image")
+		bp.Logger.Debug("pulling qemu static image",
+			bp.Logger.Args("image", "multiarch/qemu-user-static"))
 		pullRes, err := cli.ImagePull(ctx, "multiarch/qemu-user-static", types.ImagePullOptions{})
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer pullRes.Close()
-		_, err = io.Copy(ioutil.Discard, pullRes)
+		_, err = io.Copy(io.Discard, pullRes)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -98,8 +99,8 @@ func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Cli
 			Privileged: true,
 		}, nil, nil, "")
 	if err != nil {
-		slog.Error(err.Error())
-		os.Exit(1)
+		bp.Logger.Fatal("failed to create qemu container",
+			bp.Logger.Args("err", err.Error()))
 	}
 
 	if err = cli.ContainerStart(ctx, qemuImage.ID, container.StartOptions{}); err != nil {
@@ -117,14 +118,15 @@ func mustCheckArchUseQemu(ctx context.Context, b *builder.Build, cli *client.Cli
 
 	err = cli.ContainerStop(ctx, qemuImage.ID, container.StopOptions{})
 	if err != nil && !client.IsErrNotFound(err) {
-		slog.Error(err.Error())
-		os.Exit(1)
+		bp.Logger.Fatal("failed to stop qemu container",
+			bp.Logger.Args("err", err.Error()))
 	}
 }
 
 // Start the docker processor
 func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
-	slog.Debug("doing a new docker build")
+	bp.Printer = b.Printer
+
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
@@ -145,7 +147,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 		return err
 	}
 
-	kernelDownloadScript, err := builder.KernelDownloadScript(v, c.KernelUrls, kr)
+	kernelDownloadScript, err := builder.KernelDownloadScript(v, c.KernelUrls, kr, b.Printer)
 	if err != nil {
 		return err
 	}
@@ -167,30 +169,27 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	ctx := context.Background()
 	ctx = signals.WithStandardSignals(ctx)
 
-	mustCheckArchUseQemu(ctx, b, cli)
+	bp.mustCheckArchUseQemu(ctx, b, cli)
 
 	var inspect types.ImageInspect
 	if inspect, _, err = cli.ImageInspectWithRaw(ctx, builderImage); client.IsErrNotFound(err) ||
 		inspect.Architecture != b.Architecture {
 
-		slog.
-			With("image", builderImage, "arch", b.Architecture).
-			Debug("pulling builder image")
+		bp.Logger.Debug("pulling builder image",
+			bp.Logger.Args("image", builderImage, "arch", b.Architecture))
 
-		pullRes, err := cli.ImagePull(ctx, builderImage, types.ImagePullOptions{Platform: b.Architecture})
+		pullRes, err := cli.ImagePull(ctx, builderImage, image.PullOptions{Platform: b.Architecture})
 		if err != nil {
 			return err
 		}
 		defer pullRes.Close()
-		_, err = io.Copy(ioutil.Discard, pullRes)
+		_, err = io.Copy(io.Discard, pullRes)
 		if err != nil {
 			return err
 		}
 	}
 
-	slog.
-		With("image", builderImage).
-		Debug("starting container")
+	bp.Logger.Debug("starting container", bp.Logger.Args("image", builderImage))
 
 	containerCfg := &container.Config{
 		Tty:   true,
@@ -312,23 +311,23 @@ chmod +x /driverkit/driverkit.sh
 		isMultiplexed = val == "application/vnd.docker.multiplexed-stream"
 	}
 	if isMultiplexed {
-		multiplexedForwardLogs(hr.Reader)
+		bp.multiplexedForwardLogs(hr.Reader)
 	} else {
-		forwardLogs(hr.Reader)
+		bp.forwardLogs(hr.Reader)
 	}
 
 	if len(b.ModuleFilePath) > 0 {
 		if err := copyFromContainer(ctx, cli, cdata.ID, c.ToDriverFullPath(), b.ModuleFilePath); err != nil {
 			return err
 		}
-		slog.With("path", b.ModuleFilePath).Info("kernel module available")
+		bp.Logger.Info("kernel module available", bp.Logger.Args("path", b.ModuleFilePath))
 	}
 
 	if len(b.ProbeFilePath) > 0 {
 		if err := copyFromContainer(ctx, cli, cdata.ID, c.ToProbeFullPath(), b.ProbeFilePath); err != nil {
 			return err
 		}
-		slog.With("path", b.ProbeFilePath).Info("eBPF probe available")
+		bp.Logger.Info("eBPF probe available", bp.Logger.Args("path", b.ProbeFilePath))
 	}
 
 	return nil
@@ -353,10 +352,11 @@ func copyFromContainer(ctx context.Context, cli *client.Client, ID, from, to str
 func (bp *DockerBuildProcessor) cleanup(cli *client.Client, ID string) {
 	if !bp.clean {
 		bp.clean = true
-		slog.Debug("context canceled")
+		bp.Logger.Debug("context canceled")
 		duration := 1
 		if err := cli.ContainerStop(context.Background(), ID, container.StopOptions{Timeout: &duration}); err != nil && !client.IsErrNotFound(err) {
-			slog.With("err", err.Error(), "container_id", ID).Error("error stopping container")
+			bp.Logger.Error("error stopping container",
+				bp.Logger.Args("err", err.Error()))
 		}
 	}
 }
@@ -385,21 +385,21 @@ func tarWriterFiles(buf io.Writer, files []dockerCopyFile) error {
 	return nil
 }
 
-func forwardLogs(logPipe io.Reader) {
+func (bp *DockerBuildProcessor) forwardLogs(logPipe io.Reader) {
 	lineReader := bufio.NewReader(logPipe)
 	for {
 		line, err := lineReader.ReadBytes('\n')
 		if len(line) > 0 {
-			slog.Debug(string(line))
+			bp.Logger.Debug(string(line))
 		}
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			slog.With("err", err.Error()).Error("log pipe error")
+			bp.Logger.Error("log pipe error", bp.Logger.Args("err", err.Error()))
 		}
 	}
-	slog.Debug("log pipe close")
+	bp.Logger.Debug("log pipe close")
 }
 
 // When docker container attach is called on a non-tty terminal,
@@ -408,7 +408,7 @@ func forwardLogs(logPipe io.Reader) {
 // > The format of the multiplexed stream is as follows:
 // > [8]byte{STREAM_TYPE, 0, 0, 0, SIZE1, SIZE2, SIZE3, SIZE4}[]byte{OUTPUT}
 // see cli.ContainerAttach() method for more info.
-func multiplexedForwardLogs(logPipe io.Reader) {
+func (bp *DockerBuildProcessor) multiplexedForwardLogs(logPipe io.Reader) {
 	hdr := make([]byte, 8)
 	for {
 		// Load size of message
@@ -417,7 +417,7 @@ func multiplexedForwardLogs(logPipe io.Reader) {
 			break
 		}
 		if err != nil {
-			slog.With("err", err.Error()).Error("log pipe error")
+			bp.Logger.Error("log pipe error", bp.Logger.Args("err", err.Error()))
 			return
 		}
 		count := binary.BigEndian.Uint32(hdr[4:])
@@ -432,11 +432,11 @@ func multiplexedForwardLogs(logPipe io.Reader) {
 				if uint32(readCnt) == count {
 					break
 				}
-				slog.With("err", err.Error()).Error("log pipe error")
+				bp.Logger.Error("log pipe error", bp.Logger.Args("err", io.EOF.Error()))
 				return
 			}
 			if err != nil {
-				slog.With("err", err.Error()).Error("log pipe error")
+				bp.Logger.Error("log pipe error", bp.Logger.Args("err", err.Error()))
 				return
 			}
 		}
@@ -445,9 +445,9 @@ func multiplexedForwardLogs(logPipe io.Reader) {
 		lines := strings.Split(string(dat), "\n")
 		for _, line := range lines {
 			if line != "" {
-				slog.Debug(line)
+				bp.Logger.Debug(line)
 			}
 		}
 	}
-	slog.Debug("log pipe close")
+	bp.Logger.Debug("log pipe close")
 }

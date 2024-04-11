@@ -15,20 +15,18 @@ limitations under the License.
 package cmd
 
 import (
-	"log/slog"
-	"os"
-
+	"bytes"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder"
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"github.com/falcosecurity/driverkit/pkg/kubernetes/factory"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
 
 // NewKubernetesInClusterCmd creates the `driverkit kubernetes` command.
-func NewKubernetesInClusterCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Command {
+func NewKubernetesInClusterCmd(configOpts *ConfigOptions, rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Command {
 	kubernetesInClusterCmd := &cobra.Command{
 		Use:     "kubernetes-in-cluster",
 		Short:   "Build Falco kernel modules and eBPF probes against a Kubernetes cluster inside a Kubernetes cluster.",
@@ -42,32 +40,39 @@ func NewKubernetesInClusterCmd(rootOpts *RootOptions, rootFlags *pflag.FlagSet) 
 	// Add root flags
 	kubernetesInClusterCmd.PersistentFlags().AddFlagSet(rootFlags)
 
-	kubernetesInClusterCmd.Run = func(cmd *cobra.Command, args []string) {
-		slog.With("processor", cmd.Name()).Info("driver building, it will take a few seconds")
-		if !configOptions.DryRun {
-			config, err := rest.InClusterConfig()
-			if err != nil {
-				slog.With("err", err.Error()).Error("exiting")
-				os.Exit(1)
+	kubernetesInClusterCmd.RunE = func(c *cobra.Command, args []string) error {
+		configOpts.Printer.Logger.Info("starting build",
+			configOpts.Printer.Logger.Args("processor", c.Name()))
+		if !configOpts.DryRun {
+			// Since we use a spinner, cache log data to a bytesbuffer;
+			// we will later print it once we stop the spinner.
+			var buf bytes.Buffer
+			b := rootOpts.ToBuild(configOpts.Printer.WithWriter(&buf))
+			defer func() {
+				configOpts.Printer.DefaultText.Print(buf.String())
+			}()
+			if !b.HasOutputs() {
+				return nil
 			}
-			if err = factory.SetKubernetesDefaults(config); err != nil {
-				slog.With("err", err.Error()).Error("exiting")
-				os.Exit(1)
-			}
-			if err = kubernetesInClusterRun(cmd, args, config, rootOpts); err != nil {
-				slog.With("err", err.Error()).Error("exiting")
-				os.Exit(1)
-			}
+			configOpts.Printer.Spinner, _ = configOpts.Printer.Spinner.Start("driver building, it will take a few seconds")
+			defer func() {
+				_ = configOpts.Printer.Spinner.Stop()
+			}()
+			return kubernetesInClusterRun(b, configOpts)
 		}
+		return nil
 	}
 
 	return kubernetesInClusterCmd
 }
 
-func kubernetesInClusterRun(_ *cobra.Command, _ []string, kubeConfig *rest.Config, rootOpts *RootOptions) error {
-	b := rootOpts.ToBuild()
-	if !b.HasOutputs() {
-		return nil
+func kubernetesInClusterRun(b *builder.Build, configOpts *ConfigOptions) error {
+	kubeConfig, err := rest.InClusterConfig()
+	if err != nil {
+		return err
+	}
+	if err = factory.SetKubernetesDefaults(kubeConfig); err != nil {
+		return err
 	}
 
 	kc, err := kubernetes.NewForConfig(kubeConfig)
@@ -75,7 +80,12 @@ func kubernetesInClusterRun(_ *cobra.Command, _ []string, kubeConfig *rest.Confi
 		return err
 	}
 
-	buildProcessor := driverbuilder.NewKubernetesBuildProcessor(kc.CoreV1(), kubeConfig, kubernetesOptions.RunAsUser, kubernetesOptions.Namespace, kubernetesOptions.ImagePullSecret, viper.GetInt("timeout"), viper.GetString("proxy"))
-
+	buildProcessor := driverbuilder.NewKubernetesBuildProcessor(kc.CoreV1(),
+		kubeConfig,
+		kubernetesOptions.RunAsUser,
+		kubernetesOptions.Namespace,
+		kubernetesOptions.ImagePullSecret,
+		configOpts.Timeout,
+		configOpts.ProxyURL)
 	return buildProcessor.Start(b)
 }

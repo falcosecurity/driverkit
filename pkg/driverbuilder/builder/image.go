@@ -17,7 +17,7 @@ package builder
 import (
 	"context"
 	"fmt"
-	"log/slog"
+	"github.com/falcosecurity/falcoctl/pkg/output"
 	"os"
 	"regexp"
 	"strings"
@@ -47,7 +47,7 @@ type Image struct {
 }
 
 type ImagesLister interface {
-	LoadImages() []Image
+	LoadImages(printer *output.Printer) []Image
 }
 
 type FileImagesLister struct {
@@ -98,7 +98,7 @@ func NewFileImagesLister(filePath string, build *Build) (*FileImagesLister, erro
 	}, nil
 }
 
-func (f *FileImagesLister) LoadImages() []Image {
+func (f *FileImagesLister) LoadImages(printer *output.Printer) []Image {
 	var (
 		res       []Image
 		imageList YAMLImagesList
@@ -107,37 +107,43 @@ func (f *FileImagesLister) LoadImages() []Image {
 	// loop over lines in file to print them
 	fileData, err := os.ReadFile(f.FilePath)
 	if err != nil {
-		slog.With("err", err.Error(), "FilePath", f.FilePath).Warn("Error opening builder repo file")
+		printer.Logger.Warn("error opening builder repo file",
+			printer.Logger.Args("err", err.Error(), "filepath", f.FilePath))
 		return res
 	}
 
 	err = yaml.Unmarshal(fileData, &imageList)
 	if err != nil {
-		slog.With("err", err.Error(), "FilePath", f.FilePath).Warn("Error unmarshalling builder repo file")
+		printer.Logger.Warn("error unmarshalling builder repo file",
+			printer.Logger.Args("err", err.Error(), "filepath", f.FilePath))
 		return res
 	}
 
 	for _, image := range imageList.Images {
-		logger := slog.With("FilePath", f.FilePath, "image", image)
 		// Values checks
 		if image.Arch != f.Arch {
-			logger.Debug("Skipping wrong-arch image")
+			printer.Logger.Debug("skipping wrong-arch image",
+				printer.Logger.Args("filepath", f.FilePath, "image", image))
 			continue
 		}
 		if image.Tag != f.Tag {
-			logger.Debug("Skipping wrong-tag image")
+			printer.Logger.Debug("skipping wrong-tag image",
+				printer.Logger.Args("filepath", f.FilePath, "image", image))
 			continue
 		}
 		if image.Target != "any" && image.Target != f.Target {
-			logger.Debug("Skipping wrong-target image")
+			printer.Logger.Debug("skipping wrong-target image",
+				printer.Logger.Args("filepath", f.FilePath, "image", image))
 			continue
 		}
 		if image.Name == "" {
-			logger.Debug("Skipping empty name image")
+			printer.Logger.Debug("skipping empty name image",
+				printer.Logger.Args("filepath", f.FilePath, "image", image))
 			continue
 		}
 		if len(image.GCCVersions) == 0 {
-			logger.Debug("Expected at least 1 gcc version")
+			printer.Logger.Debug("expected at least 1 gcc version",
+				printer.Logger.Args("filepath", f.FilePath, "image", image))
 			continue
 		}
 
@@ -178,10 +184,11 @@ func NewRepoImagesLister(repo string, build *Build) (*RepoImagesLister, error) {
 	return &RepoImagesLister{repoOCI}, nil
 }
 
-func (repo *RepoImagesLister) LoadImages() []Image {
+func (repo *RepoImagesLister) LoadImages(printer *output.Printer) []Image {
 	tags, err := repo.Tags(context.Background())
 	if err != nil {
-		slog.With("Repo", repo.Reference, "err", err.Error()).Warn("Skipping repo")
+		printer.Logger.Warn("skipping repo",
+			printer.Logger.Args("repo", repo.Reference, "err", err.Error()))
 		return nil
 	}
 
@@ -229,7 +236,7 @@ func (repo *RepoImagesLister) LoadImages() []Image {
 
 func (b *Build) LoadImages() {
 	for _, imagesLister := range b.ImagesListers {
-		for _, image := range imagesLister.LoadImages() {
+		for _, image := range imagesLister.LoadImages(b.Printer) {
 			// User forced a gcc version? Only load images matching the requested gcc version.
 			if b.GCCVersion != "" && b.GCCVersion != image.GCCVersion.String() {
 				continue
@@ -241,8 +248,7 @@ func (b *Build) LoadImages() {
 		}
 	}
 	if len(b.Images) == 0 {
-		slog.Error("Could not load any builder image. Leaving.")
-		os.Exit(1)
+		b.Printer.Logger.Fatal("Could not load any builder image. Leaving.")
 	}
 }
 
