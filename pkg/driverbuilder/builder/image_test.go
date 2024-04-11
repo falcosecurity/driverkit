@@ -15,6 +15,8 @@ limitations under the License.
 package builder
 
 import (
+	"github.com/falcosecurity/falcoctl/pkg/output"
+	"github.com/pterm/pterm"
 	"io"
 	"net/http"
 	"os"
@@ -236,6 +238,8 @@ images:
 }
 
 func TestFileImagesLister(t *testing.T) {
+	printer := output.NewPrinter(pterm.LogLevelInfo, pterm.LogFormatterColorful, os.Stdout)
+
 	// setup images file
 	f, err := os.CreateTemp(t.TempDir(), "imagetest")
 	if err != nil {
@@ -269,11 +273,13 @@ func TestFileImagesLister(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		assert.DeepEqual(t, test.expected, lister.LoadImages())
+		assert.DeepEqual(t, test.expected, lister.LoadImages(printer))
 	}
 }
 
 func TestRepoImagesLister(t *testing.T) {
+	printer := output.NewPrinter(pterm.LogLevelInfo, pterm.LogFormatterColorful, os.Stdout)
+
 	mock, err := registry.NewMock(t)
 	assert.NilError(t, err)
 	defer mock.Close()
@@ -300,6 +306,6 @@ func TestRepoImagesLister(t *testing.T) {
 		mock.RegisterHandler("/v2/foo/test/tags/list", func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte(test.jsonData))
 		})
-		assert.DeepEqual(t, test.expected, lister.LoadImages())
+		assert.DeepEqual(t, test.expected, lister.LoadImages(printer))
 	}
 }

@@ -60,7 +60,7 @@ func NewKubernetesCmd(configOpts *ConfigOptions, rootOpts *RootOptions, rootFlag
 	kubernetesCmd.RunE = func(c *cobra.Command, args []string) error {
 		configOpts.Printer.Logger.Info("starting build",
 			configOpts.Printer.Logger.Args("processor", c.Name()))
-		if !configOpts.DryRun {
+		if !configOpts.dryRun {
 			// Since we use a spinner, cache log data to a bytesbuffer;
 			// we will later print it once we stop the spinner.
 			var buf bytes.Buffer
@@ -104,7 +104,7 @@ func kubernetesRun(kubefactory factory.Factory,
 		kubernetesOptions.RunAsUser,
 		kubernetesOptions.Namespace,
 		kubernetesOptions.ImagePullSecret,
-		configOpts.Timeout,
-		configOpts.ProxyURL)
+		configOpts.timeout,
+		configOpts.proxyURL)
 	return buildProcessor.Start(b)
 }
