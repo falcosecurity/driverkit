@@ -1,3 +1,13 @@
-level=INFO msg="using config file" file=testdata/configs/1.yaml
-level=DEBUG msg="running with options" output-module=/tmp/override.ko output-probe="" driverversion=master kernelrelease=4.15.0-1057-aws kernelversion=229 target=ubuntu-aws arch={{ .CurrentArch }} kernelurls=[] repo-org=falcosecurity repo-name=libs
-level=INFO msg="driver building, it will take a few seconds" processor=docker
+INFO  using config file file: testdata/configs/1.yaml
+DEBUG running with options
+    ├ output-module: /tmp/override.ko
+    ├ output-probe: /tmp/falco-ubuntu-aws.o
+    ├ driverversion: master
+    ├ kernelrelease: 4.15.0-1057-aws
+    ├ kernelversion: 229
+    ├ target: ubuntu-aws
+    ├ arch: {{ .CurrentArch }}
+    ├ kernelurls: []
+    ├ repo-org: falcosecurity
+    └ repo-name: libs
+INFO  starting build processor: docker

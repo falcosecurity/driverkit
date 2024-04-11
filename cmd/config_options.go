@@ -51,10 +51,16 @@ type ConfigOptions struct {
 }
 
 func (co *ConfigOptions) initPrinter() {
+	// DisableStyling is only enforced by tests.
 	if co.disableStyling {
-		pterm.DisableColor()
+		pterm.DisableStyling()
 	}
 	co.Printer = output.NewPrinter(co.logLevel.ToPtermLogLevel(), pterm.LogFormatterColorful, co.writer)
+	if co.disableStyling {
+		// Disable time print for tests
+		co.Printer.Logger = co.Printer.Logger.WithTime(false)
+	}
+
 }
 
 // Called by tests to disable styling and set bytes buffer as output
@@ -97,7 +103,7 @@ func (co *ConfigOptions) validate() []error {
 // AddFlags registers the common flags.
 func (co *ConfigOptions) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVarP(&co.configFile, "config", "c", co.configFile, "config file path (default $HOME/.driverkit.yaml if exists)")
-	flags.VarP(co.logLevel, "loglevel", "l", "Set level for logs "+co.logLevel.Allowed())
+	flags.VarP(co.logLevel, "loglevel", "l", "set level for logs "+co.logLevel.Allowed())
 	flags.IntVar(&co.Timeout, "timeout", co.Timeout, "timeout in seconds")
 	flags.StringVar(&co.ProxyURL, "proxy", co.ProxyURL, "the proxy to use to download data")
 	flags.BoolVar(&co.dryRun, "dryrun", co.dryRun, "do not actually perform the action")
@@ -133,7 +139,11 @@ func (co *ConfigOptions) Init() bool {
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
+	err := viper.ReadInConfig()
+	// Init printer with either read or existent one,
+	// so that we can further log considering log level set.
+	co.initPrinter()
+	if err == nil {
 		co.Printer.Logger.Info("using config file",
 			co.Printer.Logger.Args("file", viper.ConfigFileUsed()))
 	} else {
@@ -143,6 +153,5 @@ func (co *ConfigOptions) Init() bool {
 			co.Printer.Logger.Debug("running without a configuration file")
 		}
 	}
-	co.initPrinter()
 	return configErr
 }

@@ -18,7 +18,7 @@ driverkit local [flags]
   -h, --help                      help for local
       --kernelrelease string      kernel release to build the module for, it can be found by executing 'uname -v'
       --kernelversion string      kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v' (default "1")
-  -l, --loglevel string           Set level for logs (info, warn, debug, trace) (default "info")
+  -l, --loglevel string           set level for logs (info, warn, debug, trace) (default "info")
       --moduledevicename string   kernel module device name (the default is falco, so the device will be under /dev/falco*) (default "falco")
       --moduledrivername string   kernel module driver name, i.e. the name you see when you check installed modules via lsmod (default "falco")
       --output-module string      filepath where to save the resulting kernel module

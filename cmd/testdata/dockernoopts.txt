@@ -1,10 +1,7 @@
-level=ERROR msg="error validating build options" err="kernel release is a required field"
-level=ERROR msg="error validating build options" err="target is a required field"
-level=ERROR msg="error validating build options" err="output module path is required when probe is missing"
-level=ERROR msg="error validating build options" err="output probe path is required when module is missing"
-Error: exiting for validation errors
-Usage:
-  driverkit docker [flags]
-
-{{ .Flags }}
-
+ERROR error validating build options err: kernel release is a required field
+ERROR error validating build options err: target is a required field
+ERROR error validating build options
+    └ err: output module path is required when probe is missing
+ERROR error validating build options
+    └ err: output probe path is required when module is missing
+ERROR error executing driverkit err: exiting for validation errors
