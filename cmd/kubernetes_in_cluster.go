@@ -44,20 +44,23 @@ func NewKubernetesInClusterCmd(configOpts *ConfigOptions, rootOpts *RootOptions,
 		configOpts.Printer.Logger.Info("starting build",
 			configOpts.Printer.Logger.Args("processor", c.Name()))
 		if !configOpts.dryRun {
-			// Since we use a spinner, cache log data to a bytesbuffer;
-			// we will later print it once we stop the spinner.
-			var buf bytes.Buffer
-			b := rootOpts.ToBuild(configOpts.Printer.WithWriter(&buf))
-			defer func() {
-				configOpts.Printer.DefaultText.Print(buf.String())
-			}()
-			if !b.HasOutputs() {
+			if !rootOpts.Output.HasOutputs() {
+				configOpts.Printer.Logger.Info("no output specified")
 				return nil
 			}
-			configOpts.Printer.Spinner, _ = configOpts.Printer.Spinner.Start("driver building, it will take a few seconds")
-			defer func() {
-				_ = configOpts.Printer.Spinner.Stop()
-			}()
+			// Since we use a spinner, cache log data to a bytesbuffer;
+			// we will later print it once we stop the spinner.
+			var b *builder.Build
+			if configOpts.disableStyling {
+				b = rootOpts.ToBuild(configOpts.Printer)
+			} else {
+				var buf bytes.Buffer
+				b = rootOpts.ToBuild(configOpts.Printer.WithWriter(&buf))
+				configOpts.Printer.Spinner, _ = configOpts.Printer.Spinner.Start("driver building, it will take a few seconds")
+				defer func() {
+					configOpts.Printer.DefaultText.Print(buf.String())
+				}()
+			}
 			return kubernetesInClusterRun(b, configOpts)
 		}
 		return nil
@@ -85,7 +88,7 @@ func kubernetesInClusterRun(b *builder.Build, configOpts *ConfigOptions) error {
 		kubernetesOptions.RunAsUser,
 		kubernetesOptions.Namespace,
 		kubernetesOptions.ImagePullSecret,
-		configOpts.timeout,
-		configOpts.proxyURL)
+		configOpts.Timeout,
+		configOpts.ProxyURL)
 	return buildProcessor.Start(b)
 }

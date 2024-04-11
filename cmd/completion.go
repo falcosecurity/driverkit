@@ -66,25 +66,23 @@ func NewCompletionCmd(_ *ConfigOptions, _ *RootOptions, _ *pflag.FlagSet) *cobra
 		Args:              validateArgs(),
 		ValidArgs:         cmdArgs,
 		DisableAutoGenTag: true,
-		Run: func(c *cobra.Command, args []string) {
+		RunE: func(c *cobra.Command, args []string) error {
 			if len(args) == 0 {
-				c.Help()
-				return
+				return c.Help()
 			}
 
 			arg := args[0]
 			switch arg {
 			case "bash":
-				c.Root().GenBashCompletion(os.Stdout)
-				break
+				return c.Root().GenBashCompletion(os.Stdout)
 			case "zsh":
-				c.Root().GenZshCompletion(os.Stdout)
-				break
+				return c.Root().GenZshCompletion(os.Stdout)
 			case "fish":
-				c.Root().GenFishCompletion(os.Stdout, true)
+				return c.Root().GenFishCompletion(os.Stdout, true)
 			case "help":
-				c.Help()
+				return c.Help()
 			}
+			return nil
 		},
 	}
 

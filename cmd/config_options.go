@@ -38,32 +38,38 @@ var aliasProcessors = []string{"docker", "k8s", "k8s-ic"}
 // ConfigOptions represent the persistent configuration flags of driverkit.
 type ConfigOptions struct {
 	configFile string
-	timeout    int    `validate:"number,min=30" default:"120" name:"timeout"`
-	proxyURL   string `validate:"omitempty,proxy" name:"proxy url"`
+	Timeout    int    `validate:"number,min=30" default:"120" name:"timeout"`
+	ProxyURL   string `validate:"omitempty,proxy" name:"proxy url"`
 	dryRun     bool
 
 	// Printer used by all commands to output messages.
 	Printer *output.Printer
 	// writer is used to write the output of the printer.
-	writer   io.Writer
-	logLevel *options.LogLevel
+	writer         io.Writer
+	logLevel       *options.LogLevel
+	disableStyling bool
 }
 
 func (co *ConfigOptions) initPrinter() {
-	logLevel := co.logLevel.ToPtermLogLevel()
-	co.Printer = output.NewPrinter(logLevel, pterm.LogFormatterColorful, co.writer)
+	if co.disableStyling {
+		pterm.DisableColor()
+	}
+	co.Printer = output.NewPrinter(co.logLevel.ToPtermLogLevel(), pterm.LogFormatterColorful, co.writer)
 }
 
-func (co *ConfigOptions) SetOutput(writer io.Writer) {
+// Called by tests to disable styling and set bytes buffer as output
+func (co *ConfigOptions) setOutput(writer io.Writer, disableStyling bool) {
 	co.writer = writer
+	co.disableStyling = disableStyling
 	co.initPrinter()
 }
 
 // NewConfigOptions creates an instance of ConfigOptions.
 func NewConfigOptions() (*ConfigOptions, error) {
 	o := &ConfigOptions{
-		writer:   os.Stdout,
-		logLevel: options.NewLogLevel(),
+		writer:         os.Stdout,
+		logLevel:       options.NewLogLevel(),
+		disableStyling: false,
 	}
 	o.initPrinter()
 	if err := defaults.Set(o); err != nil {
@@ -92,8 +98,8 @@ func (co *ConfigOptions) validate() []error {
 func (co *ConfigOptions) AddFlags(flags *pflag.FlagSet) {
 	flags.StringVarP(&co.configFile, "config", "c", co.configFile, "config file path (default $HOME/.driverkit.yaml if exists)")
 	flags.VarP(co.logLevel, "loglevel", "l", "Set level for logs "+co.logLevel.Allowed())
-	flags.IntVar(&co.timeout, "timeout", co.timeout, "timeout in seconds")
-	flags.StringVar(&co.proxyURL, "proxy", co.proxyURL, "the proxy to use to download data")
+	flags.IntVar(&co.Timeout, "timeout", co.Timeout, "timeout in seconds")
+	flags.StringVar(&co.ProxyURL, "proxy", co.ProxyURL, "the proxy to use to download data")
 	flags.BoolVar(&co.dryRun, "dryrun", co.dryRun, "do not actually perform the action")
 }
 

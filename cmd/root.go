@@ -112,13 +112,14 @@ func NewRootCmd(configOpts *ConfigOptions, rootOpts *RootOptions) *RootCmd {
 		Args:                  cobra.OnlyValidArgs,
 		DisableFlagsInUseLine: true,
 		DisableAutoGenTag:     true,
+		SilenceUsage:          true,
 		Version:               version.String(),
-		Run: func(c *cobra.Command, args []string) {
+		RunE: func(c *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				configOpts.Printer.Logger.Info("specify a valid processor", configOpts.Printer.Logger.Args("processors", validProcessors))
 			}
 			// Fallback to help
-			_ = c.Help()
+			return c.Help()
 		},
 	}
 	ret := &RootCmd{
@@ -210,6 +211,13 @@ func Start() {
 		configOpts.Printer.Logger.Fatal("error setting driverkit root options defaults",
 			configOpts.Printer.Logger.Args("err", err.Error()))
 	}
+
+	// Cleanup spinner upon leaving if any
+	defer func() {
+		if configOpts.Printer.Spinner != nil {
+			_ = configOpts.Printer.Spinner.Stop()
+		}
+	}()
 	root := NewRootCmd(configOpts, rootOpts)
 	if err = root.Execute(); err != nil {
 		configOpts.Printer.Logger.Fatal("error executing driverkit", configOpts.Printer.Logger.Args("err", err.Error()))
