@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"bytes"
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"os"
 
 	"github.com/olekukonko/tablewriter"
@@ -28,17 +29,26 @@ func NewImagesCmd(configOpts *ConfigOptions, rootOpts *RootOptions, rootFlags *p
 	imagesCmd := &cobra.Command{
 		Use:   "images",
 		Short: "List builder images",
-		Run: func(c *cobra.Command, args []string) {
+		RunE: func(c *cobra.Command, args []string) error {
 			configOpts.Printer.Logger.Info("starting loading images",
 				configOpts.Printer.Logger.Args("processor", c.Name()))
 			// Since we use a spinner, cache log data to a bytesbuffer;
 			// we will later print it once we stop the spinner.
-			var buf bytes.Buffer
-			b := rootOpts.ToBuild(configOpts.Printer.WithWriter(&buf))
-			configOpts.Printer.Spinner, _ = configOpts.Printer.Spinner.Start("listing images, it will take a few seconds")
+			var (
+				buf bytes.Buffer
+				b   *builder.Build
+			)
+			if configOpts.disableStyling {
+				b = rootOpts.ToBuild(configOpts.Printer)
+			} else {
+				b = rootOpts.ToBuild(configOpts.Printer.WithWriter(&buf))
+				configOpts.Printer.Spinner, _ = configOpts.Printer.Spinner.Start("listing images, it will take a few seconds")
+			}
 			b.LoadImages()
-			_ = configOpts.Printer.Spinner.Stop()
-			configOpts.Printer.DefaultText.Print(buf.String())
+			if !configOpts.disableStyling {
+				_ = configOpts.Printer.Spinner.Stop()
+				configOpts.Printer.DefaultText.Print(buf.String())
+			}
 
 			table := tablewriter.NewWriter(os.Stdout)
 			table.SetHeader([]string{"Image", "Target", "Arch", "GCC"})
@@ -54,6 +64,7 @@ func NewImagesCmd(configOpts *ConfigOptions, rootOpts *RootOptions, rootFlags *p
 				table.Append(data)
 			}
 			table.Render() // Send output
+			return nil
 		},
 	}
 	// Add root flags

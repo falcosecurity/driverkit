@@ -17,6 +17,7 @@ package cmd
 import (
 	"bytes"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder"
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -30,21 +31,24 @@ func NewDockerCmd(configOpts *ConfigOptions, rootOpts *RootOptions, rootFlags *p
 			configOpts.Printer.Logger.Info("starting build",
 				configOpts.Printer.Logger.Args("processor", c.Name()))
 			if !configOpts.dryRun {
-				// Since we use a spinner, cache log data to a bytesbuffer;
-				// we will later print it once we stop the spinner.
-				var buf bytes.Buffer
-				b := rootOpts.ToBuild(configOpts.Printer.WithWriter(&buf))
-				defer func() {
-					configOpts.Printer.DefaultText.Print(buf.String())
-				}()
-				if !b.HasOutputs() {
+				if !rootOpts.Output.HasOutputs() {
+					configOpts.Printer.Logger.Info("no output specified")
 					return nil
 				}
-				configOpts.Printer.Spinner, _ = configOpts.Printer.Spinner.Start("driver building, it will take a few seconds")
-				defer func() {
-					_ = configOpts.Printer.Spinner.Stop()
-				}()
-				return driverbuilder.NewDockerBuildProcessor(configOpts.timeout, configOpts.proxyURL).Start(b)
+				// Since we use a spinner, cache log data to a bytesbuffer;
+				// we will later print it once we stop the spinner.
+				var b *builder.Build
+				if configOpts.disableStyling {
+					b = rootOpts.ToBuild(configOpts.Printer)
+				} else {
+					var buf bytes.Buffer
+					b = rootOpts.ToBuild(configOpts.Printer.WithWriter(&buf))
+					configOpts.Printer.Spinner, _ = configOpts.Printer.Spinner.Start("driver building, it will take a few seconds")
+					defer func() {
+						configOpts.Printer.DefaultText.Print(buf.String())
+					}()
+				}
+				return driverbuilder.NewDockerBuildProcessor(configOpts.Timeout, configOpts.ProxyURL).Start(b)
 			}
 			return nil
 		},

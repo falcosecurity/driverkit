@@ -19,7 +19,6 @@ package cmd
 
 import (
 	"bytes"
-	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -319,9 +318,9 @@ func run(t *testing.T, test testCase) {
 	assert.NilError(t, err)
 	rootOpts, err := NewRootOptions()
 	assert.NilError(t, err)
+	var buf bytes.Buffer
+	configOpts.setOutput(&buf, true)
 	c := NewRootCmd(configOpts, rootOpts)
-	b := bytes.NewBufferString("")
-	configOpts.SetOutput(b)
 	if len(test.args) == 0 || (test.args[0] != "__complete" && test.args[0] != "__completeNoDesc" && test.args[0] != "help" && test.args[0] != "completion") {
 		test.args = append(test.args, "--dryrun")
 	}
@@ -340,11 +339,8 @@ func run(t *testing.T, test testCase) {
 			assert.Error(t, err, test.expect.err)
 		}
 	}
-	out, err := io.ReadAll(b)
-	if err != nil {
-		t.Fatalf("error reading CLI output: %v", err)
-	}
-	res := stripansi.Strip(string(out))
+	out := buf.String()
+	res := stripansi.Strip(out)
 	assert.Equal(t, test.expect.out, res)
 	// Teardown
 	for k := range test.env {

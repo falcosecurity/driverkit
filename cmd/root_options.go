@@ -36,6 +36,10 @@ type OutputOptions struct {
 	Probe  string `validate:"required_without=Module,filepath,omitempty,endswith=.o" name:"output probe path"`
 }
 
+func (oo *OutputOptions) HasOutputs() bool {
+	return oo.Module != "" || oo.Probe != ""
+}
+
 type RepoOptions struct {
 	Org  string `default:"falcosecurity" name:"organization name"`
 	Name string `default:"libs" name:"repo name"`
