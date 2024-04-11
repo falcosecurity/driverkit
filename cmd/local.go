@@ -23,7 +23,7 @@ func NewLocalCmd(configOpts *ConfigOptions, rootOpts *RootOptions, rootFlags *pf
 		RunE: func(c *cobra.Command, args []string) error {
 			configOpts.Printer.Logger.Info("starting build",
 				configOpts.Printer.Logger.Args("processor", c.Name()))
-			if !configOpts.DryRun {
+			if !configOpts.dryRun {
 				// Since we use a spinner, cache log data to a bytesbuffer;
 				// we will later print it once we stop the spinner.
 				var buf bytes.Buffer
@@ -42,7 +42,7 @@ func NewLocalCmd(configOpts *ConfigOptions, rootOpts *RootOptions, rootFlags *pf
 					opts.downloadHeaders,
 					opts.srcDir,
 					opts.envMap,
-					configOpts.Timeout).Start(b)
+					configOpts.timeout).Start(b)
 			}
 			return nil
 		},

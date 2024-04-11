@@ -37,27 +37,32 @@ var aliasProcessors = []string{"docker", "k8s", "k8s-ic"}
 
 // ConfigOptions represent the persistent configuration flags of driverkit.
 type ConfigOptions struct {
-	ConfigFile string
-	Timeout    int    `validate:"number,min=30" default:"120" name:"timeout"`
-	ProxyURL   string `validate:"omitempty,proxy" name:"proxy url"`
-	DryRun     bool
+	configFile string
+	timeout    int    `validate:"number,min=30" default:"120" name:"timeout"`
+	proxyURL   string `validate:"omitempty,proxy" name:"proxy url"`
+	dryRun     bool
 
 	// Printer used by all commands to output messages.
 	Printer *output.Printer
-	// Writer is used to write the output of the printer.
-	Writer   io.Writer
+	// writer is used to write the output of the printer.
+	writer   io.Writer
 	logLevel *options.LogLevel
 }
 
 func (co *ConfigOptions) initPrinter() {
 	logLevel := co.logLevel.ToPtermLogLevel()
-	co.Printer = output.NewPrinter(logLevel, pterm.LogFormatterColorful, co.Writer)
+	co.Printer = output.NewPrinter(logLevel, pterm.LogFormatterColorful, co.writer)
+}
+
+func (co *ConfigOptions) SetOutput(writer io.Writer) {
+	co.writer = writer
+	co.initPrinter()
 }
 
 // NewConfigOptions creates an instance of ConfigOptions.
 func NewConfigOptions() (*ConfigOptions, error) {
 	o := &ConfigOptions{
-		Writer:   os.Stdout,
+		writer:   os.Stdout,
 		logLevel: options.NewLogLevel(),
 	}
 	o.initPrinter()
@@ -85,11 +90,11 @@ func (co *ConfigOptions) validate() []error {
 
 // AddFlags registers the common flags.
 func (co *ConfigOptions) AddFlags(flags *pflag.FlagSet) {
-	flags.StringVarP(&co.ConfigFile, "config", "c", co.ConfigFile, "config file path (default $HOME/.driverkit.yaml if exists)")
+	flags.StringVarP(&co.configFile, "config", "c", co.configFile, "config file path (default $HOME/.driverkit.yaml if exists)")
 	flags.VarP(co.logLevel, "loglevel", "l", "Set level for logs "+co.logLevel.Allowed())
-	flags.IntVar(&co.Timeout, "timeout", co.Timeout, "timeout in seconds")
-	flags.StringVar(&co.ProxyURL, "proxy", co.ProxyURL, "the proxy to use to download data")
-	flags.BoolVar(&co.DryRun, "dryrun", co.DryRun, "do not actually perform the action")
+	flags.IntVar(&co.timeout, "timeout", co.timeout, "timeout in seconds")
+	flags.StringVar(&co.proxyURL, "proxy", co.proxyURL, "the proxy to use to download data")
+	flags.BoolVar(&co.dryRun, "dryrun", co.dryRun, "do not actually perform the action")
 }
 
 // Init reads in config file and ENV variables if set.
@@ -102,8 +107,8 @@ func (co *ConfigOptions) Init() bool {
 		}
 		configErr = true
 	}
-	if co.ConfigFile != "" {
-		viper.SetConfigFile(co.ConfigFile)
+	if co.configFile != "" {
+		viper.SetConfigFile(co.configFile)
 	} else {
 		// Find home directory.
 		home, err := homedir.Dir()

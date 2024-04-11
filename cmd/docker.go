@@ -29,7 +29,7 @@ func NewDockerCmd(configOpts *ConfigOptions, rootOpts *RootOptions, rootFlags *p
 		RunE: func(c *cobra.Command, args []string) error {
 			configOpts.Printer.Logger.Info("starting build",
 				configOpts.Printer.Logger.Args("processor", c.Name()))
-			if !configOpts.DryRun {
+			if !configOpts.dryRun {
 				// Since we use a spinner, cache log data to a bytesbuffer;
 				// we will later print it once we stop the spinner.
 				var buf bytes.Buffer
@@ -44,7 +44,7 @@ func NewDockerCmd(configOpts *ConfigOptions, rootOpts *RootOptions, rootFlags *p
 				defer func() {
 					_ = configOpts.Printer.Spinner.Stop()
 				}()
-				return driverbuilder.NewDockerBuildProcessor(configOpts.Timeout, configOpts.ProxyURL).Start(b)
+				return driverbuilder.NewDockerBuildProcessor(configOpts.timeout, configOpts.proxyURL).Start(b)
 			}
 			return nil
 		},

@@ -315,9 +315,13 @@ var tests = []testCase{
 
 func run(t *testing.T, test testCase) {
 	// Setup
-	c := NewRootCmd()
+	configOpts, err := NewConfigOptions()
+	assert.NilError(t, err)
+	rootOpts, err := NewRootOptions()
+	assert.NilError(t, err)
+	c := NewRootCmd(configOpts, rootOpts)
 	b := bytes.NewBufferString("")
-	c.SetOutput(b)
+	configOpts.SetOutput(b)
 	if len(test.args) == 0 || (test.args[0] != "__complete" && test.args[0] != "__completeNoDesc" && test.args[0] != "help" && test.args[0] != "completion") {
 		test.args = append(test.args, "--dryrun")
 	}
@@ -328,7 +332,7 @@ func run(t *testing.T, test testCase) {
 		}
 	}
 	// Test
-	err := c.Execute()
+	err = c.Execute()
 	if err != nil {
 		if test.expect.err == "" {
 			t.Fatalf("error executing CLI: %v", err)
