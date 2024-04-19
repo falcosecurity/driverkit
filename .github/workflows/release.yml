@@ -19,20 +19,21 @@ jobs:
       arch: ${{ matrix.arch }}
 
   push-images-release:
+    needs: build-test-release
     strategy:
       matrix:
         arch: [amd64, arm64]
     uses: ./.github/workflows/reusable_build_push_images.yml
-    needs: build-test-release
     with:
       arch: ${{ matrix.arch }}
       tag: ${{ github.ref_name }}
       is_latest: true
+      push: true
     secrets: inherit  
 
   images-release:
-    uses: ./.github/workflows/reusable_manifest_images.yml
     needs: push-images-release
+    uses: ./.github/workflows/reusable_manifest_images.yml
     with:
       tag: ${{ github.ref_name }}
       is_latest: true

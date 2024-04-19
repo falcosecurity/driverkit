@@ -19,6 +19,31 @@ jobs:
     with:
       arch: ${{ matrix.arch }}
 
+  paths-filter:
+    runs-on: ubuntu-latest
+    outputs:
+      docker_needs_build: ${{ steps.filter.outputs.docker == 'true' }}
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50 # v2.11.1
+        id: filter
+        with:
+          filters: |
+            docker:
+              - 'docker/**'  
+
+  build-images-dev:
+    needs: [build-test-dev,paths-filter]
+    if: needs.paths-filter.outputs.docker_needs_build
+    strategy:
+      matrix:
+        arch: [ amd64, arm64 ]
+    uses: ./.github/workflows/reusable_build_push_images.yml
+    with:
+      arch: ${{ matrix.arch }}
+      push: false
+    secrets: inherit
+
   gomodtidy:
     name: Enforce go.mod tidiness
     runs-on: ubuntu-latest
