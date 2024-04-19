@@ -1,4 +1,4 @@
-FROM debian:buster-backports
+FROM debian:buster
 
 LABEL maintainer="cncf-falco-dev@lists.cncf.io"
 
@@ -11,11 +11,11 @@ RUN apt-get update \
 	bash-completion \
 	bc \
 	clang \
-    llvm \
+    	llvm \
 	ca-certificates \
 	curl \
 	dkms \
-	dwarves/buster-backports \
+	dwarves \
 	gnupg2 \
 	gcc \
 	jq \
