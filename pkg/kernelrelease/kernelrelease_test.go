@@ -234,6 +234,20 @@ func TestFromString(t *testing.T) {
 				FullExtraversion: "+deb10u4~bpo9+1",
 			},
 		},
+		// See https://github.com/falcosecurity/falco/issues/3172
+		"strange tencentos version": {
+			kernelVersionStr: "5.4.119-19.0009.28",
+			want: KernelRelease{
+				Fullversion: "5.4.119",
+				Version: semver.Version{
+					Major: 5,
+					Minor: 4,
+					Patch: 119,
+				},
+				Extraversion:     "19",
+				FullExtraversion: "-19.0009.28",
+			},
+		},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
