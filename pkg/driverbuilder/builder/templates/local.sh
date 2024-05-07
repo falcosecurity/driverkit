@@ -20,7 +20,7 @@
 # looking for it in a bunch of ways. Convenient when running Falco inside
 # a container or in other weird environments.
 #
-set -xeo pipefail
+set -xeuo pipefail
 
 {{ if or .BuildProbe (and  .BuildModule (not .UseDKMS)) }}
 cd {{ .DriverBuildDir }}
@@ -30,7 +30,6 @@ mkdir -p build && cd build
 {{ .CmakeCmd }}
 {{ end }}
 {{ end }}
-
 
 {{ if .BuildModule }}
 {{ if .UseDKMS }}

@@ -44,6 +44,7 @@ func NewLocalCmd(configOpts *ConfigOptions, rootOpts *RootOptions, rootFlags *pf
 				}
 				return driverbuilder.NewLocalBuildProcessor(opts.useDKMS,
 					opts.downloadHeaders,
+					false,
 					opts.srcDir,
 					opts.envMap,
 					configOpts.Timeout).Start(b)

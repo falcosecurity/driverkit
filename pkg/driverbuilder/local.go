@@ -25,13 +25,15 @@ const (
 type LocalBuildProcessor struct {
 	useDKMS         bool
 	downloadHeaders bool
-	srcDir          string
-	envMap          map[string]string
-	timeout         int
+	// Whether to only print cmd output on error
+	printOnError bool
+	srcDir       string
+	envMap       map[string]string
+	timeout      int
 	*output.Printer
 }
 
-func NewLocalBuildProcessor(useDKMS, downloadHeaders bool,
+func NewLocalBuildProcessor(useDKMS, downloadHeaders, printOnError bool,
 	srcDir string,
 	envMap map[string]string,
 	timeout int,
@@ -39,6 +41,7 @@ func NewLocalBuildProcessor(useDKMS, downloadHeaders bool,
 	return &LocalBuildProcessor{
 		useDKMS:         useDKMS,
 		srcDir:          srcDir,
+		printOnError:    printOnError,
 		envMap:          envMap,
 		downloadHeaders: downloadHeaders,
 		timeout:         timeout,
@@ -117,7 +120,7 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 
 	// Load gcc versions from system
 	var gccs []string
-	if len(b.ModuleFilePath) > 0 {
+	if len(c.ModuleFilePath) > 0 {
 		out, err := exec.Command("which", "gcc").Output()
 		if err != nil {
 			return err
@@ -166,6 +169,12 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 
 	for _, gcc := range gccs {
 		vv.GccPath = gcc
+		if c.ModuleFilePath != "" {
+			lbp.Logger.Info("Trying to dkms install module.", lbp.Logger.Args("gcc", gcc))
+		}
+		if c.ProbeFilePath != "" {
+			lbp.Logger.Info("Trying to build eBPF probe.")
+		}
 
 		// Generate the build script from the builder
 		driverkitScript, err := builder.Script(v, c, kr)
@@ -181,59 +190,58 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 			cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, val))
 		}
 
-		stdout, err := cmd.StdoutPipe()
-		if err != nil {
-			lbp.Logger.Warn("Failed to pipe stdout", lbp.Logger.Args("err", err))
-			_, err = cmd.CombinedOutput()
-		} else {
-			cmd.Stderr = cmd.Stdout // redirect stderr to stdout so that we catch it
-			defer stdout.Close()
-			err = cmd.Start()
-			if err != nil {
-				lbp.Logger.Warn("Failed to execute command", lbp.Logger.Args("err", err))
-			} else {
-				// print the output of the subprocess line by line
-				scanner := bufio.NewScanner(stdout)
-				for scanner.Scan() {
-					m := scanner.Text()
-					fmt.Println(m)
-				}
-				err = cmd.Wait()
-			}
+		out, err := cmd.CombinedOutput()
+		if !lbp.printOnError || err != nil {
+			// Only print on error
+			lbp.DefaultText.Print(string(out))
 		}
 
 		// If we built the probe, disable its build for subsequent attempts (with other available gccs)
 		if c.ProbeFilePath != "" {
 			if _, err = os.Stat(srcProbePath); !os.IsNotExist(err) {
-				if err = copyDataToLocalPath(srcProbePath, b.ProbeFilePath); err != nil {
+				if err = copyDataToLocalPath(srcProbePath, c.ProbeFilePath); err != nil {
 					return err
 				}
-				lbp.Logger.Info("eBPF probe available", lbp.Logger.Args("path", b.ProbeFilePath))
+				lbp.Logger.Info("eBPF probe available", lbp.Logger.Args("path", c.ProbeFilePath))
 				c.ProbeFilePath = ""
 			}
 		}
 
 		// If we received an error, perhaps we just need to try another build for the kmod.
 		// Check if we were able to build anything.
-		koFiles, err := filepath.Glob(srcModulePath)
-		if err == nil && len(koFiles) > 0 {
-			// Since only kmod might need to get rebuilt
-			// with another gcc, break here if we actually built the kmod.
-			break
+		if c.ModuleFilePath != "" {
+			koFiles, err := filepath.Glob(srcModulePath)
+			if err == nil && len(koFiles) > 0 {
+				// Since only kmod might need to get rebuilt
+				// with another gcc, break here if we actually built the kmod,
+				// since we already checked ebpf build status.
+				if err = copyDataToLocalPath(koFiles[0], c.ModuleFilePath); err != nil {
+					return err
+				}
+				lbp.Logger.Info("kernel module available", lbp.Logger.Args("path", b.ModuleFilePath))
+				c.ModuleFilePath = ""
+				break
+			} else {
+				// print dkms build log
+				dkmsLogFile := fmt.Sprintf("/var/lib/dkms/%s/%s/build/make.log", c.DriverName, c.DriverVersion)
+				logs, err := os.ReadFile(filepath.Clean(dkmsLogFile))
+				if err != nil {
+					lbp.Logger.Warn("Running dkms build failed, couldn't find dkms log", lbp.Logger.Args("file", dkmsLogFile))
+				} else {
+					lbp.Logger.Warn("Running dkms build failed. Dumping dkms log.", lbp.Logger.Args("file", dkmsLogFile))
+					logBuf := bytes.NewBuffer(logs)
+					scanner := bufio.NewScanner(logBuf)
+					for scanner.Scan() {
+						m := scanner.Text()
+						lbp.DefaultText.Println(m)
+					}
+				}
+			}
 		}
 	}
 
-	if len(b.ModuleFilePath) > 0 {
-		// If we received an error, perhaps we must just rebuilt the kmod.
-		// Check if we were able to build anything.
-		koFiles, err := filepath.Glob(srcModulePath)
-		if err != nil || len(koFiles) == 0 {
-			return fmt.Errorf("failed to find kernel module .ko file: %s", srcModulePath)
-		}
-		if err = copyDataToLocalPath(koFiles[0], b.ModuleFilePath); err != nil {
-			return err
-		}
-		lbp.Logger.Info("kernel module available", lbp.Logger.Args("path", b.ModuleFilePath))
+	if c.ModuleFilePath != "" || c.ProbeFilePath != "" {
+		return fmt.Errorf("Failed to build all requested drivers.")
 	}
 	return nil
 }
