@@ -17,7 +17,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"github.com/falcosecurity/falcoctl/pkg/options"
 	"github.com/falcosecurity/falcoctl/pkg/output"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/pflag"
@@ -46,7 +45,7 @@ type ConfigOptions struct {
 	Printer *output.Printer
 	// writer is used to write the output of the printer.
 	writer         io.Writer
-	logLevel       *options.LogLevel
+	logLevel       *output.LogLevel
 	disableStyling bool
 }
 
@@ -74,7 +73,7 @@ func (co *ConfigOptions) setOutput(writer io.Writer, disableStyling bool) {
 func NewConfigOptions() (*ConfigOptions, error) {
 	o := &ConfigOptions{
 		writer:         os.Stdout,
-		logLevel:       options.NewLogLevel(),
+		logLevel:       output.NewLogLevel(),
 		disableStyling: false,
 	}
 	o.initPrinter()
