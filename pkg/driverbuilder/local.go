@@ -38,6 +38,9 @@ func NewLocalBuildProcessor(useDKMS, downloadHeaders, printOnError bool,
 	envMap map[string]string,
 	timeout int,
 ) *LocalBuildProcessor {
+	if envMap == nil {
+		envMap = make(map[string]string)
+	}
 	return &LocalBuildProcessor{
 		useDKMS:         useDKMS,
 		srcDir:          srcDir,
