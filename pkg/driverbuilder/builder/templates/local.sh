@@ -20,7 +20,7 @@
 # looking for it in a bunch of ways. Convenient when running Falco inside
 # a container or in other weird environments.
 #
-set -xeuo pipefail
+set -xeo pipefail
 
 {{ if or .BuildProbe (and  .BuildModule (not .UseDKMS)) }}
 cd {{ .DriverBuildDir }}

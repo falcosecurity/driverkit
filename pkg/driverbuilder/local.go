@@ -74,7 +74,7 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 		// if an unsupported target is passed.
 		// Go on skipping automatic kernel headers download.
 		if err == nil {
-			lbp.Logger.Info("Trying automatic kernel headers download")
+			lbp.Logger.Info("Trying automatic kernel headers download.")
 			kernelDownloadScript, err := builder.KernelDownloadScript(realBuilder, nil, kr, lbp.Printer)
 			// Patch kernel download script to echo KERNELDIR.
 			// We need to capture KERNELDIR to later pass it as env variable to the build.
@@ -90,7 +90,7 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 					for scanner.Scan() {
 						path = scanner.Text()
 					}
-					lbp.Logger.Info("Setting KERNELDIR env var", lbp.Logger.Args("path", path))
+					lbp.Logger.Info("Setting KERNELDIR env var.", lbp.Logger.Args("path", path))
 					// add the kerneldir path to env
 					lbp.envMap[kernelDirEnv] = path
 					defer func() {
@@ -98,11 +98,11 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 						_ = os.RemoveAll(path)
 					}()
 				} else {
-					lbp.Logger.Warn("Failed to download headers", lbp.Logger.Args("err", err))
+					lbp.Logger.Warn("Failed to download headers.", lbp.Logger.Args("err", err))
 				}
 			}
 		} else {
-			lbp.Logger.Info("Skipping kernel headers automatic download", lbp.Logger.Args("err", err))
+			lbp.Logger.Info("Skipping kernel headers automatic download.", lbp.Logger.Args("err", err))
 		}
 	}
 
@@ -202,7 +202,7 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 				if err = copyDataToLocalPath(srcProbePath, c.ProbeFilePath); err != nil {
 					return err
 				}
-				lbp.Logger.Info("eBPF probe available", lbp.Logger.Args("path", c.ProbeFilePath))
+				lbp.Logger.Info("eBPF probe available.", lbp.Logger.Args("path", c.ProbeFilePath))
 				c.ProbeFilePath = ""
 			}
 		}
@@ -218,7 +218,7 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 				if err = copyDataToLocalPath(koFiles[0], c.ModuleFilePath); err != nil {
 					return err
 				}
-				lbp.Logger.Info("kernel module available", lbp.Logger.Args("path", b.ModuleFilePath))
+				lbp.Logger.Info("kernel module available.", lbp.Logger.Args("path", b.ModuleFilePath))
 				c.ModuleFilePath = ""
 				break
 			} else {
@@ -226,7 +226,7 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 				dkmsLogFile := fmt.Sprintf("/var/lib/dkms/%s/%s/build/make.log", c.DriverName, c.DriverVersion)
 				logs, err := os.ReadFile(filepath.Clean(dkmsLogFile))
 				if err != nil {
-					lbp.Logger.Warn("Running dkms build failed, couldn't find dkms log", lbp.Logger.Args("file", dkmsLogFile))
+					lbp.Logger.Warn("Running dkms build failed, couldn't find dkms log.", lbp.Logger.Args("file", dkmsLogFile))
 				} else {
 					lbp.Logger.Warn("Running dkms build failed. Dumping dkms log.", lbp.Logger.Args("file", dkmsLogFile))
 					logBuf := bytes.NewBuffer(logs)
@@ -241,7 +241,7 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 	}
 
 	if c.ModuleFilePath != "" || c.ProbeFilePath != "" {
-		return fmt.Errorf("Failed to build all requested drivers.")
+		return errors.New("failed to build all requested drivers")
 	}
 	return nil
 }
