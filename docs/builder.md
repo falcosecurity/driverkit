@@ -37,7 +37,7 @@ Your builder will need a constant for the target it implements. Usually that con
 can just be the ID of the distribution you are implementing, as taken reading `/etc/os-release` file.  
 A builder can implement more than one target at time. For example, the minikube builder is just a vanilla one.
 
-Once you have the constant, you will need to add it to the `BuilderByTarget` map.  
+Once you have the constant, you will need to add it to the [byTarget](https://github.com/falcosecurity/driverkit/blob/master/pkg/driverbuilder/builder/target.go) map. 
 Open your file and you will need to add something like this:
 
 ```go
@@ -48,7 +48,7 @@ type archLinux struct {
 }
 
 func init() {
-	BuilderByTarget[TargetTypeArchLinux] = &archLinux{}
+	byTarget[TargetTypeArchLinux] = &archLinux{}
 }
 ```
 
