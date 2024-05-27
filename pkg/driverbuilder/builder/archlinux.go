@@ -131,7 +131,7 @@ func (c *archlinux) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 			}
 		}
 	} else if kr.Architecture.ToNonDeb() == "aarch64" {
-		baseURL := "http://tardis.tiny-vps.com/aarm/packages/l/linux-aarch64-headers/"
+		baseURL := "https://alaa.ad24.cz/packages/l/linux-aarch64-headers/"
 		for _, compressionAlgo := range possibleCompressionSuffixes {
 			urls = append(
 				urls,
