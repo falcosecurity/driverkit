@@ -22,6 +22,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	"github.com/blang/semver"
 	"io"
 	"io/ioutil"
 	"log"
@@ -177,6 +178,14 @@ func (a *amazonlinux2) Name() string {
 
 func (a *amazonlinux2) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	return fetchAmazonLinuxPackagesURLs(a, kr)
+}
+
+func (a *amazonlinux2) GCCVersion(kr kernelrelease.KernelRelease) semver.Version {
+	// 5.10 amazonlinux2 kernels need gcc 10
+	if kr.Major == 5 && kr.Minor == 10 {
+		return semver.Version{Major: 10}
+	}
+	return semver.Version{}
 }
 
 func (a *amazonlinux2) repos() []string {
