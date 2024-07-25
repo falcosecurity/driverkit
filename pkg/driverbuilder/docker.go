@@ -78,7 +78,7 @@ func (bp *DockerBuildProcessor) mustCheckArchUseQemu(ctx context.Context, b *bui
 	if _, _, err = cli.ImageInspectWithRaw(ctx, "multiarch/qemu-user-static"); client.IsErrNotFound(err) {
 		bp.Logger.Debug("pulling qemu static image",
 			bp.Logger.Args("image", "multiarch/qemu-user-static"))
-		pullRes, err := cli.ImagePull(ctx, "multiarch/qemu-user-static", types.ImagePullOptions{})
+		pullRes, err := cli.ImagePull(ctx, "multiarch/qemu-user-static", image.PullOptions{})
 		if err != nil {
 			log.Fatal(err)
 		}
