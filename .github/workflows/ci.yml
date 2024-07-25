@@ -22,7 +22,7 @@ jobs:
   paths-filter:
     runs-on: ubuntu-latest
     outputs:
-      docker_needs_build: ${{ steps.filter.outputs.docker == 'true' }}
+      docker_needs_build: ${{ steps.filter.outputs.docker }}
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50 # v2.11.1
@@ -34,7 +34,7 @@ jobs:
 
   build-images-dev:
     needs: [build-test-dev,paths-filter]
-    if: needs.paths-filter.outputs.docker_needs_build
+    if: needs.paths-filter.outputs.docker_needs_build == 'true'
     strategy:
       matrix:
         arch: [ amd64, arm64 ]
