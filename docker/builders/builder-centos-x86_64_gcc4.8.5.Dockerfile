@@ -2,8 +2,19 @@ FROM centos:7
 
 LABEL maintainer="cncf-falco-dev@lists.cncf.io"
 
-RUN yum -y install centos-release-scl && \
-    yum -y install gcc \
+# Fix broken mirrors - centos:7 eol
+RUN sed -i s/mirror.centos.org/vault.centos.org/g /etc/yum.repos.d/*.repo; \
+    sed -i s/^#.*baseurl=http/baseurl=https/g /etc/yum.repos.d/*.repo; \
+    sed -i s/^mirrorlist=http/#mirrorlist=https/g /etc/yum.repos.d/*.repo
+
+RUN yum -y install centos-release-scl
+
+# fix broken mirrors (again)
+RUN sed -i s/mirror.centos.org/vault.centos.org/g /etc/yum.repos.d/*.repo; \
+    sed -i s/^#.*baseurl=http/baseurl=https/g /etc/yum.repos.d/*.repo; \
+    sed -i s/^mirrorlist=http/#mirrorlist=https/g /etc/yum.repos.d/*.repo
+
+RUN yum -y install gcc \
     llvm-toolset-7.0 \
 	bash-completion \
 	bc \
