@@ -85,6 +85,13 @@ func (c *fedora) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 			kr.Fullversion,
 			kr.FullExtraversion,
 		),
+		fmt.Sprintf( // updates-archive
+			"https://fedoraproject-updates-archive.fedoraproject.org/fedora/%s/%s/kernel-devel-%s%s.rpm",
+			version,
+			kr.Architecture.ToNonDeb(),
+			kr.Fullversion,
+			kr.FullExtraversion,
+		),
 	}
 
 	// return out all possible urls
