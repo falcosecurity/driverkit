@@ -103,6 +103,8 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 				} else {
 					lbp.Logger.Warn("Failed to download headers.", lbp.Logger.Args("err", err))
 				}
+			} else {
+				lbp.Logger.Warn("Failed to generate script.", lbp.Logger.Args("err", err))
 			}
 		} else {
 			lbp.Logger.Info("Skipping kernel headers automatic download.", lbp.Logger.Args("err", err))
