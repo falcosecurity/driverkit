@@ -24,7 +24,6 @@ import (
 	"fmt"
 	"github.com/blang/semver"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -165,7 +164,7 @@ func (a *amazonlinux2023) repos() []string {
 }
 
 func (a *amazonlinux2023) baseUrl() string {
-	return "https://cdn.amazonlinux.com/al2023/core/mirrors/"
+	return "https://cdn.amazonlinux.com/al2023/core/mirrors"
 }
 
 func (a *amazonlinux2023) ext() string {
@@ -211,9 +210,7 @@ func buildMirror(a amazonBuilder, r string, kv kernelrelease.KernelRelease) (str
 	switch a.(type) {
 	case *amazonlinux:
 		baseURL = fmt.Sprintf("%s/%s", a.baseUrl(), r)
-	case *amazonlinux2:
-		baseURL = fmt.Sprintf("%s/%s/%s", a.baseUrl(), r, kv.Architecture.ToNonDeb())
-	case *amazonlinux2022:
+	case *amazonlinux2, *amazonlinux2022, *amazonlinux2023:
 		baseURL = fmt.Sprintf("%s/%s/%s", a.baseUrl(), r, kv.Architecture.ToNonDeb())
 	default:
 		return "", fmt.Errorf("unsupported target")
@@ -240,87 +237,89 @@ func fetchAmazonLinuxPackagesURLs(a amazonBuilder, kv kernelrelease.KernelReleas
 	visited := make(map[string]struct{})
 
 	for _, v := range a.repos() {
-		mirror, err := buildMirror(a, v, kv)
-		if err != nil {
-			return nil, err
-		}
-
-		// Obtain the repo URL by getting mirror URL content
-		mirrorRes, err := http.Get(mirror)
-		if err != nil {
-			return nil, err
-		}
-		defer mirrorRes.Body.Close()
-
-		var repo string
-		scanner := bufio.NewScanner(mirrorRes.Body)
-		if scanner.Scan() {
-			repo = scanner.Text()
-		}
-		if repo == "" {
-			return nil, fmt.Errorf("repository not found")
-		}
-		repo = strings.ReplaceAll(strings.TrimSuffix(repo, "\n"), "$basearch", kv.Architecture.ToNonDeb())
-		repo = strings.TrimSuffix(repo, "/")
-		repoDatabaseURL := fmt.Sprintf("%s/repodata/primary.sqlite.%s", repo, a.ext())
-		if _, ok := visited[repoDatabaseURL]; ok {
-			continue
-		}
-		// Download the repo database
-		repoRes, err := http.Get(repoDatabaseURL)
-		if err != nil {
-			return nil, err
-		}
-		defer repoRes.Body.Close()
-		visited[repoDatabaseURL] = struct{}{}
-
-		unzip, err := unzipFuncFromBuilder(a)
-		if err != nil {
-			return nil, err
-		}
-
-		dbBytes, err := unzip(repoRes.Body)
-		if err != nil {
-			return nil, err
-		}
-		// Create the temporary database file
-		dbFile, err := ioutil.TempFile(os.TempDir(), fmt.Sprintf("%s-*.sqlite", a.Name()))
-		if err != nil {
-			return nil, err
-		}
-		defer os.Remove(dbFile.Name())
-		if _, err := dbFile.Write(dbBytes); err != nil {
-			return nil, err
-		}
-		// Open the database
-		db, err := sql.Open("sqlite", dbFile.Name())
-		if err != nil {
-			return nil, err
-		}
-		defer db.Close()
-		// Query the database
-		rel := strings.TrimPrefix(strings.TrimSuffix(kv.FullExtraversion, fmt.Sprintf(".%s", kv.Architecture.ToNonDeb())), "-")
-		q := fmt.Sprintf("SELECT location_href FROM packages WHERE name LIKE 'kernel-devel%%' AND version='%s' AND release='%s'", kv.Fullversion, rel)
-		stmt, err := db.Prepare(q)
-		if err != nil {
-			return nil, err
-		}
-		defer stmt.Close()
-		rows, err := stmt.Query()
-		if err != nil {
-			return nil, err
-		}
-		defer rows.Close()
-		for rows.Next() {
-			var href string
-			err = rows.Scan(&href)
+		err := func() error {
+			mirror, err := buildMirror(a, v, kv)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
-			urls = append(urls, fmt.Sprintf("%s/%s", repo, href))
-		}
 
-		if err := dbFile.Close(); err != nil {
+			// Obtain the repo URL by getting mirror URL content
+			mirrorRes, err := http.Get(mirror)
+			if err != nil {
+				return err
+			}
+			defer mirrorRes.Body.Close()
+
+			var repo string
+			scanner := bufio.NewScanner(mirrorRes.Body)
+			if scanner.Scan() {
+				repo = scanner.Text()
+			}
+			if repo == "" {
+				return fmt.Errorf("repository not found")
+			}
+			repo = strings.ReplaceAll(strings.TrimSuffix(repo, "\n"), "$basearch", kv.Architecture.ToNonDeb())
+			repo = strings.TrimSuffix(repo, "/")
+			repoDatabaseURL := fmt.Sprintf("%s/repodata/primary.sqlite.%s", repo, a.ext())
+			if _, ok := visited[repoDatabaseURL]; ok {
+				return nil
+			}
+			// Download the repo database
+			repoRes, err := http.Get(repoDatabaseURL)
+			if err != nil {
+				return err
+			}
+			defer repoRes.Body.Close()
+			visited[repoDatabaseURL] = struct{}{}
+
+			unzip, err := unzipFuncFromBuilder(a)
+			if err != nil {
+				return err
+			}
+
+			dbBytes, err := unzip(repoRes.Body)
+			if err != nil {
+				return err
+			}
+			// Create the temporary database file
+			dbFile, err := os.CreateTemp(os.TempDir(), fmt.Sprintf("%s-*.sqlite", a.Name()))
+			if err != nil {
+				return err
+			}
+			defer os.Remove(dbFile.Name())
+			if _, err := dbFile.Write(dbBytes); err != nil {
+				return err
+			}
+			// Open the database
+			db, err := sql.Open("sqlite", dbFile.Name())
+			if err != nil {
+				return err
+			}
+			defer db.Close()
+			// Query the database
+			rel := strings.TrimPrefix(strings.TrimSuffix(kv.FullExtraversion, fmt.Sprintf(".%s", kv.Architecture.ToNonDeb())), "-")
+			q := fmt.Sprintf("SELECT location_href FROM packages WHERE name LIKE 'kernel-devel%%' AND version='%s' AND release='%s'", kv.Fullversion, rel)
+			stmt, err := db.Prepare(q)
+			if err != nil {
+				return err
+			}
+			defer stmt.Close()
+			rows, err := stmt.Query()
+			if err != nil {
+				return err
+			}
+			defer rows.Close()
+			for rows.Next() {
+				var href string
+				err = rows.Scan(&href)
+				if err != nil {
+					log.Fatal(err)
+				}
+				urls = append(urls, fmt.Sprintf("%s/%s", repo, href))
+			}
+			return dbFile.Close()
+		}()
+		if err != nil {
 			return nil, err
 		}
 
