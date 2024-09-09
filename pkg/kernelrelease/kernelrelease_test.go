@@ -248,11 +248,26 @@ func TestFromString(t *testing.T) {
 				FullExtraversion: "-19.0009.28",
 			},
 		},
+		// See https://github.com/falcosecurity/falco/issues/3278
+		"strange cos version": {
+			kernelVersionStr: "5.15.146+",
+			want: KernelRelease{
+				Fullversion: "5.15.146",
+				Version: semver.Version{
+					Major: 5,
+					Minor: 15,
+					Patch: 146,
+				},
+				Extraversion:     "",
+				FullExtraversion: "+",
+			},
+		},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			got := FromString(tt.kernelVersionStr)
 			assert.DeepEqual(t, tt.want, got)
+			assert.Equal(t, got.String(), tt.kernelVersionStr)
 		})
 	}
 }
