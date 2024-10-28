@@ -29,7 +29,7 @@ on:
 
 jobs:
   build-images:
-    runs-on: ${{ (inputs.arch == 'arm64' && 'actuated-arm64-8cpu-16gb') || 'ubuntu-latest' }}
+    runs-on: ${{ (inputs.arch == 'arm64' && 'github-arm64-2c-8gb') || 'ubuntu-latest' }}
     env:
       GIT_BRANCH: ${{ inputs.branch }}
       GIT_TAG: ${{ inputs.tag }}
