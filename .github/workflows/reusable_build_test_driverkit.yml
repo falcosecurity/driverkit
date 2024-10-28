@@ -10,7 +10,7 @@ on:
 jobs:
   build-test:
     # See https://github.com/actions/runner/issues/409#issuecomment-1158849936
-    runs-on: ${{ (inputs.arch == 'arm64' && 'actuated-arm64-8cpu-16gb') || 'ubuntu-latest' }}
+    runs-on: ${{ (inputs.arch == 'arm64' && 'github-arm64-2c-8gb') || 'ubuntu-latest' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
