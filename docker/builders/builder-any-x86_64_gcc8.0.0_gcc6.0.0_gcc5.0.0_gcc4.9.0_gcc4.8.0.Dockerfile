@@ -40,7 +40,6 @@ RUN apt-get update \
 	zstd \
 	gawk \
 	mawk \
-	cmake \
 	git \
 	&& rm -rf /var/lib/apt/lists/*
 
@@ -124,6 +123,13 @@ RUN curl -L -o binutils_2.30-22_${TARGETARCH}.deb https://download.falco.org/dep
 	&& curl -L -o binutils-common_2.30-22_${TARGETARCH}.deb https://download.falco.org/dependencies/binutils-common_2.30-22_${TARGETARCH}.deb \
 	&& dpkg -i *binutils*.deb \
 	&& rm -f *binutils*.deb
+
+# Install a recent version of cmake (debian buster has at most 3.13)
+RUN curl -L -o /tmp/cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v3.22.5/cmake-3.22.5-linux-$(uname -m).tar.gz; \
+    gzip -d /tmp/cmake.tar.gz; \
+    tar -xpf /tmp/cmake.tar --directory=/tmp; \
+    cp -R /tmp/cmake-3.22.5-linux-$(uname -m)/* /usr; \
+    rm -rf /tmp/cmake-3.22.5-linux-$(uname -m)/
 
 # Properly create soft link
 RUN ln -s /usr/bin/gcc-4.8 /usr/bin/gcc-4.8.0
