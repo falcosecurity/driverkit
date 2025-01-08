@@ -1,6 +1,6 @@
 # Release Process
 
-Our release process is based upon [CircleCI](https://app.circleci.com/pipelines/github/falcosecurity/driverkit) and [goreleaser](https://github.com/goreleaser/goreleaser) tool for artifacts.
+Our release process is fully automated using [Github actions](.github/workflows/release.yml) and [goreleaser](https://github.com/goreleaser/goreleaser) tool for artifacts.
 
 When we release we do the following process:
 
