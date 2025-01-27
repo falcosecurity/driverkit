@@ -75,10 +75,10 @@ func (c *archlinux) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 				urls = append(
 					urls,
 					fmt.Sprintf(
-						"%s/linux-headers-%s%s-%s.pkg.tar.%s",
+						"%s/linux-headers-%s-%s-%s.pkg.tar.%s",
 						baseURL,
-						kr.Fullversion,
-						kr.FullExtraversion,
+						kr.String(),
+						kr.KernelVersion,
 						kr.Architecture.ToNonDeb(),
 						compressionAlgo,
 					),
@@ -90,10 +90,10 @@ func (c *archlinux) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 				urls = append(
 					urls,
 					fmt.Sprintf(
-						"%s/linux-hardened-headers-%s%s-%s.pkg.tar.%s",
+						"%s/linux-hardened-headers-%s-%s-%s.pkg.tar.%s",
 						baseURL,
-						kr.Fullversion,
-						kr.FullExtraversion,
+						kr.String(),
+						kr.KernelVersion,
 						kr.Architecture.ToNonDeb(),
 						compressionAlgo,
 					),
@@ -105,10 +105,10 @@ func (c *archlinux) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 				urls = append(
 					urls,
 					fmt.Sprintf(
-						"%s/linux-zen-headers-%s%s-%s.pkg.tar.%s",
+						"%s/linux-zen-headers-%s-%s-%s.pkg.tar.%s",
 						baseURL,
-						kr.Fullversion,
-						kr.FullExtraversion,
+						kr.String(),
+						kr.KernelVersion,
 						kr.Architecture.ToNonDeb(),
 						compressionAlgo,
 					),
@@ -120,10 +120,10 @@ func (c *archlinux) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 				urls = append(
 					urls,
 					fmt.Sprintf(
-						"%s/linux-lts-headers-%s%s-%s.pkg.tar.%s",
+						"%s/linux-lts-headers-%s-%s-%s.pkg.tar.%s",
 						baseURL,
-						kr.Fullversion,
-						kr.FullExtraversion,
+						kr.String(),
+						kr.KernelVersion,
 						kr.Architecture.ToNonDeb(),
 						compressionAlgo,
 					),
@@ -136,10 +136,10 @@ func (c *archlinux) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 			urls = append(
 				urls,
 				fmt.Sprintf(
-					"%s/linux-aarch64-headers-%s%s-%s.pkg.tar.%s",
+					"%s/linux-aarch64-headers-%s-%s-%s.pkg.tar.%s",
 					baseURL,
-					kr.Fullversion,
-					kr.FullExtraversion,
+					kr.String(),
+					kr.KernelVersion,
 					kr.Architecture.ToNonDeb(),
 					compressionAlgo,
 				),
