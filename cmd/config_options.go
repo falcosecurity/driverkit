@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"github.com/falcosecurity/falcoctl/pkg/output"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/pflag"
@@ -92,7 +91,7 @@ func (co *ConfigOptions) validate() []error {
 		var errArr []error
 		for _, e := range errs {
 			// Translate each error one at a time
-			errArr = append(errArr, fmt.Errorf(e.Translate(validate.T)))
+			errArr = append(errArr, errors.New(e.Translate(validate.T)))
 		}
 		return errArr
 	}
