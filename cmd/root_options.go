@@ -16,7 +16,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"github.com/falcosecurity/falcoctl/pkg/output"
 	"github.com/spf13/pflag"
 	"os"
@@ -92,7 +91,7 @@ func (ro *RootOptions) Validate() []error {
 		errArr := []error{}
 		for _, e := range errs {
 			// Translate each error one at a time
-			errArr = append(errArr, fmt.Errorf(e.Translate(validate.T)))
+			errArr = append(errArr, errors.New(e.Translate(validate.T)))
 		}
 		return errArr
 	}
@@ -101,7 +100,7 @@ func (ro *RootOptions) Validate() []error {
 	kr := kernelrelease.FromString(ro.KernelRelease)
 	kr.Architecture = kernelrelease.Architecture(ro.Architecture)
 	if !kr.SupportsModule() && !kr.SupportsProbe() {
-		return []error{fmt.Errorf("both module and probe are not supported by given options")}
+		return []error{errors.New("both module and probe are not supported by given options")}
 	}
 
 	return nil
