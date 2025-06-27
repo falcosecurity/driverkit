@@ -22,8 +22,6 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
-	"github.com/docker/docker/api/types/image"
-	"github.com/falcosecurity/falcoctl/pkg/output"
 	"io"
 	"log"
 	"runtime"
@@ -32,13 +30,17 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/archive"
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"k8s.io/apimachinery/pkg/util/uuid"
+
+	"github.com/falcosecurity/falcoctl/pkg/output"
+
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"github.com/falcosecurity/driverkit/pkg/signals"
-	v1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"k8s.io/apimachinery/pkg/util/uuid"
 )
 
 // DockerBuildProcessorName is a constant containing the docker name.
@@ -198,7 +200,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	}
 
 	// check for any overridden builder image network modes by the builder
-	var builderImageNetMode = container.NetworkMode("default")
+	builderImageNetMode := container.NetworkMode("default")
 	if vv, ok := v.(builder.BuilderImageNetworkMode); ok {
 		builderImageNetMode = container.NetworkMode(vv.BuilderImageNetMode())
 	}
@@ -239,8 +241,7 @@ func (bp *DockerBuildProcessor) Start(b *builder.Build) error {
 	//   * each download-headers script will export KERNELDIR variable internally
 	//   * we source download-headers.sh so that KERNELDIR is then visible to driverkit.sh
 	// * we finally make the actual build of the drivers
-	runCmd :=
-		`
+	runCmd := `
 #!/bin/bash
 
 chmod +x /driverkit/download-libs.sh
@@ -266,7 +267,7 @@ chmod +x /driverkit/driverkit.sh
 		return err
 	}
 	// Copy the needed files to the container
-	err = cli.CopyToContainer(ctx, cdata.ID, "/", &buf, types.CopyToContainerOptions{})
+	err = cli.CopyToContainer(ctx, cdata.ID, "/", &buf, container.CopyToContainerOptions{})
 	if err != nil {
 		return err
 	}
@@ -281,7 +282,7 @@ chmod +x /driverkit/driverkit.sh
 		)
 	}
 
-	edata, err := cli.ContainerExecCreate(ctx, cdata.ID, types.ExecConfig{
+	edata, err := cli.ContainerExecCreate(ctx, cdata.ID, container.ExecOptions{
 		Privileged:   false,
 		Tty:          false,
 		AttachStdin:  false,
@@ -295,12 +296,11 @@ chmod +x /driverkit/driverkit.sh
 			"/driverkit/cmd.sh",
 		},
 	})
-
 	if err != nil {
 		return err
 	}
 
-	hr, err := cli.ContainerExecAttach(ctx, edata.ID, types.ExecStartCheck{})
+	hr, err := cli.ContainerExecAttach(ctx, edata.ID, container.ExecAttachOptions{})
 	if err != nil {
 		return err
 	}
