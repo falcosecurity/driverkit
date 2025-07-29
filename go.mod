@@ -8,7 +8,7 @@ require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
 	github.com/blang/semver/v4 v4.0.0
 	github.com/creasty/defaults v1.7.0
-	github.com/docker/docker v28.3.0+incompatible
+	github.com/docker/docker v28.3.3+incompatible
 	github.com/falcosecurity/falcoctl v0.11.1
 	github.com/go-playground/locales v0.14.1
 	github.com/go-playground/universal-translator v0.18.1
