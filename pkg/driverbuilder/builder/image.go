@@ -22,7 +22,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/blang/semver"
+	"github.com/blang/semver/v4"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"github.com/falcosecurity/falcoctl/pkg/oci/repository"
 	"gopkg.in/yaml.v3"

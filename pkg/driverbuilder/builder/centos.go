@@ -18,7 +18,7 @@ import (
 	_ "embed"
 	"fmt"
 
-	"github.com/blang/semver"
+	"github.com/blang/semver/v4"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 

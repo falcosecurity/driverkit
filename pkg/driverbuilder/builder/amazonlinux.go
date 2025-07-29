@@ -22,7 +22,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
-	"github.com/blang/semver"
+	"github.com/blang/semver/v4"
 	"io"
 	"log"
 	"net/http"
