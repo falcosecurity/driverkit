@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/blang/semver"
+	"github.com/blang/semver/v4"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 

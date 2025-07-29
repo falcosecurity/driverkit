@@ -22,7 +22,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/blang/semver"
+	"github.com/blang/semver/v4"
 	"github.com/docker/docker/testutil/registry"
 	"gotest.tools/assert"
 )
