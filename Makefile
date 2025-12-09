@@ -23,6 +23,7 @@ DOCKER_ORG ?= falcosecurity
 ARCH := $(shell uname -m)
 
 BUILDERS := $(patsubst docker/builders/builder-%.Dockerfile,%,$(wildcard docker/builders/builder*$(ARCH)*.Dockerfile))
+BUILDERS_CMAKE_VERSION := 3.24.4
 
 IMAGE_NAME_BUILDER_BASE ?= docker.io/$(DOCKER_ORG)/driverkit-builder
 
@@ -58,9 +59,12 @@ image/all: image/builder image/driverkit
 
 .PHONY: image/builder
 image/builder:
-	$(foreach b,$(BUILDERS),\
-		$(DOCKER) buildx build -o type=image,push="false" -f docker/builders/builder-$b.Dockerfile . ; \
-    )
+	@ for b in $(BUILDERS); do \
+		$(DOCKER) buildx build \
+			-o type=image,push="false" \
+			-f docker/builders/builder-$$b.Dockerfile \
+			--build-arg CMAKE_VERSION=$(BUILDERS_CMAKE_VERSION) . ; \
+	done
 
 .PHONY: image/driverkit
 image/driverkit:

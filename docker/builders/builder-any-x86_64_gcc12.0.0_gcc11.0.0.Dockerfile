@@ -3,6 +3,8 @@ FROM debian:bookworm
 LABEL maintainer="cncf-falco-dev@lists.cncf.io"
 
 ARG TARGETARCH
+# Cmake version to install, in the form M.m.p.
+ARG CMAKE_VERSION
 
 RUN cp /etc/skel/.bashrc /root && cp /etc/skel/.profile /root
 
@@ -39,9 +41,15 @@ RUN apt-get update \
 	software-properties-common \
 	gpg \
 	zstd \
-	cmake \
 	git \
 	&& rm -rf /var/lib/apt/lists/*
+
+# Install specific cmake version.
+RUN curl -L -o /tmp/cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-$(uname -m).tar.gz; \
+    gzip -d /tmp/cmake.tar.gz; \
+    tar -xpf /tmp/cmake.tar --directory=/tmp; \
+    cp -R /tmp/cmake-${CMAKE_VERSION}-linux-$(uname -m)/* /usr; \
+    rm -rf /tmp/cmake-${CMAKE_VERSION}-linux-$(uname -m)/
 
 # Properly create soft links
 RUN ln -s /usr/bin/gcc-11 /usr/bin/gcc-11.0.0
