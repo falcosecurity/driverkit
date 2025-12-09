@@ -2,6 +2,9 @@ FROM centos:7
 
 LABEL maintainer="cncf-falco-dev@lists.cncf.io"
 
+# Cmake version to install, in the form M.m.p.
+ARG CMAKE_VERSION
+
 # Fix broken mirrors - centos:7 eol
 RUN sed -i s/mirror.centos.org/vault.centos.org/g /etc/yum.repos.d/*.repo; \
     sed -i s/^#.*baseurl=http/baseurl=https/g /etc/yum.repos.d/*.repo; \
@@ -35,12 +38,12 @@ RUN yum -y install gcc \
 	make \
 	git
 
-# Install cmake3.x (on centos7 `cmake` package installs cmake2.x)
-RUN curl -L -o /tmp/cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v3.22.5/cmake-3.22.5-linux-$(uname -m).tar.gz; \
+# Install specific cmake version.
+RUN curl -L -o /tmp/cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-$(uname -m).tar.gz; \
     gzip -d /tmp/cmake.tar.gz; \
     tar -xpf /tmp/cmake.tar --directory=/tmp; \
-    cp -R /tmp/cmake-3.22.5-linux-$(uname -m)/* /usr; \
-    rm -rf /tmp/cmake-3.22.5-linux-$(uname -m)/
+    cp -R /tmp/cmake-${CMAKE_VERSION}-linux-$(uname -m)/* /usr; \
+    rm -rf /tmp/cmake-${CMAKE_VERSION}-linux-$(uname -m)/
 
 # Properly create soft link
 RUN ln -s /usr/bin/gcc /usr/bin/gcc-4.8.5
