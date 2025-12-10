@@ -45,10 +45,10 @@ RUN apt-get update \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Install specific cmake version.
-RUN curl -L -o /tmp/cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-$(uname -m).tar.gz; \
-    gzip -d /tmp/cmake.tar.gz; \
-    tar -xpf /tmp/cmake.tar --directory=/tmp; \
-    cp -R /tmp/cmake-${CMAKE_VERSION}-linux-$(uname -m)/* /usr; \
+RUN curl -L -o /tmp/cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-$(uname -m).tar.gz && \
+    gzip -d /tmp/cmake.tar.gz && \
+    tar -xpf /tmp/cmake.tar --directory=/tmp && \
+    cp -R /tmp/cmake-${CMAKE_VERSION}-linux-$(uname -m)/* /usr && \
     rm -rf /tmp/cmake-${CMAKE_VERSION}-linux-$(uname -m)/
 
 # Properly create soft link
