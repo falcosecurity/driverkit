@@ -134,10 +134,10 @@ RUN curl -L -o binutils_2.30-22_${TARGETARCH}.deb https://download.falco.org/dep
 	&& rm -f *binutils*.deb
 
 # Install specific cmake version.
-RUN curl -L -o /tmp/cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-$(uname -m).tar.gz; \
-    gzip -d /tmp/cmake.tar.gz; \
-    tar -xpf /tmp/cmake.tar --directory=/tmp; \
-    cp -R /tmp/cmake-${CMAKE_VERSION}-linux-$(uname -m)/* /usr; \
+RUN curl -L -o /tmp/cmake.tar.gz https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-$(uname -m).tar.gz && \
+    gzip -d /tmp/cmake.tar.gz && \
+    tar -xpf /tmp/cmake.tar --directory=/tmp && \
+    cp -R /tmp/cmake-${CMAKE_VERSION}-linux-$(uname -m)/* /usr && \
     rm -rf /tmp/cmake-${CMAKE_VERSION}-linux-$(uname -m)/
 
 # Properly create soft link
