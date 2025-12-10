@@ -1,0 +1,26 @@
+# note: this workflow is identical to master CI, but doesn't run any test. Run it with caution and only if required.
+name: Images CI (unchecked)
+
+on:
+  workflow_dispatch:
+
+# Checks if any concurrent jobs is running for master CI and eventually cancel it
+concurrency:
+  group: ci-master
+  cancel-in-progress: true
+
+jobs:
+  push-images-master:
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+    uses: ./.github/workflows/reusable_build_push_images.yml
+    with:
+      arch: ${{ matrix.arch }}
+      push: true
+    secrets: inherit
+
+  images-master:
+    needs: push-images-master
+    uses: ./.github/workflows/reusable_manifest_images.yml
+    secrets: inherit
