@@ -74,9 +74,13 @@ push/all: push/builder push/driverkit
 
 .PHONY: push/builder
 push/builder:
-	$(foreach b,$(BUILDERS),\
-		$(DOCKER) buildx build --push -t "$(IMAGE_NAME_BUILDER_BASE):$b-$(GIT_REF)" -t "$(IMAGE_NAME_BUILDER_BASE):$b-$(GIT_COMMIT)" -f docker/builders/builder-$b.Dockerfile . ; \
-	)
+	@ for b in $(BUILDERS); do \
+		$(DOCKER) buildx build --push \
+			-t "$(IMAGE_NAME_BUILDER_BASE):$$b-$(GIT_REF)" \
+			-t "$(IMAGE_NAME_BUILDER_BASE):$$b-$(GIT_COMMIT)" \
+			-f docker/builders/builder-$$b.Dockerfile \
+			--build-arg CMAKE_VERSION=$(BUILDERS_CMAKE_VERSION) . ; \
+	done
 
 .PHONY: push/driverkit
 push/driverkit:
@@ -84,9 +88,12 @@ push/driverkit:
 
 .PHONY: push/latest
 push/latest:
-	$(foreach b,$(BUILDERS),\
-		$(DOCKER) buildx build --push -t "$(IMAGE_NAME_BUILDER_BASE):$b-latest" -f docker/builders/builder-$b.Dockerfile . ; \
-	)
+	@ for b in $(BUILDERS); do \
+		$(DOCKER) buildx build --push \
+			-t "$(IMAGE_NAME_BUILDER_BASE):$$b-latest" \
+			-f docker/builders/builder-$$b.Dockerfile \
+			--build-arg CMAKE_VERSION=$(BUILDERS_CMAKE_VERSION) . ; \
+	done
 	$(DOCKER) buildx build --push -t "$(IMAGE_NAME_DRIVERKIT_LATEST)" -f docker/driverkit.Dockerfile .
 
 manifest/all: manifest/driverkit
