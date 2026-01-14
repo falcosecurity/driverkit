@@ -16,8 +16,10 @@ package cmd
 
 import (
 	"bytes"
-	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"os"
+
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
+	"github.com/olekukonko/tablewriter/tw"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
@@ -50,10 +52,17 @@ func NewImagesCmd(configOpts *ConfigOptions, rootOpts *RootOptions, rootFlags *p
 				configOpts.Printer.DefaultText.Print(buf.String())
 			}
 
-			table := tablewriter.NewWriter(os.Stdout)
-			table.SetHeader([]string{"Image", "Target", "Arch", "GCC"})
-			table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-			table.SetCenterSeparator("|")
+			table := tablewriter.NewTable(os.Stdout,
+				tablewriter.WithRendition(tw.Rendition{
+					Symbols: tw.NewSymbols(tw.StyleMarkdown),
+					Borders: tw.Border{Left: tw.On, Right: tw.On, Top: tw.Off, Bottom: tw.Off}, // Markdown needs left/right borders
+				}),
+				tablewriter.WithHeaderAlignment(tw.AlignCenter), // Center align headers
+				tablewriter.WithRowAlignment(tw.AlignLeft),      // Common for Markdown
+				tablewriter.WithHeaderAutoWrap(tw.WrapNone),
+				tablewriter.WithRowAutoWrap(tw.WrapNone),
+				tablewriter.WithHeader([]string{"Image", "Target", "Arch", "GCC"}),
+			)
 
 			for _, img := range b.Images {
 				data := make([]string, 4)
