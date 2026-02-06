@@ -18,7 +18,6 @@ RUN sed -i s/mirror.centos.org/vault.centos.org/g /etc/yum.repos.d/*.repo; \
     sed -i s/^mirrorlist=http/#mirrorlist=https/g /etc/yum.repos.d/*.repo
 
 RUN yum -y install gcc \
-    llvm-toolset-7.0 \
 	bash-completion \
 	bc \
 	ca-certificates \
@@ -47,7 +46,3 @@ RUN curl -L -o /tmp/cmake.tar.gz https://github.com/Kitware/CMake/releases/downl
 
 # Properly create soft link
 RUN ln -s /usr/bin/gcc /usr/bin/gcc-4.8.5
-
-RUN source scl_source enable llvm-toolset-7.0
-RUN echo "source scl_source enable llvm-toolset-7.0" >> /etc/bashrc
-RUN source /etc/bashrc

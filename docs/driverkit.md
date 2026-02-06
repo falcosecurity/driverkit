@@ -43,5 +43,5 @@ driverkit
 * [driverkit images](driverkit_images.md)	 - List builder images
 * [driverkit kubernetes](driverkit_kubernetes.md)	 - Build Falco kernel modules against a Kubernetes cluster.
 * [driverkit kubernetes-in-cluster](driverkit_kubernetes-in-cluster.md)	 - Build Falco kernel modules against a Kubernetes cluster inside a Kubernetes cluster.
-* [driverkit local](driverkit_local.md)	 - Build Falco kernel modules in local env with local kernel sources and gcc/clang.
+* [driverkit local](driverkit_local.md)	 - Build Falco kernel modules in local env with local kernel sources and gcc.
 

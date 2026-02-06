@@ -5,4 +5,4 @@ Available Commands:
   images                List builder images
   kubernetes            Build Falco kernel modules against a Kubernetes cluster.
   kubernetes-in-cluster Build Falco kernel modules against a Kubernetes cluster inside a Kubernetes cluster.
-  local                 Build Falco kernel modules in local env with local kernel sources and gcc/clang.
+  local                 Build Falco kernel modules in local env with local kernel sources and gcc.

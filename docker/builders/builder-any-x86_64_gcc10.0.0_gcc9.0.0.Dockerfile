@@ -12,8 +12,6 @@ RUN apt-get update \
 	&& apt-get install -y --no-install-recommends \
 	bash-completion \
 	bc \
-	clang \
-    llvm \
 	ca-certificates \
 	curl \
 	dkms \

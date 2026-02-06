@@ -175,8 +175,6 @@ The requested gcc version is then [used to find the correct builder image to be 
 
 > **NOTE**: when implementing the `builder.GCCVersionRequestor`, returning an empty `semver.Version` means to fallback at default algorithm.
 
-However, there is no mechanism to dynamically choose a clang version, because there should never be any need of touching it.   
-The build will use the one provided by the chosen builder image.  
 Any failure must be treated as a bug, and reported on [libs](https://github.com/falcosecurity/libs) repository.
 
 ### 5. kernel-crawler

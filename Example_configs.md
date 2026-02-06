@@ -233,8 +233,7 @@ ARG rh_password
 
 RUN subscription-manager register --username $rh_username --password $rh_password --auto-attach
 
-RUN yum install gcc curl elfutils-libelf-devel kmod make \
-                llvm-toolset-0:12.0.1-1.module+el8.5.0+11871+08d0eab5.x86_64 cpio -y
+RUN yum install gcc curl elfutils-libelf-devel kmod make cpio -y
 ```
 
 ## redhat 9
@@ -257,7 +256,7 @@ and Dockerfile.rhel9:
 ```bash
 FROM docker.io/redhat/ubi9
 
-RUN yum install gcc elfutils-libelf-devel kmod make cpio llvm-toolset -y
+RUN yum install gcc elfutils-libelf-devel kmod make cpio -y
 RUN ln -s /usr/bin/$(uname -p)-redhat-linux-gcc-11 /usr/bin/gcc-11
 ```
 The `ln -s /usr/bin/$(uname -p)-redhat-linux-gcc-11 /usr/bin/gcc-11` command creates a symbolic link which makes sure driverkit finds the correct compiler binary.
@@ -276,7 +275,7 @@ ARG REDHAT_PASSWORD
 
 RUN subscription-manager register --username $REDHAT_USERNAME --password $REDHAT_PASSWORD --auto-attach
 
-RUN yum install gcc elfutils-libelf-devel kmod make cpio llvm-toolset -y
+RUN yum install gcc elfutils-libelf-devel kmod make cpio -y
 RUN ln -s /usr/bin/$(uname -p)-redhat-linux-gcc-11 /usr/bin/gcc-11
 ```
 

@@ -20,7 +20,7 @@ func NewLocalCmd(configOpts *ConfigOptions, rootOpts *RootOptions, rootFlags *pf
 	opts := localCmdOptions{}
 	localCmd := &cobra.Command{
 		Use:   "local",
-		Short: "Build Falco kernel modules in local env with local kernel sources and gcc/clang.",
+		Short: "Build Falco kernel modules in local env with local kernel sources and gcc.",
 		RunE: func(c *cobra.Command, args []string) error {
 			configOpts.Printer.Logger.Info("starting build",
 				configOpts.Printer.Logger.Args("processor", c.Name()))
