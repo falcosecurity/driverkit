@@ -6,8 +6,6 @@ LABEL maintainer="cncf-falco-dev@lists.cncf.io"
 ARG CMAKE_VERSION
 
 RUN yum -y install gcc10 \
-    clang \
-    llvm \
     bash-completion \
     bc \
     ca-certificates \

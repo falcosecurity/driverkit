@@ -1,6 +1,6 @@
 ## driverkit local
 
-Build Falco kernel modules in local env with local kernel sources and gcc/clang.
+Build Falco kernel modules in local env with local kernel sources and gcc.
 
 ```
 driverkit local [flags]

@@ -9,8 +9,6 @@ ARG CMAKE_VERSION
 RUN dnf install -y \
 	bash-completion \
 	bc \
-	clang \
-	llvm \
 	ca-certificates \
 	curl \
 	dkms \
