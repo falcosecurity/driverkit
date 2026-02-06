@@ -32,10 +32,9 @@ rm -f /tmp/download.lock
 `
 
 const moduleLockFile = "/tmp/module.lock"
-const probeLockFile = "/tmp/probe.lock"
 
-// waitForLockAndCat MUST only output the file, any other output will break
-// the download file itself because it goes trough stdout
+// waitForLockAndCat MUST only output the file, any other output will break the download file itself because it goes
+// through stdout.
 var waitForLockAndCat = `
 while true; do
   if [ -f "$2" ]; then

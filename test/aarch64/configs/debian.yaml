@@ -9,4 +9,3 @@ kernelurls: [
 architecture: arm64
 output:
   module: /tmp/debian_aarch64.ko
-  probe: /tmp/debian_aarch64.o

@@ -8,4 +8,3 @@ kernelurls: [
 ]
 output:
   module: /tmp/debian_x86_64.ko
-  probe: /tmp/debian_x86_64.o

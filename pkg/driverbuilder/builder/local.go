@@ -3,8 +3,9 @@ package builder
 import (
 	_ "embed"
 	"fmt"
-	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"path/filepath"
+
+	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 )
 
 // NOTE: since this is only used by local build,
@@ -60,7 +61,6 @@ func (l *LocalBuilder) TemplateData(c Config, kr kernelrelease.KernelRelease) in
 			ModuleDriverName: c.DriverName,
 			ModuleFullPath:   l.GetModuleFullPath(c, kr),
 			BuildModule:      len(c.ModuleFilePath) > 0,
-			BuildProbe:       len(c.ProbeFilePath) > 0,
 			GCCVersion:       l.GccPath,
 			CmakeCmd: fmt.Sprintf(cmakeCmdFmt,
 				c.DriverName,
@@ -88,13 +88,6 @@ func (l *LocalBuilder) GetModuleFullPath(c Config, kr kernelrelease.KernelReleas
 		return filepath.Join(l.SrcDir, fmt.Sprintf("%s.ko", c.DriverName))
 	}
 	return c.ToDriverFullPath()
-}
-
-func (l *LocalBuilder) GetProbeFullPath(c Config) string {
-	if l.SrcDir != "" {
-		return filepath.Join(l.SrcDir, "bpf", "probe.o")
-	}
-	return c.ToProbeFullPath()
 }
 
 func (l *LocalBuilder) GetDriverBuildDir() string {

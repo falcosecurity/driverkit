@@ -20,10 +20,11 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/falcosecurity/falcoctl/pkg/output"
-	"k8s.io/cli-runtime/pkg/genericiooptions"
 	"os"
 	"time"
+
+	"github.com/falcosecurity/falcoctl/pkg/output"
+	"k8s.io/cli-runtime/pkg/genericiooptions"
 
 	"github.com/falcosecurity/driverkit/pkg/signals"
 
@@ -126,10 +127,6 @@ func (bp *KubernetesBuildProcessor) Start(b *builder.Build) error {
 	if c.ModuleFilePath != "" {
 		res = fmt.Sprintf("%s\n%s", "touch "+moduleLockFile, res)
 		res = fmt.Sprintf("%s\n%s", res, "rm "+moduleLockFile)
-	}
-	if c.ProbeFilePath != "" {
-		res = fmt.Sprintf("%s\n%s", "touch "+probeLockFile, res)
-		res = fmt.Sprintf("%s\n%s", res, "rm "+probeLockFile)
 	}
 
 	// Append a script to the entrypoint to wait
@@ -258,10 +255,10 @@ func (bp *KubernetesBuildProcessor) Start(b *builder.Build) error {
 		return err
 	}
 	defer podClient.Delete(ctx, pod.Name, metav1.DeleteOptions{})
-	return bp.copyModuleAndProbeFromPodWithUID(ctx, c, b, namespace, string(uid))
+	return bp.copyModuleFromPodWithUID(ctx, c, b, namespace, string(uid))
 }
 
-func (bp *KubernetesBuildProcessor) copyModuleAndProbeFromPodWithUID(ctx context.Context, c builder.Config, build *builder.Build, namespace string, falcoBuilderUID string) error {
+func (bp *KubernetesBuildProcessor) copyModuleFromPodWithUID(ctx context.Context, c builder.Config, build *builder.Build, namespace string, falcoBuilderUID string) error {
 	namespacedClient := bp.coreV1Client.Pods(namespace)
 	watch, err := namespacedClient.Watch(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", falcoBuilderUIDLabel, falcoBuilderUID),
@@ -288,7 +285,7 @@ func (bp *KubernetesBuildProcessor) copyModuleAndProbeFromPodWithUID(ctx context
 				continue
 			}
 			if p.Status.Phase == corev1.PodRunning {
-				bp.Logger.Info("start downloading module and probe from pod",
+				bp.Logger.Info("start downloading module from pod",
 					bp.Logger.Args(falcoBuilderUIDLabel, falcoBuilderUID))
 				if c.ModuleFilePath != "" {
 					err = copySingleFileFromPod(c.ModuleFilePath, bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name, c.ToDriverFullPath(), moduleLockFile)
@@ -296,13 +293,6 @@ func (bp *KubernetesBuildProcessor) copyModuleAndProbeFromPodWithUID(ctx context
 						return err
 					}
 					bp.Logger.Info("Kernel Module extraction successful")
-				}
-				if c.ProbeFilePath != "" {
-					err = copySingleFileFromPod(c.ProbeFilePath, bp.coreV1Client, bp.clientConfig, p.Namespace, p.Name, c.ToProbeFullPath(), probeLockFile)
-					if err != nil {
-						return err
-					}
-					bp.Logger.Info("Probe Module extraction successful")
 				}
 				err = unlockPod(bp.coreV1Client, bp.clientConfig, p)
 				if err != nil {

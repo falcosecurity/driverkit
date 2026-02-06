@@ -136,7 +136,7 @@ export KERNELDIR=/tmp/kernel
 ```
 
 Once you have those, based on what that kernel can do and based on what was configured
-by the user, the build script will build the kernel module driver and/or the eBPF probe driver.
+by the user, the build script will build the kernel module driver.
 Example build template for archlinux:
 ```bash
 set -xeuo pipefail
@@ -152,12 +152,6 @@ strip -g {{ .ModuleFullPath }}
 # Print results
 modinfo {{ .ModuleFullPath }}
 {{ end }}
-
-{{ if .BuildProbe }}
-# Build the eBPF probe
-make bpf
-ls -l driver/bpf/probe.o
-{{ end }}
 ```
 
 How does this work?
@@ -165,7 +159,6 @@ How does this work?
 If the user specifies:
 
 - `c.Build.ModuleFilePath` you will need to build the kernel module and save it in /tmp/driver/falco.ko`
-- `c.Build.ProbeFilePath` you will need to build the eBPF probe and save it in /tmp/driver/probe.o`
 
 The `/tmp/driver` MUST be interpolated from the `DriverDirectory` constant from [`builders.go`](/pkg/driverbuilder/builder/builders.go).
 

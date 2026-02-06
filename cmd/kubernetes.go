@@ -31,7 +31,7 @@ import (
 func NewKubernetesCmd(configOpts *ConfigOptions, rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Command {
 	kubernetesCmd := &cobra.Command{
 		Use:     "kubernetes",
-		Short:   "Build Falco kernel modules and eBPF probes against a Kubernetes cluster.",
+		Short:   "Build Falco kernel modules against a Kubernetes cluster.",
 		Aliases: []string{"k8s"},
 	}
 

@@ -49,16 +49,8 @@ var supportedArchsSlice []string
 // is supported, depending on the architecture.
 // See compatibility matrix: https://falco.org/docs/event-sources/drivers/
 var moduleMinKernelVersion = map[Architecture]semver.Version{
-	ArchitectureAmd64: semver.MustParse("2.6.0"),
+	ArchitectureAmd64: semver.MustParse("3.10.0"),
 	ArchitectureArm64: semver.MustParse("3.16.0"),
-}
-
-// Represents the minimum kernel version for which building the probe
-// is supported, depending on the architecture.
-// See compatibility matrix: https://falco.org/docs/event-sources/drivers/
-var probeMinKernelVersion = map[Architecture]semver.Version{
-	ArchitectureAmd64: semver.MustParse("4.14.0"),
-	ArchitectureArm64: semver.MustParse("4.17.0"),
 }
 
 func init() {
@@ -95,7 +87,7 @@ func (a Architecture) String() string {
 // NOTE: we cannot fetch Architecture from kernel string
 // because it is not always provided.
 // Instead, rely on the global option
-// (it it set for builders in kernelReleaseFromBuildConfig())
+// (it is set for builders in kernelReleaseFromBuildConfig())
 type KernelRelease struct {
 	Fullversion string
 	semver.Version
@@ -141,10 +133,6 @@ func FromString(kernelVersionStr string) KernelRelease {
 
 func (k *KernelRelease) SupportsModule() bool {
 	return k.GTE(moduleMinKernelVersion[k.Architecture])
-}
-
-func (k *KernelRelease) SupportsProbe() bool {
-	return k.GTE(probeMinKernelVersion[k.Architecture])
 }
 
 func (k *KernelRelease) String() string {

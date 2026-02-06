@@ -7,4 +7,3 @@ kernelurls: [
 architecture: arm64
 output:
   module: /tmp/amazonlinux2_aarch64.ko
-  probe: /tmp/amazonlinux2_aarch64.o

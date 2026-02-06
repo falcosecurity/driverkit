@@ -29,7 +29,7 @@ import (
 func NewKubernetesInClusterCmd(configOpts *ConfigOptions, rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Command {
 	kubernetesInClusterCmd := &cobra.Command{
 		Use:     "kubernetes-in-cluster",
-		Short:   "Build Falco kernel modules and eBPF probes against a Kubernetes cluster inside a Kubernetes cluster.",
+		Short:   "Build Falco kernel modules against a Kubernetes cluster inside a Kubernetes cluster.",
 		Aliases: []string{"k8s-ic"},
 	}
 

@@ -323,13 +323,6 @@ chmod +x /driverkit/driverkit.sh
 		bp.Logger.Info("kernel module available", bp.Logger.Args("path", b.ModuleFilePath))
 	}
 
-	if len(b.ProbeFilePath) > 0 {
-		if err := copyFromContainer(ctx, cli, cdata.ID, c.ToProbeFullPath(), b.ProbeFilePath); err != nil {
-			return err
-		}
-		bp.Logger.Info("eBPF probe available", bp.Logger.Args("path", b.ProbeFilePath))
-	}
-
 	return nil
 }
 

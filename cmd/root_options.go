@@ -16,11 +16,12 @@ package cmd
 
 import (
 	"errors"
-	"github.com/falcosecurity/falcoctl/pkg/output"
-	"github.com/spf13/pflag"
 	"os"
 	"runtime"
 	"strings"
+
+	"github.com/falcosecurity/falcoctl/pkg/output"
+	"github.com/spf13/pflag"
 
 	"github.com/creasty/defaults"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
@@ -29,14 +30,13 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-// OutputOptions wraps the two drivers that driverkit builds.
+// OutputOptions wraps the driver that driverkit builds.
 type OutputOptions struct {
-	Module string `validate:"required_without=Probe,filepath,omitempty,endswith=.ko" name:"output module path"`
-	Probe  string `validate:"required_without=Module,filepath,omitempty,endswith=.o" name:"output probe path"`
+	Module string `validate:"required,filepath,omitempty,endswith=.ko" name:"output module path"`
 }
 
 func (oo *OutputOptions) HasOutputs() bool {
-	return oo.Module != "" || oo.Probe != ""
+	return oo.Module != ""
 }
 
 type RepoOptions struct {
@@ -90,17 +90,17 @@ func (ro *RootOptions) Validate() []error {
 		errors.As(err, &errs)
 		errArr := []error{}
 		for _, e := range errs {
-			// Translate each error one at a time
+			// Translate each error one at a time.
 			errArr = append(errArr, errors.New(e.Translate(validate.T)))
 		}
 		return errArr
 	}
 
-	// check that the kernel versions supports at least one of probe and module
+	// check that the kernel versions supports the module.
 	kr := kernelrelease.FromString(ro.KernelRelease)
 	kr.Architecture = kernelrelease.Architecture(ro.Architecture)
-	if !kr.SupportsModule() && !kr.SupportsProbe() {
-		return []error{errors.New("both module and probe are not supported by given options")}
+	if !kr.SupportsModule() {
+		return []error{errors.New("module is not supported by given options")}
 	}
 
 	return nil
@@ -108,7 +108,6 @@ func (ro *RootOptions) Validate() []error {
 
 func (ro *RootOptions) AddFlags(flags *pflag.FlagSet, targets []string) {
 	flags.StringVar(&ro.Output.Module, "output-module", ro.Output.Module, "filepath where to save the resulting kernel module")
-	flags.StringVar(&ro.Output.Probe, "output-probe", ro.Output.Probe, "filepath where to save the resulting eBPF probe")
 	flags.StringVar(&ro.Architecture, "architecture", runtime.GOARCH, "target architecture for the built driver, one of "+kernelrelease.SupportedArchs.String())
 	flags.StringVar(&ro.DriverVersion, "driverversion", ro.DriverVersion, "driver version as a git commit hash or as a git tag")
 	flags.StringVar(&ro.KernelVersion, "kernelversion", ro.KernelVersion, "kernel version to build the module for, it's the numeric value after the hash when you execute 'uname -v'")
@@ -117,7 +116,7 @@ func (ro *RootOptions) AddFlags(flags *pflag.FlagSet, targets []string) {
 	flags.StringVar(&ro.KernelConfigData, "kernelconfigdata", ro.KernelConfigData, "base64 encoded kernel config data: in some systems it can be found under the /boot directory, in other it is gzip compressed under /proc")
 	flags.StringVar(&ro.ModuleDeviceName, "moduledevicename", ro.ModuleDeviceName, "kernel module device name (the default is falco, so the device will be under /dev/falco*)")
 	flags.StringVar(&ro.ModuleDriverName, "moduledrivername", ro.ModuleDriverName, "kernel module driver name, i.e. the name you see when you check installed modules via lsmod")
-	flags.StringVar(&ro.BuilderImage, "builderimage", ro.BuilderImage, "docker image to be used to build the kernel module and eBPF probe. If not provided, an automatically selected image will be used.")
+	flags.StringVar(&ro.BuilderImage, "builderimage", ro.BuilderImage, "docker image to be used to build the kernel module. If not provided, an automatically selected image will be used.")
 	flags.StringSliceVar(&ro.BuilderRepos, "builderrepo", ro.BuilderRepos, "list of docker repositories or yaml file (absolute path) containing builder images index with the format 'images: [ { target:<target>, name:<image-name>, arch: <arch>, tag: <imagetag>, gcc_versions: [ <gcc-tag> ] },...]', in descending priority order. Used to search for builder images. eg: --builderrepo myorg/driverkit-builder --builderrepo falcosecurity/driverkit-builder --builderrepo '/path/to/my/index.yaml'.")
 	flags.StringVar(&ro.GCCVersion, "gccversion", ro.GCCVersion, "enforce a specific gcc version for the build")
 
@@ -139,7 +138,6 @@ func (ro *RootOptions) Log(printer *output.Printer) {
 	printer.Logger.Debug("running with options",
 		printer.Logger.Args(
 			"output-module", ro.Output.Module,
-			"output-probe", ro.Output.Probe,
 			"driverversion", ro.DriverVersion,
 			"kernelrelease", ro.KernelRelease,
 			"kernelversion", ro.KernelVersion,
@@ -165,7 +163,6 @@ func (ro *RootOptions) ToBuild(printer *output.Printer) *builder.Build {
 		Architecture:      ro.Architecture,
 		KernelConfigData:  kernelConfigData,
 		ModuleFilePath:    ro.Output.Module,
-		ProbeFilePath:     ro.Output.Probe,
 		ModuleDriverName:  ro.ModuleDriverName,
 		ModuleDeviceName:  ro.ModuleDeviceName,
 		GCCVersion:        ro.GCCVersion,
@@ -207,11 +204,6 @@ func (ro *RootOptions) ToBuild(printer *output.Printer) *builder.Build {
 	if len(build.ModuleFilePath) > 0 && !kr.SupportsModule() {
 		build.ModuleFilePath = ""
 		printer.Logger.Warn("skipping build attempt of module for unsupported kernel release",
-			printer.Logger.Args("kernelrelease", kr.String()))
-	}
-	if len(build.ProbeFilePath) > 0 && !kr.SupportsProbe() {
-		build.ProbeFilePath = ""
-		printer.Logger.Warn("skipping build attempt of probe for unsupported kernel release",
 			printer.Logger.Args("kernelrelease", kr.String()))
 	}
 	return build

@@ -7,7 +7,6 @@ kernelrelease: 4.19.91-26.al7.x86_64
 target: alinux
 output:
     module: /tmp/falco_alinux_4.19.91-26.al7.x86_64.ko
-    probe: /tmp/falco_alinux_4.19.91-26.al7.x86_64.o
 driverversion: master
 ```
 
@@ -18,7 +17,6 @@ kernelrelease: 5.10.84-10.4.al8.x86_64
 target: alinux
 output:
     module: /tmp/falco_alinux_4.19.91-26.al7.x86_64.ko
-    probe: /tmp/falco_alinux_4.19.91-26.al7.x86_64.o
 driverversion: master
 ```
 
@@ -29,7 +27,6 @@ kernelrelease: 5.14.0-162.12.1.el9_1.x86_64
 target: almalinux
 output:
     module: /tmp/falco_almalinux_5.14.0-162.12.1.el9_1.x86_64.ko
-    probe: /tmp/falco_almalinux_5.14.0-162.12.1.el9_1.x86_64.o
 driverversion: master
 ```
 
@@ -50,7 +47,6 @@ kernelrelease: 4.14.171-136.231.amzn2.x86_64
 target: amazonlinux2
 output:
     module: /tmp/falco_amazonlinux2_4.14.171-136.231.amzn2.x86_64.ko
-    probe: /tmp/falco_amazonlinux2_4.14.171-136.231.amzn2.x86_64.o
 driverversion: master
 ```
 
@@ -61,13 +57,12 @@ kernelrelease: 5.10.96-90.460.amzn2022.x86_64
 target: amazonlinux2022
 output:
     module: /tmp/falco_amazonlinux2022_5.10.96-90.460.amzn2022.x86_64.ko
-    probe: /tmp/falco_amazonlinux2022_5.10.96-90.460.amzn2022.x86_64.o
 driverversion: master
 ```
 
 ## archlinux
 
-Example configuration file to build both the Kernel module and eBPF probe for Archlinux.
+Example configuration file to build both the Kernel module for Archlinux.
 Note: archlinux target uses the [Arch Linux Archive](https://wiki.archlinux.org/title/Arch_Linux_Archive) to fetch
 all ever supported kernel releases.
 For arm64, it uses an user-provided mirror, as no official mirror is available: http://tardis.tiny-vps.com/aarm/.
@@ -79,7 +74,6 @@ kernelrelease: 6.0.6.arch1-1
 target: arch
 output:
   module: /tmp/falco-arch.ko
-  probe: /tmp/falco-arch.o
 driverversion: master
 builderimage: ${ARCH_BUILD_IMAGE_HERE}
 ```
@@ -119,14 +113,13 @@ driverversion: master
 
 ## debian
 
-Example configuration file to build both the Kernel module and eBPF probe for Debian.
+Example configuration file to build both the Kernel module for Debian.
 
 ```yaml
 kernelrelease: 4.19.0-6-amd64
 kernelversion: 1
 output:
   module: /tmp/falco-debian.ko
-  probe: /tmp/falco-debian.o
 target: debian
 driverversion: master
 ```
@@ -144,7 +137,7 @@ driverversion: master
 
 ## flatcar
 
-Example configuration file to build both the Kernel module and eBPF probe for Flatcar.
+Example configuration file to build both the Kernel module for Flatcar.
 The Flatcar release version needs to be provided in the `kernelrelease` field instead of the kernel version;
 moreover, kernelconfigdata must be provided.
 
@@ -153,13 +146,12 @@ kernelrelease: 3185.0.0
 target: flatcar
 output:
   module: /tmp/falco-flatcar-3185.0.0.ko
-  probe: /tmp/falco-flatcar-3185.0.0.o
 driverversion: master
 kernelconfigdata: Q09ORklHX0ZBTk9USUZZPXkKQ09ORklHX0t...
 ```
 
 ## minikube
-Example configuration file to build both the Kernel module and eBPF probe for Minikube.
+Example configuration file to build both the Kernel module for Minikube.
 ```yaml
 kernelversion: 1_1.26.0
 kernelrelease: 5.10.57
@@ -167,7 +159,6 @@ target: minikube
 architecture: amd64
 output:
   module: /tmp/falco_minikube_5.10.57_1_1.26.0.ko
-  probe: /tmp/falco_minikube_5.10.57_1_1.26.0.o
 kernelconfigdata: Q09ORklHX0ZBTk9USUZZPXkKQ09ORklHX0t...
 ```
 
@@ -221,7 +212,6 @@ kernelrelease: 4.18.0-372.9.1.el8.x86_64
 target: redhat
 output:
   module: /tmp/falco-redhat8.ko
-  probe: /tmp/falco-redhat8.o
 driverversion: master
 builderimage: redhat/ubi8:rhel8_driverkit
 ```
@@ -254,7 +244,6 @@ kernelrelease: 5.14.0-70.13.1.el9_0.x86_64
 target: redhat
 output:
   module: /tmp/falco-redhat9.ko
-  probe: /tmp/falco-redhat9.o
 driverversion: master
 builderimage: docker.io/redhat/ubi9:rhel9_driverkit
 ```
@@ -300,12 +289,11 @@ kernelrelease: 5.14.0-162.18.1.el9_1.x86_64
 target: rocky
 output:
     module: /tmp/falco_almalinux_5.14.0-162.18.1.el9_1.x86_64.ko
-    probe: /tmp/falco_almalinux_5.14.0-162.18.1.el9_1.x86_64.o
 driverversion: master
 ```
 
 ## ubuntu
-Example configuration file to build both the Kernel module and eBPF probe for Ubuntu (works with any flavor!).
+Example configuration file to build both the Kernel module for Ubuntu (works with any flavor!).
 
 ```yaml
 kernelrelease: 5.0.0-1021-aws-5.0
@@ -313,13 +301,12 @@ kernelversion: 24~18.04.1
 target: ubuntu
 output:
   module: /tmp/falco-ubuntu-generic.ko
-  probe: /tmp/falco-ubuntu-generic.o
 driverversion: master
 ```
 
 ## ubuntu-aws
 
-Example configuration file to build both the Kernel module and eBPF probe for Ubuntu AWS.
+Example configuration file to build both the Kernel module for Ubuntu AWS.
 
 ```yaml
 kernelrelease: 4.15.0-1057-aws
@@ -327,7 +314,6 @@ kernelversion: 59
 target: ubuntu-aws
 output:
   module: /tmp/falco-ubuntu-aws.ko
-  probe: /tmp/falco-ubuntu-aws.o
 driverversion: master
 ```
 
@@ -335,7 +321,7 @@ driverversion: master
 > and should not be used in new configs.
 
 ## ubuntu-generic
-Example configuration file to build both the Kernel module and eBPF probe for Ubuntu generic.
+Example configuration file to build both the Kernel module for Ubuntu generic.
 
 ```yaml
 kernelrelease: 4.15.0-72-generic
@@ -343,7 +329,6 @@ kernelversion: 81
 target: ubuntu-generic
 output:
   module: /tmp/falco-ubuntu-generic.ko
-  probe: /tmp/falco-ubuntu-generic.o
 driverversion: master
 ```
 
@@ -362,7 +347,6 @@ kernelversion: 1
 target: vanilla
 output:
   module: /tmp/falco-vanilla.ko
-  probe: /tmp/falco-vanilla.o
 driverversion: 0de226085cc4603c45ebb6883ca4cacae0bd25b2
 ```
 

@@ -29,5 +29,5 @@ driverkit completion (bash|zsh|fish|help) [flags]
 
 ### SEE ALSO
 
-* [driverkit](driverkit.md)	 - A command line tool to build Falco kernel modules and eBPF probes.
+* [driverkit](driverkit.md)	 - A command line tool to build Falco kernel modules.
 
