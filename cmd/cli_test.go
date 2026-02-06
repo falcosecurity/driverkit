@@ -130,7 +130,6 @@ var tests = []testCase{
 			"ubuntu-aws",
 			"--output-module",
 			"/tmp/falco-ubuntu-aws.ko",
-			"--output-probe",
 			"/tmp/falco-ubuntu-aws.o",
 			"--loglevel",
 			"debug",
@@ -144,7 +143,6 @@ var tests = []testCase{
 		env: map[string]string{
 			"DRIVERKIT_KERNELVERSION": "59",
 			"DRIVERKIT_OUTPUT_MODULE": "/tmp/falco-ubuntu-aws.ko",
-			"DRIVERKIT_OUTPUT_PROBE":  "/tmp/falco-ubuntu-aws.o",
 		},
 		args: []string{
 			"docker",

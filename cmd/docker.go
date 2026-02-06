@@ -16,6 +16,7 @@ package cmd
 
 import (
 	"bytes"
+
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder"
 	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
 	"github.com/spf13/cobra"
@@ -26,7 +27,7 @@ import (
 func NewDockerCmd(configOpts *ConfigOptions, rootOpts *RootOptions, rootFlags *pflag.FlagSet) *cobra.Command {
 	dockerCmd := &cobra.Command{
 		Use:   "docker",
-		Short: "Build Falco kernel modules and eBPF probes against a docker daemon.",
+		Short: "Build Falco kernel modules against a docker daemon.",
 		RunE: func(c *cobra.Command, args []string) error {
 			configOpts.Printer.Logger.Info("starting build",
 				configOpts.Printer.Logger.Args("processor", c.Name()))

@@ -180,19 +180,6 @@ func init() {
 	)
 
 	V.RegisterTranslation(
-		"required_without",
-		T,
-		func(ut ut.Translator) error {
-			return ut.Add("required_without", "{0} is required when {1} is missing", true)
-		},
-		func(ut ut.Translator, fe validator.FieldError) string {
-			t, _ := ut.T(fe.Tag(), fe.Field(), strings.ToLower(fe.Param()))
-
-			return t
-		},
-	)
-
-	V.RegisterTranslation(
 		"endswith",
 		T,
 		func(ut ut.Translator) error {

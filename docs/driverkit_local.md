@@ -1,6 +1,6 @@
 ## driverkit local
 
-Build Falco kernel modules and eBPF probes in local env with local kernel sources and gcc/clang.
+Build Falco kernel modules in local env with local kernel sources and gcc/clang.
 
 ```
 driverkit local [flags]
@@ -22,7 +22,6 @@ driverkit local [flags]
       --moduledevicename string   kernel module device name (the default is falco, so the device will be under /dev/falco*) (default "falco")
       --moduledrivername string   kernel module driver name, i.e. the name you see when you check installed modules via lsmod (default "falco")
       --output-module string      filepath where to save the resulting kernel module
-      --output-probe string       filepath where to save the resulting eBPF probe
       --repo-name string          repository github name (default "libs")
       --repo-org string           repository github organization (default "falcosecurity")
       --src-dir string            Enforce usage of local source dir to build drivers.
@@ -32,5 +31,5 @@ driverkit local [flags]
 
 ### SEE ALSO
 
-* [driverkit](driverkit.md)	 - A command line tool to build Falco kernel modules and eBPF probes.
+* [driverkit](driverkit.md)	 - A command line tool to build Falco kernel modules.
 

@@ -6,4 +6,3 @@ kernelurls: [
 ]
 output:
   module: /tmp/amazonlinux2_x86_64.ko
-  probe: /tmp/amazonlinux2_x86_64.o

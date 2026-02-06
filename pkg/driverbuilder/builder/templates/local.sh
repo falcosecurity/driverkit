@@ -22,7 +22,7 @@
 #
 set -xeo pipefail
 
-{{ if or .BuildProbe (and  .BuildModule (not .UseDKMS)) }}
+{{ if and .BuildModule (not .UseDKMS) }}
 cd {{ .DriverBuildDir }}
 {{ if .DownloadSrc }}
 echo "* Configuring sources with cmake"
@@ -56,25 +56,5 @@ make CC={{ .GCCVersion }}
 strip -g {{ .ModuleFullPath }}
 # Print results
 modinfo {{ .ModuleFullPath }}
-{{ end }}
-{{ end }}
-
-{{ if .BuildProbe }}
-echo "* Building eBPF probe"
-if [ ! -d /sys/kernel/debug/tracing ]; then
-  echo "* Mounting debugfs"
-  # Do not fail if this fails.
-  mount -t debugfs nodev /sys/kernel/debug || :
-fi
-
-{{ if .DownloadSrc }}
-# Build the eBPF probe - cmake configured
-make bpf
-ls -l driver/bpf/probe.o
-{{ else }}
-# Build the eBPF probe - preconfigured sources
-cd bpf
-make
-ls -l probe.o
 {{ end }}
 {{ end }}

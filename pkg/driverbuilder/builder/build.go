@@ -17,8 +17,9 @@ package builder
 import (
 	"context"
 	"fmt"
-	"github.com/falcosecurity/falcoctl/pkg/output"
 	"strings"
+
+	"github.com/falcosecurity/falcoctl/pkg/output"
 
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
 	"oras.land/oras-go/v2/registry/remote/auth"
@@ -35,7 +36,6 @@ type Build struct {
 	DriverVersion     string
 	Architecture      string
 	ModuleFilePath    string
-	ProbeFilePath     string
 	ModuleDriverName  string
 	ModuleDeviceName  string
 	BuilderImage      string

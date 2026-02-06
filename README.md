@@ -7,7 +7,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/falcosecurity/driverkit?style=for-the-badge)](https://goreportcard.com/report/github.com/falcosecurity/driverkit)
 [![Docker pulls](https://img.shields.io/docker/pulls/falcosecurity/driverkit?style=for-the-badge)](https://hub.docker.com/r/falcosecurity/driverkit)
 
-A command line tool that can be used to build the [Falco](https://github.com/falcosecurity/falco) kernel module and eBPF probe.
+A command line tool that can be used to build the [Falco](https://github.com/falcosecurity/falco) kernel module.
 
 ## Glossary
 
@@ -85,7 +85,6 @@ kernelversion: 59
 target: ubuntu-aws
 output:
   module: /tmp/falco-ubuntu-aws.ko
-  probe: /tmp/falco-ubuntu-aws.o
 driverversion: master
 ```
 

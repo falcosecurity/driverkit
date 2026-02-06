@@ -1,7 +1,4 @@
 ERROR error validating build options err: kernel release is a required field
 ERROR error validating build options err: target is a required field
-ERROR error validating build options
-    └ err: output module path is required when probe is missing
-ERROR error validating build options
-    └ err: output probe path is required when module is missing
+ERROR error validating build options err: output module path is a required field
 ERROR error executing driverkit err: exiting for validation errors

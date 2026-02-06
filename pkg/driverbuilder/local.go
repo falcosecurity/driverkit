@@ -7,14 +7,15 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
-	"github.com/falcosecurity/falcoctl/pkg/output"
 	"io"
 	"os"
 	"os/exec"
 	"os/user"
 	"path/filepath"
 	"time"
+
+	"github.com/falcosecurity/driverkit/pkg/driverbuilder/builder"
+	"github.com/falcosecurity/falcoctl/pkg/output"
 )
 
 const (
@@ -155,9 +156,8 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 	vv.SrcDir = lbp.srcDir
 	vv.UseDKMS = lbp.useDKMS
 
-	// Fetch paths were kmod and probe will be built
+	// Fetch paths were kmod will be built
 	srcModulePath := vv.GetModuleFullPath(c, kr)
-	srcProbePath := vv.GetProbeFullPath(c)
 
 	if len(lbp.srcDir) == 0 {
 		lbp.Logger.Info("Downloading driver sources")
@@ -176,9 +176,6 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 		vv.GccPath = gcc
 		if c.ModuleFilePath != "" {
 			lbp.Logger.Info("Trying to dkms install module.", lbp.Logger.Args("gcc", gcc))
-		}
-		if c.ProbeFilePath != "" {
-			lbp.Logger.Info("Trying to build eBPF probe.")
 		}
 
 		// Generate the build script from the builder
@@ -201,25 +198,12 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 			lbp.DefaultText.Print(string(out))
 		}
 
-		// If we built the probe, disable its build for subsequent attempts (with other available gccs)
-		if c.ProbeFilePath != "" {
-			if _, err = os.Stat(srcProbePath); !os.IsNotExist(err) {
-				if err = copyDataToLocalPath(srcProbePath, c.ProbeFilePath); err != nil {
-					return err
-				}
-				lbp.Logger.Info("eBPF probe available.", lbp.Logger.Args("path", c.ProbeFilePath))
-				c.ProbeFilePath = ""
-			}
-		}
-
 		// If we received an error, perhaps we just need to try another build for the kmod.
 		// Check if we were able to build anything.
 		if c.ModuleFilePath != "" {
 			koFiles, err := filepath.Glob(srcModulePath)
 			if err == nil && len(koFiles) > 0 {
-				// Since only kmod might need to get rebuilt
-				// with another gcc, break here if we actually built the kmod,
-				// since we already checked ebpf build status.
+				// Since only kmod might need to get rebuilt with another gcc, break here if we actually built the kmod.
 				if err = copyDataToLocalPath(koFiles[0], c.ModuleFilePath); err != nil {
 					return err
 				}
@@ -245,8 +229,8 @@ func (lbp *LocalBuildProcessor) Start(b *builder.Build) error {
 		}
 	}
 
-	if c.ModuleFilePath != "" || c.ProbeFilePath != "" {
-		return errors.New("failed to build all requested drivers")
+	if c.ModuleFilePath != "" {
+		return errors.New("failed to build requested driver")
 	}
 	return nil
 }

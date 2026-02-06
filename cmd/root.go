@@ -49,7 +49,6 @@ func persistentValidateFunc(rootCommand *RootCmd, configOpts *ConfigOptions, roo
 		}
 		nested := map[string]string{ // handle nested options in config file
 			"output-module": "output.module",
-			"output-probe":  "output.probe",
 		}
 		rootCommand.c.Flags().VisitAll(func(f *pflag.Flag) {
 			if name := f.Name; !skip[name] {
@@ -109,7 +108,7 @@ type RootCmd struct {
 func NewRootCmd(configOpts *ConfigOptions, rootOpts *RootOptions) *RootCmd {
 	rootCmd := &cobra.Command{
 		Use:                   "driverkit",
-		Short:                 "A command line tool to build Falco kernel modules and eBPF probes.",
+		Short:                 "A command line tool to build Falco kernel modules.",
 		ValidArgs:             validProcessors,
 		ArgAliases:            aliasProcessors,
 		Args:                  cobra.OnlyValidArgs,

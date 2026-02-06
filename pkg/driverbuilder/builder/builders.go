@@ -19,12 +19,13 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"github.com/falcosecurity/falcoctl/pkg/output"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
 	"text/template"
+
+	"github.com/falcosecurity/falcoctl/pkg/output"
 
 	"github.com/blang/semver/v4"
 	"github.com/falcosecurity/driverkit/pkg/kernelrelease"
@@ -41,7 +42,6 @@ const (
   -DENABLE_DRIVERS_TESTS=Off \
   -DDRIVER_NAME=%s \
   -DPROBE_NAME=%s \
-  -DBUILD_BPF=On \
   -DDRIVER_VERSION=%s \
   -DPROBE_VERSION=%s \
   -DGIT_COMMIT=%s \
@@ -56,7 +56,7 @@ var libsDownloadTemplate string
 
 var HeadersNotFoundErr = errors.New("kernel headers not found")
 
-// Config contains all the configurations needed to build the kernel module or the eBPF probe.
+// Config contains all the configurations needed to build the kernel module.
 type Config struct {
 	DriverName      string
 	DeviceName      string
@@ -68,16 +68,11 @@ func (c Config) ToDriverFullPath() string {
 	return path.Join(DriverDirectory, "build", "driver", fmt.Sprintf("%s.ko", c.DriverName))
 }
 
-func (c Config) ToProbeFullPath() string {
-	return path.Join(DriverDirectory, "build", "driver", "bpf", "probe.o")
-}
-
 type commonTemplateData struct {
 	DriverBuildDir   string
 	ModuleDriverName string
 	ModuleFullPath   string
 	BuildModule      bool
-	BuildProbe       bool
 	GCCVersion       string
 	CmakeCmd         string
 }
@@ -383,7 +378,6 @@ func (c Config) toTemplateData(b Builder, kr kernelrelease.KernelRelease) common
 		ModuleDriverName: c.DriverName,
 		ModuleFullPath:   c.ToDriverFullPath(),
 		BuildModule:      len(c.ModuleFilePath) > 0,
-		BuildProbe:       len(c.ProbeFilePath) > 0,
 		GCCVersion:       c.GCCVersion,
 		CmakeCmd: fmt.Sprintf(cmakeCmdFmt,
 			c.DriverName,

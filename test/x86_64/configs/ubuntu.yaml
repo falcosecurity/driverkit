@@ -7,4 +7,3 @@ kernelurls: [
 ]
 output:
   module: /tmp/ubuntu_x86_64.ko
-  probe: /tmp/ubuntu_x86_64.o

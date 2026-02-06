@@ -1,6 +1,6 @@
 ## driverkit kubernetes
 
-Build Falco kernel modules and eBPF probes against a Kubernetes cluster.
+Build Falco kernel modules against a Kubernetes cluster.
 
 ```
 driverkit kubernetes [flags]
@@ -13,7 +13,7 @@ driverkit kubernetes [flags]
       --as string                      username to impersonate for the operation, user could be a regular user or a service account in a namespace
       --as-group stringArray           group to impersonate for the operation, this flag can be repeated to specify multiple groups
       --as-uid string                  uID to impersonate for the operation
-      --builderimage string            docker image to be used to build the kernel module and eBPF probe. If not provided, an automatically selected image will be used.
+      --builderimage string            docker image to be used to build the kernel module. If not provided, an automatically selected image will be used.
       --builderrepo strings            list of docker repositories or yaml file (absolute path) containing builder images index with the format 'images: [ { target:<target>, name:<image-name>, arch: <arch>, tag: <imagetag>, gcc_versions: [ <gcc-tag> ] },...]', in descending priority order. Used to search for builder images. eg: --builderrepo myorg/driverkit-builder --builderrepo falcosecurity/driverkit-builder --builderrepo '/path/to/my/index.yaml'. (default [docker.io/falcosecurity/driverkit-builder])
       --cache-dir string               default cache directory (default "$HOME/.kube/cache")
       --certificate-authority string   path to a cert file for the certificate authority
@@ -39,7 +39,6 @@ driverkit kubernetes [flags]
       --moduledrivername string        kernel module driver name, i.e. the name you see when you check installed modules via lsmod (default "falco")
   -n, --namespace string               If present, the namespace scope for the pods and its config  (default "default")
       --output-module string           filepath where to save the resulting kernel module
-      --output-probe string            filepath where to save the resulting eBPF probe
       --proxy string                   the proxy to use to download data
       --registry-name string           registry name to which authenticate
       --registry-password string       registry password
@@ -59,5 +58,5 @@ driverkit kubernetes [flags]
 
 ### SEE ALSO
 
-* [driverkit](driverkit.md)	 - A command line tool to build Falco kernel modules and eBPF probes.
+* [driverkit](driverkit.md)	 - A command line tool to build Falco kernel modules.
 

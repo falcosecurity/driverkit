@@ -34,9 +34,3 @@ strip -g {{ .ModuleFullPath }}
 # Print results
 modinfo {{ .ModuleFullPath }}
 {{ end }}
-
-{{ if .BuildProbe }}
-# Build the eBPF probe
-make bpf
-ls -l driver/bpf/probe.o
-{{ end }}
