@@ -114,8 +114,7 @@ test:
 	GOEXPERIMENT=loopvar go test -v -cover ./cmd
 
 .PHONY: integration_test
-integration_test:
-	echo "Temporarily skipped"
+integration_test: $(test_configs)
 
 .PHONY: $(test_configs)
 $(test_configs): ${driverkit}
