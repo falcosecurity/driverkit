@@ -40,6 +40,7 @@ Please remove the leading whitespace before the `/kind <>` you uncommented.
 
 > /area tests
 
+> /area automation
 
 **What this PR does / why we need it**:
 
