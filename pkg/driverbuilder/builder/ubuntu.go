@@ -92,6 +92,10 @@ func (v *ubuntu) KernelTemplateData(kr kernelrelease.KernelRelease, urls []strin
 }
 
 func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease) ([]string, error) {
+	return ubuntuHeadersURLFromReleaseWithResolver(kr, GetResolvingURLs)
+}
+
+func ubuntuHeadersURLFromReleaseWithResolver(kr kernelrelease.KernelRelease, resolveURLs func([]string) ([]string, error)) ([]string, error) {
 	// decide which mirrors to use based on the architecture passed in
 	baseURLs := []string{}
 	if kr.Architecture.String() == kernelrelease.ArchitectureAmd64 {
@@ -114,7 +118,7 @@ func ubuntuHeadersURLFromRelease(kr kernelrelease.KernelRelease) ([]string, erro
 			return nil, err
 		}
 		// try resolving the URLs
-		urls, err := GetResolvingURLs(possibleURLs)
+		urls, err := resolveURLs(possibleURLs)
 		// there should be 2 urls returned - the _all.deb package and the _{arch}.deb package
 		if err == nil && len(urls) == ubuntuRequiredURLs {
 			return urls, err
