@@ -286,7 +286,7 @@ func TestUbuntuHeadersURLFromRelease(t *testing.T) {
 		})
 		expectedResolverInputs := [][]string{test.expected.urls}
 		if len(expected) != ubuntuRequiredURLs && test.config.Architecture.String() == kernelrelease.ArchitectureAmd64 {
-			securityURLs, err := fetchUbuntuKernelURL("http://security.ubuntu.com/ubuntu/pool/main/l", test.config)
+			securityURLs, err := fetchUbuntuKernelURL(ubuntuSecurityMirrorURL, test.config)
 			if err != nil {
 				t.Fatalf("Unexpected error encountered with Test Input: '%v' | Error: '%s'", test.config, err)
 			}
@@ -318,6 +318,9 @@ func TestUbuntuHeadersURLFromRelease(t *testing.T) {
 
 func TestUbuntuHeadersURLFromReleaseUsesSecurityMirrorFallback(t *testing.T) {
 	test := tests[0]
+	if test.config.Architecture.String() != kernelrelease.ArchitectureAmd64 {
+		t.Fatal("fallback test requires an amd64 kernel release")
+	}
 	var resolverInputs [][]string
 	gotURLs, err := ubuntuHeadersURLFromReleaseWithResolver(test.config, func(possibleURLs []string) ([]string, error) {
 		resolverInputs = append(resolverInputs, possibleURLs)
@@ -330,7 +333,7 @@ func TestUbuntuHeadersURLFromReleaseUsesSecurityMirrorFallback(t *testing.T) {
 		t.Fatalf("Unexpected error encountered with Test Input: '%v' | Error: '%s'", test.config, err)
 	}
 
-	securityURLs, err := fetchUbuntuKernelURL("http://security.ubuntu.com/ubuntu/pool/main/l", test.config)
+	securityURLs, err := fetchUbuntuKernelURL(ubuntuSecurityMirrorURL, test.config)
 	if err != nil {
 		t.Fatalf("Unexpected error encountered with Test Input: '%v' | Error: '%s'", test.config, err)
 	}
