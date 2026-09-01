@@ -316,6 +316,33 @@ func TestUbuntuHeadersURLFromRelease(t *testing.T) {
 	}
 }
 
+func TestUbuntuHeadersURLFromReleaseUsesSecurityMirrorFallback(t *testing.T) {
+	test := tests[0]
+	var resolverInputs [][]string
+	gotURLs, err := ubuntuHeadersURLFromReleaseWithResolver(test.config, func(possibleURLs []string) ([]string, error) {
+		resolverInputs = append(resolverInputs, possibleURLs)
+		if len(resolverInputs) == 1 {
+			return nil, HeadersNotFoundErr
+		}
+		return test.expected.headersURLs, nil
+	})
+	if err != nil {
+		t.Fatalf("Unexpected error encountered with Test Input: '%v' | Error: '%s'", test.config, err)
+	}
+
+	securityURLs, err := fetchUbuntuKernelURL("http://security.ubuntu.com/ubuntu/pool/main/l", test.config)
+	if err != nil {
+		t.Fatalf("Unexpected error encountered with Test Input: '%v' | Error: '%s'", test.config, err)
+	}
+	expectedResolverInputs := [][]string{test.expected.urls, securityURLs}
+	if !reflect.DeepEqual(resolverInputs, expectedResolverInputs) {
+		t.Fatalf("Possible URLs don't match! Test Input: '%v' | Got: '%v' / Want: '%v'", test.config, resolverInputs, expectedResolverInputs)
+	}
+	if !reflect.DeepEqual(gotURLs, test.expected.headersURLs) {
+		t.Fatalf("URLs don't match! Test Input: '%v' | Got: '%v' / Want: '%v'", test.config, gotURLs, test.expected.headersURLs)
+	}
+}
+
 func TestFetchUbuntuKernelURL(t *testing.T) {
 	for _, test := range tests {
 
