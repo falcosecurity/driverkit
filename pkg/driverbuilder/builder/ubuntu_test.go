@@ -278,7 +278,9 @@ func TestUbuntuHeadersURLFromRelease(t *testing.T) {
 		expected := test.expected.headersURLs
 
 		// call function
-		gotURLs, err := ubuntuHeadersURLFromRelease(test.config)
+		gotURLs, err := ubuntuHeadersURLFromReleaseWithResolver(test.config, func([]string) ([]string, error) {
+			return expected, nil
+		})
 		// compare errors
 		// there are no official errors, so comparing fmt.Errorf() doesn't really work
 		// compare error message text instead
