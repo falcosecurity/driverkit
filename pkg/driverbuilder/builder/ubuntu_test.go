@@ -284,8 +284,16 @@ func TestUbuntuHeadersURLFromRelease(t *testing.T) {
 			resolverInputs = append(resolverInputs, possibleURLs)
 			return expected, nil
 		})
-		if len(resolverInputs) == 0 || !reflect.DeepEqual(resolverInputs[0], test.expected.urls) {
-			t.Fatalf("Possible URLs don't match! Test Input: '%v' | Got: '%v' / Want: '%v'", test.config, resolverInputs, test.expected.urls)
+		expectedResolverInputs := [][]string{test.expected.urls}
+		if len(expected) != ubuntuRequiredURLs && test.config.Architecture.String() == kernelrelease.ArchitectureAmd64 {
+			securityURLs, err := fetchUbuntuKernelURL("http://security.ubuntu.com/ubuntu/pool/main/l", test.config)
+			if err != nil {
+				t.Fatalf("Unexpected error encountered with Test Input: '%v' | Error: '%s'", test.config, err)
+			}
+			expectedResolverInputs = append(expectedResolverInputs, securityURLs)
+		}
+		if !reflect.DeepEqual(resolverInputs, expectedResolverInputs) {
+			t.Fatalf("Possible URLs don't match! Test Input: '%v' | Got: '%v' / Want: '%v'", test.config, resolverInputs, expectedResolverInputs)
 		}
 		// compare errors
 		// there are no official errors, so comparing fmt.Errorf() doesn't really work
