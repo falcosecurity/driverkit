@@ -36,6 +36,11 @@ const TargetTypeUbuntu Type = "ubuntu"
 // and an arch dependent package.
 const ubuntuRequiredURLs = 2
 
+const (
+	ubuntuMainMirrorURL     = "https://mirrors.edge.kernel.org/ubuntu/pool/main/l"
+	ubuntuSecurityMirrorURL = "http://security.ubuntu.com/ubuntu/pool/main/l"
+)
+
 type ubuntuTemplateData struct {
 	KernelDownloadURLS   []string
 	KernelLocalVersion   string
@@ -100,8 +105,8 @@ func ubuntuHeadersURLFromReleaseWithResolver(kr kernelrelease.KernelRelease, res
 	baseURLs := []string{}
 	if kr.Architecture.String() == kernelrelease.ArchitectureAmd64 {
 		baseURLs = []string{
-			"https://mirrors.edge.kernel.org/ubuntu/pool/main/l",
-			"http://security.ubuntu.com/ubuntu/pool/main/l",
+			ubuntuMainMirrorURL,
+			ubuntuSecurityMirrorURL,
 		}
 	} else {
 		baseURLs = []string{
