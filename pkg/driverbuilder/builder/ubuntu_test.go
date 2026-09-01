@@ -16,6 +16,7 @@ package builder
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/blang/semver/v4"
@@ -278,9 +279,14 @@ func TestUbuntuHeadersURLFromRelease(t *testing.T) {
 		expected := test.expected.headersURLs
 
 		// call function
-		gotURLs, err := ubuntuHeadersURLFromReleaseWithResolver(test.config, func([]string) ([]string, error) {
+		var resolverInputs [][]string
+		gotURLs, err := ubuntuHeadersURLFromReleaseWithResolver(test.config, func(possibleURLs []string) ([]string, error) {
+			resolverInputs = append(resolverInputs, possibleURLs)
 			return expected, nil
 		})
+		if len(resolverInputs) == 0 || !reflect.DeepEqual(resolverInputs[0], test.expected.urls) {
+			t.Fatalf("Possible URLs don't match! Test Input: '%v' | Got: '%v' / Want: '%v'", test.config, resolverInputs, test.expected.urls)
+		}
 		// compare errors
 		// there are no official errors, so comparing fmt.Errorf() doesn't really work
 		// compare error message text instead
