@@ -20,6 +20,9 @@ jobs:
 
   push-images-release:
     needs: build-test-release
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       matrix:
         arch: [amd64, arm64]
@@ -33,6 +36,9 @@ jobs:
 
   images-release:
     needs: push-images-release
+    permissions:
+      contents: read
+      id-token: write
     uses: ./.github/workflows/reusable_manifest_images.yml
     with:
       tag: ${{ github.ref_name }}
