@@ -57,7 +57,11 @@ func (c *fedora) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 
 	// fedora FullExtraversion looks like "-200.fc36.x86_64"
 	// need to get the "fc36" out of the middle
-	fedoraVersion := strings.Split(kr.FullExtraversion, ".")[1]
+	extraversionParts := strings.Split(kr.FullExtraversion, ".")
+	if len(extraversionParts) < 2 {
+		return nil, fmt.Errorf("cannot parse fedora version out of kernel release %q", kr.String())
+	}
+	fedoraVersion := extraversionParts[1]
 
 	// trim off the "fc" from fedoraVersion
 	version := strings.Trim(fedoraVersion, "fc")

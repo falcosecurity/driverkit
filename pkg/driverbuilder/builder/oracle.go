@@ -60,6 +60,9 @@ func (c *oracle) URLs(kr kernelrelease.KernelRelease) ([]string, error) {
 	// oracle FullExtraversion looks like "-2047.510.5.5.el7uek.x86_64"
 	// need to get the "el7uek" out of the middle
 	splitVersion := strings.Split(kr.FullExtraversion, ".")
+	if len(splitVersion) < 2 {
+		return nil, fmt.Errorf("cannot parse oracle linux version out of kernel release %q", kr.String())
+	}
 	oracleVersion := splitVersion[len(splitVersion)-2] // [ "-2047", "510", "5", "5", "el7uek","x86_64" ] want -2
 
 	// trim off the "el" and "uek" from oracleVersion
